@@ -1,0 +1,45 @@
+// W202DS Server hardware layout; split from the validated imported tree.
+/ {
+	aliases {
+		npu-cooling0 = "/npu-cooling-devices/npu-cooling0";
+	};
+	soc {
+		ai-axi {
+			npu@27100000 {
+				compatible = "img,ax3xxx-nna";
+				reg = <0x00 0x27100000 0x00 0x80000>;
+				interrupt-names = "ai_powervr_0", "ai_powervr_1", "ai_powervr_2", "ai_mem_fw", "ai_perf_busmon";
+				interrupts = <0x00 0xe2 0x04 0x00 0xdf 0x04 0x00 0xde 0x04 0x00 0xdd 0x04 0x00 0xc8 0x04>;
+				apb_reg = <0xbd 0x00 0x00>;
+				pd_ai_sys = <0x04 0x00 0x00>;
+				clock-names = "ai_apll", "ai_eb", "powervr_eb", "mtx_eb", "dvfs_eb", "ocm_eb", "pmon_eb", "aon_to_ocm_eb";
+				clocks = <0x46 0x03 0x11 0x0a 0xbe 0x00 0xbe 0x01 0xbe 0x02 0xbe 0x03 0xbe 0x04 0xbe 0x05>;
+				sprd,npu_freq_default = <0x4b000>;
+				npu-supply = <0xbf>;
+				phandle = <0x1bd>;
+			};
+		};
+	};
+	npu-cooling-devices {
+		npu-cooling0 {
+			compatible = "sprd,npu-power-model";
+			#cooling-cells = <0x02>;
+			sprd,efuse-block7 = <0x07>;
+			sprd,efuse-block15 = <0x0f>;
+			sprd,leak-core = <0x02 0x55 0x74d>;
+			sprd,leak-cluster = <0x02 0x55 0x9dc>;
+			sprd,temp-scale = <0x14 0xfffff4c7 0x26db0 0xfff61e79>;
+			sprd,voltage-scale = <0x4ad 0xfffff61f 0x753 0xfffffe45>;
+			sprd,hotplug-period = <0x00>;
+			sprd,core-base = <0x1371>;
+			sprd,cluster-base = <0x3c6>;
+			sprd,dynamic-core = <0x22124 0x352 0x320>;
+			sprd,dynamic-cluster = <0x17b0 0x300 0x384>;
+			phandle = <0x11e>;
+		};
+	};
+	__symbols__ {
+		npu_img = "/soc/ai-axi/npu@27100000";
+		npu_cooling0 = "/npu-cooling-devices/npu-cooling0";
+	};
+};

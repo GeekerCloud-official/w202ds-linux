@@ -1,0 +1,93 @@
+// W202DS imported hardware layout; driver status is documented in ../README.md.
+/ {
+	soc {
+		mm {
+			vdsp {
+				compatible = "sprd,qogirn6pro-vdsp";
+				vdsp_force_shutdown = <0x04 0x2fc 0x2000000>;
+				vdsp_auto_shutdown = <0x04 0x2fc 0x1000000>;
+				vdsp_power_state = <0x04 0x510 0x1f>;
+				vdsp_intr_disable = <0x04 0x25c 0x01>;
+				vdsp_deepsleep_enable = <0x04 0x1fc 0x01>;
+				vdsp_pd_sel = <0x04 0x2fc 0x8000000>;
+				vdsppll_force_off = <0x04 0xa2c 0x02>;
+				vdsppll_force_on = <0x04 0xa2c 0x01>;
+				sprd,syscon-mmahb = <0x40>;
+				sprd,syscon-mailbox = <0x57>;
+				clock-names = "ext_26m", "ext_26m";
+				iommu_names = "sprd,iommuvau-epp-n6pro", "sprd,iommuvau-idma-n6pro", "sprd,iommuvau-vdma-n6pro";
+				power-domains = <0x20>;
+				queue-priority = <0x07 0x08 0x09>;
+				device-irq = <0x00 0x02 0x01>;
+				device-irq-host-offset = <0x00>;
+				device-irq-mode = <0x01>;
+				host-irq = <0x08 0x00>;
+				host-irq-mode = <0x01>;
+				interrupts = <0x00 0x56 0x04>;
+				firmware-name = "vdsp_firmware.bin";
+				status = "okay";
+			};
+			mailbox@30020000 {
+				compatible = "sprd,vdsp-mailbox";
+				reg = <0x00 0x30020000 0x00 0x10000 0x00 0x30024000 0x00 0x4000>;
+				sprd,vdsp-core-cnt = <0x03>;
+				sprd,vdsp-version = <0x03>;
+				phandle = <0x57>;
+			};
+			iommu@34300000 {
+				compatible = "sprd,iommuvau-epp-n6pro";
+				reg = <0x00 0x34300000 0x00 0x400>;
+				reg_name = "mmu_reg";
+				sprd,iova-base = <0x40000000>;
+				sprd,iova-size = <0x20000000>;
+				status = "okay";
+				#iommu-cells = <0x00>;
+				phandle = <0x16e>;
+			};
+			iommu@34400000 {
+				compatible = "sprd,iommuvau-idma-n6pro";
+				reg = <0x00 0x34400000 0x00 0x400>;
+				reg_name = "mmu_reg";
+				sprd,iova-base = <0x40000000>;
+				sprd,iova-size = <0x20000000>;
+				status = "okay";
+				#iommu-cells = <0x00>;
+				phandle = <0x16f>;
+			};
+			iommu@34100200 {
+				compatible = "sprd,iommuvau-vdma-n6pro";
+				reg = <0x00 0x34100200 0x00 0x400>;
+				reg_name = "mmu_reg";
+				sprd,iova-base = <0x40000000>;
+				sprd,iova-size = <0x20000000>;
+				status = "okay";
+				#iommu-cells = <0x00>;
+				phandle = <0x170>;
+			};
+		};
+	};
+	vdsp-dvfs {
+		compatible = "sprd,hwdvfs-vdsp";
+		operating-points = <0x6590 0x927c0 0x4b000 0x927c0 0x7d000 0x927c0 0x96000 0x9eb10 0xc8000 0xaae60 0xf78f0 0xb71b0>;
+		phandle = <0x222>;
+	};
+	vdma-dvfs {
+		compatible = "sprd,hwdvfs-vdma";
+		operating-points = <0x6590 0x927c0 0x25800 0x927c0 0x3e800 0x927c0 0x4b000 0x9eb10 0x64000 0xaae60 0x7d000 0xb71b0>;
+		phandle = <0x223>;
+	};
+	vdsp_mtx-dvfs {
+		compatible = "sprd,hwdvfs-vdsp_mtx";
+		operating-points = <0x6590 0x927c0 0x4b000 0x927c0 0x64000 0xaae60 0x7d000 0xb71b0>;
+		phandle = <0x224>;
+	};
+	__symbols__ {
+		vdsp_mailbox = "/soc/mm/mailbox@30020000";
+		iommu_vdsp_msti = "/soc/mm/iommu@34300000";
+		iommu_vdsp_idma = "/soc/mm/iommu@34400000";
+		iommu_vdsp_vdma = "/soc/mm/iommu@34100200";
+		vdsp_dvfs = "/vdsp-dvfs";
+		vdma_dvfs = "/vdma-dvfs";
+		vdsp_mtx_dvfs = "/vdsp_mtx-dvfs";
+	};
+};
