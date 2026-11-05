@@ -1,0 +1,25 @@
+# w202ds-audio-driver（扬声器与麦克风）
+
+```text
+audio/
+├── build.mk
+├── device.json
+├── devicetree/
+├── evidence/
+├── firmware/
+├── modules/
+├── README.md
+├── reference/
+├── source/
+└── SOURCES.json
+```
+
+| 功能 | 可用性 | 问题描述 |
+| --- | --- | --- |
+| 扬声器播放 | 待完成并验证 | 尚无 Linux 完整播放链路验收结果。 |
+| 麦克风录音 | 待完成并验证 | 尚无 Linux 完整录音链路验收结果。 |
+| 功放控制 | 待完成并验证 | AW883xx 具体型号未确认，配套 ACF / monitor 文件仍缺失。 |
+| 音频路由与音量控制 | 待完成并验证 | 完整声卡路由尚未验收。 |
+| 音频 DSP | 待验证 | 已保存 AUDCP 固件，尚无实际音频处理验收结果。 |
+
+更新日期：2026-11-05

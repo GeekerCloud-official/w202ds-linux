@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "status": "AUDCP 原厂 l_agdsp_a/b 实体已归位；AW883xx ACF/monitor 固件尚未取得",
+  "files": [
+    {
+      "path": "firmware/stock-partitions/l_agdsp_a.img",
+      "bytes": 6291456,
+      "sha256": "ccb87fc69fc7a22a54544824fb22a5541fcb5da7afba72ae03867f2c2a2ae9d8",
+      "storage": "regular",
+      "source": "w202ds-research/firmware/full/l_agdsp_a.img",
+      "source_path_base": "workspace",
+      "format": "raw-stock-partition"
+    },
+    {
+      "path": "firmware/stock-partitions/l_agdsp_b.img",
+      "bytes": 6291456,
+      "sha256": "2150b2d49033ae990484e0d6b7f64b42ebccaa5e933769d57841dddbe718f57d",
+      "storage": "regular",
+      "source": "w202ds-research/firmware/full/l_agdsp_b.img",
+      "source_path_base": "workspace",
+      "format": "raw-stock-partition"
+    }
+  ],
+  "redistribution": "Original vendor binaries have no newly established redistribution license; preserve provenance.",
+  "missing": [
+    {
+      "name": "aw883xx_acf.bin",
+      "evidence": "w202ds-research/bsp/Devices/audio/source/vendor-reference/sound/soc/codecs/aw883xx_new/aw883xx.c",
+      "evidence_path_base": "workspace"
+    },
+    {
+      "name": "aw883xx_monitor.bin",
+      "evidence": "w202ds-research/bsp/Devices/audio/source/vendor-reference/sound/soc/codecs/aw883xx_new/aw883xx_monitor.c",
+      "evidence_path_base": "workspace"
+    }
+  ],
+  "placement": "Known firmware is stored as regular files beneath this device firmware directory; shared chip firmware has one owner.",
+  "imported_from": "w202ds-research/bsp/Devices/audio/firmware"
+}
