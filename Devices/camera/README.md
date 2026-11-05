@@ -1,0 +1,25 @@
+# w202ds-camera-driver（摄像头）
+
+```text
+camera/
+├── build.mk
+├── device.json
+├── devicetree/
+├── evidence/
+├── modules/
+├── README.md
+├── reference/
+├── research/
+├── source/
+└── SOURCES.json
+```
+
+| 功能 | 可用性 | 问题描述 |
+| --- | --- | --- |
+| 摄像头识别 | 原系统有型号记录，Linux 待验 | 原系统报告 GC13A0 与 SC520CS；前后摄对应关系未确认。 |
+| 图像采集与预览 | 待完成并验证 | 尚无 Linux 实际采集与预览验收结果。 |
+| 拍照 | 待完成并验证 | 传感器及 ISP 链路尚未验收。 |
+| 录像 | 待完成并验证 | 尚无 Linux 实际录像验收结果。 |
+| 闪光灯控制 | 待验证 | 尚无实物闪光灯验收结果。 |
+
+更新日期：2026-11-05
