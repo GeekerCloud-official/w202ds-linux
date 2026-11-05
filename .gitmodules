@@ -1,4 +1,4 @@
 [submodule "kernel"]
 	path = kernel
-	url = https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git
+	url = https://github.com/Yeamika/w202ds-linux-kernel.git
 	shallow = true

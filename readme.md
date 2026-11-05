@@ -53,5 +53,5 @@ git -C kernel log --oneline v6.18.35..HEAD
 git submodule status kernel
 ```
 
-子模块初始化、当前提交和未推送时的恢复方式见 [内核 Git 说明](KERNEL-GIT.md)。
-本轮只提交内核、子模块接入和仓库布局说明，其他设备源码和进行中的基带修改仍保持原有工作区状态。
+子模块初始化、当前提交和备用恢复方式见 [内核 Git 说明](KERNEL-GIT.md)。
+设备组件按已确认内容在主仓库分批提交，实际入库范围以 `git ls-files Devices/` 为准。
