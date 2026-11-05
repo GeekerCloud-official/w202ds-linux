@@ -28,7 +28,7 @@ make -C Devices \
 
 该 provider 限定配置/全局符号表/release/实际 cfg80211.ko 的哈希；不能用于别的内核配置。
 它的符号来自原 M23 私有构建，最新输出里的 cfg80211.ko 与原模块逐字节相同。
-历史构建证据放在 `../provenance/`，不作为新构建的输入或可加载模块。
+历史构建记录仅在本地保留；新构建使用实际源码、内核输出及显式指定的 provider。
 
 
 额外的独立测试目标：`w202ds-drm-backlight`、`w202ds-usb3-legacy-phy`。

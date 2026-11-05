@@ -7,7 +7,7 @@
 上游：`https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git`。
 W202DS 内核仓库：`https://github.com/Yeamika/w202ds-linux-kernel.git`，分支 `6.18.35`。
 基线提交：`acb7cf4c1184e27622be0faf89244d5001ed1e87`。
-当前适配提交：`815a26419264a57cb9a7a8f4f4bf2869fd70048a`，验证记录见 [provenance](provenance/kernel-git-20261105/README.md)。
+当前适配提交：`815a26419264a57cb9a7a8f4f4bf2869fd70048a`。
 本轮新提交的作者和提交者均使用 `Yeamika <255833500+Yeamika@users.noreply.github.com>`。
 
 ## 检查与继续开发

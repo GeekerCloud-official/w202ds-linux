@@ -14,8 +14,7 @@ W202DS Linux 6.18.35 内核、板级设备树及硬件模块源码。
 ├── devicetree/
 ├── Devices/
 ├── config/
-├── integration/
-└── provenance/
+└── integration/
 ```
 
 | 目录 | 用途 |
@@ -24,24 +23,22 @@ W202DS Linux 6.18.35 内核、板级设备树及硬件模块源码。
 | `devicetree/` | W202DS 设备树源码及相关文件。 |
 | `Devices/` | 18 组硬件归属，含模块源码、DTSI、构建入口及实现/待办说明。 |
 | `config/` | 最新 Server 构建使用的完整内核配置。 |
-| `provenance/` | 源码哈希、构建记录、已验证范围与导入检查结果。 |
 
 已导入 2026-11-05 Server 使用的 `6.18.35-w202ds-m23-wifi` 源码及对应模块。
 包含 DRM、GPU、VPU、WCN/Wi-Fi、基带、PMIC、充电、霍尔、键盘、Sensor Hub 和历史 Linux 触控实现。
-各项实际完成度见 [设备清单](Devices/README.md)，构建见 [BUILD.md](BUILD.md)，来源与验证见 [provenance](provenance/README.md)。
+各项实际完成度见 [设备清单](Devices/README.md)，构建见 [BUILD.md](BUILD.md)。
 
 主区包含源码、对应硬件固件、基带配套用户态源码和服务模板。旧 BSP 独有的原厂参考、历史模块/运行包与完整 PanVK Git 仓库已归入对应设备；这些参考包不等于开源实现或最新可安装模块。设备 NV、账号密钥和完整系统 rootfs 不纳入公共源码。
 Linux 树内通用 EFI 支持属于内核，正常保留。快充、Vulkan、蓝牙、KDE 等未验收能力不列为已完成。
 
 已进行板级源码分离：实现归 `Devices/`，内核保留功能位置接入；硬件 DTSI 也随设备维护。
-详细范围与构建/真机边界见 [分离记录](provenance/separation-20261105/README.md)。
 已取得的硬件固件放对应设备的 `firmware/`。
 
-2026-11-05 完整构建及 Server 上机已完成：378 件树内模块、50 件独立外部模块均编译通过，运行内核 Build ID 与新产物匹配。GPU、VPU、蜂窝数据和键盘/霍尔的验证范围见 [本轮记录](provenance/full-build-20261105/README.md)。KDE 尚未启动验收。
+2026-11-05 完整构建及 Server 上机已完成：378 件树内模块、50 件独立外部模块均编译通过，运行内核 Build ID 与新产物匹配。GPU、VPU、蜂窝数据和键盘/霍尔的验证范围见 [设备清单](Devices/README.md) 中对应硬件说明。KDE 尚未启动验收。
 
 `Devices/` 下 18 个目录已简化为硬件名称；模块名和构建目标保留原名。`config/server.config` 的下一次构建名称改为 `6.18.35-w202ds`，当前真机仍运行已验证的 `6.18.35-w202ds-m23-wifi`，未因改名再次刷写。
 
-旧 `w202ds-research/bsp/Devices` 指向本版本的 `Devices/`；旧 `bsp/kernel` 指向本版本的 `integration/kernel/`，保留 initramfs、兼容配置、构建记录和交付包入口。实际 Linux 源码始终在本版本 `kernel/`，不混入集成脚本。去重校验与保留范围见 [主区迁移记录](provenance/main-area-20261105/README.md)。
+旧 `w202ds-research/bsp/Devices` 指向本版本的 `Devices/`；旧 `bsp/kernel` 指向本版本的 `integration/kernel/`，保留 initramfs、兼容配置、构建记录和交付包入口。实际 Linux 源码始终在本版本 `kernel/`，不混入集成脚本。
 
 ## 内核 Git
 

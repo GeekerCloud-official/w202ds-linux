@@ -26,7 +26,7 @@ dtc -I dts -O dtb -o output/devicetree/w202ds-server.dtb devicetree/w202ds-serve
 使用现有 CM2 冻结构建目录进行单模块开发时，见 [独立模块构建说明](Devices/BUILD.md) 的 cfg80211 导出选项。
 构建检查与真机功能验收分别记录，不能由编译成功推断硬件完整可用。
 
-2026-11-05 的完整构建已在 Server 上机，见 [构建与测试记录](provenance/full-build-20261105/README.md)。随后按用户要求只保留下一次构建的 `CONFIG_LOCALVERSION="-w202ds"`；当前运行版本仍为 `6.18.35-w202ds-m23-wifi`。更换 release 时还须同步 initramfs、模块目录和用户态版本约定，不能只改 Image 文件名。
+2026-11-05 的完整构建已在 Server 上机。随后按用户要求只保留下一次构建的 `CONFIG_LOCALVERSION="-w202ds"`；当前运行版本仍为 `6.18.35-w202ds-m23-wifi`。更换 release 时还须同步 initramfs、模块目录和用户态版本约定，不能只改 Image 文件名。
 
 基带用户态独立入口为 `make -C Devices/modem/userspace OUT=绝对输出目录 all`，不触发内核构建。目录名称已简化，内核模块目标名称不变。
 
