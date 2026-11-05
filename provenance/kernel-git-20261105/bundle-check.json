@@ -1,0 +1,6 @@
+{
+  "isolated_bundle_import": true,
+  "commit": "815a26419264a57cb9a7a8f4f4bf2869fd70048a",
+  "connectivity_fsck": true,
+  "kernelrelease": "6.18.35-w202ds"
+}
