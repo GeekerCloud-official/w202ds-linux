@@ -1,0 +1,333 @@
+// W202DS Server hardware layout; split from the validated imported tree.
+/ {
+	aliases {
+		eth0 = "/sipa-eth0";
+		eth1 = "/sipa-eth1";
+		eth2 = "/sipa-eth2";
+		eth3 = "/sipa-eth3";
+		eth4 = "/sipa-eth4";
+		eth5 = "/sipa-eth5";
+		eth6 = "/sipa-eth6";
+		eth7 = "/sipa-eth7";
+		eth8 = "/sipa-eth8";
+		eth9 = "/sipa-eth9";
+		eth10 = "/sipa-eth10";
+		eth11 = "/sipa-eth11";
+		eth12 = "/sipa-eth12";
+		eth13 = "/sipa-eth13";
+		eth14 = "/sipa-eth14";
+		eth15 = "/sipa-eth15";
+		serdes0 = "/soc/aon/modem-dbg-log@520000";
+		serdes1 = "/soc/aon/modem-dbg-log@530000";
+		v4-modem0 = "/modem@0";
+		v4-modem1 = "/modem@1";
+		v4-modem2 = "/modem@2";
+		v4-modem3 = "/modem@3";
+	};
+	soc {
+		ipa-apb {
+			sipa@25220000 {
+				compatible = "sprd,qogirn6pro-sipa";
+				reg = <0x00 0x25220000 0x00 0x2000>;
+				reg-names = "ipa-base";
+				interrupts = <0x00 0x89 0x04 0x00 0x88 0x04 0x00 0x87 0x04 0x00 0x86 0x04 0x00 0x85 0x04 0x00 0x84 0x04 0x00 0x83 0x04 0x00 0x82 0x04 0x00 0x8a 0x04>;
+				interrupt-names = "ipa_irq0", "ipa_irq1", "ipa_irq2", "ipa_irq3", "ipa_irq4", "ipa_irq5", "ipa_irq6", "ipa_irq7", "ipa_general";
+				enable-ipa = <0x58 0x04 0x01>;
+				enable-tft = <0x58 0x04 0x02>;
+				sprd,sipa-bypass-mode = <0x01>;
+				power-domains = <0x59>;
+				fifo-names = "sprd,usb-ul", "sprd,usb-dl", "sprd,wifi-ul", "sprd,wifi-dl";
+				fifo-sizes = <0x00 0x800 0x00 0x800 0x00 0x800 0x00 0x800 0x00 0x80 0x00 0x80 0x00 0x80 0x00 0x80>;
+				phandle = <0x171>;
+			};
+			sipa-dele {
+				compatible = "sprd,orca-sipa-delegate";
+				sprd,ul-fifo-depth = <0x1000>;
+				sprd,dl-fifo-depth = <0x1000>;
+				power-domains = <0x59>;
+				phandle = <0x172>;
+			};
+		};
+		aon {
+			mailbox@600000 {
+				compatible = "unisoc,mailbox";
+				reg = <0x600000 0x10000 0x610000 0x10000 0x620000 0x20000>;
+				reg-names = "inbox", "outbox", "common";
+				sprd,mailbox_clk = <0x02 0x04 0x04>;
+				interrupts = <0x00 0x2d 0x04 0x00 0x2c 0x04 0x00 0x2b 0x04>;
+				interrupt-names = "inbox", "outbox", "oob-outbox";
+				#mbox-cells = <0x02>;
+				phandle = <0xf7>;
+			};
+			sipa-sys {
+				compatible = "sprd,qogirn6pro-ipa-sys-power-domain";
+				ipa-sys-autoshutdownen = <0x04 0x3e0 0x1000000>;
+				ipa-sys-dslpen = <0x04 0x780 0x01>;
+				ipa-sys-state = <0x04 0x548 0x1f00>;
+				ipa-sys-forcelslp = <0x04 0x830 0x10>;
+				ipa-sys-lslpen = <0x04 0x808 0x10>;
+				ipa-sys-smartlslpen = <0x04 0x8cc 0x10>;
+				ipa-sys-accessen = <0x02 0xcd8 0x01>;
+				reg-size = <0x07>;
+				#power-domain-cells = <0x00>;
+				sprd,syscon-dispc1-glb = <0x5a>;
+				sprd,syscon-glb-apb = <0x58>;
+				sprd,syscon-apb = <0x60>;
+				sprd,syscon-anlg-phy = <0x6a>;
+				clocks = <0x5d 0x05 0x5c 0x00 0x0b 0x15 0x09>;
+				clock-names = "clk_ipa_ckg_eb", "ipa_core", "ipa_core_source", "ipa_core_default";
+				phandle = <0x59>;
+			};
+			modem-dbg-log@520000 {
+				compatible = "sprd,dbg-log-qogirn6pro";
+				reg = <0x520000 0x4000>;
+				sprd,syscon-pmu-apb = <0x04>;
+				sprd,syscon-dsi-apb = <0x47>;
+				sprd,ch-name = "TRAINING", "TPIU", "DBUS", "PHYCP";
+				sprd,ch-index = <0x0f 0x01 0x00 0x02>;
+				sprd,dcfix;
+				status = "okay";
+				clock-names = "serdes0_eb", "serdes1_eb", "ana_eb", "dsi_cfg_eb", "cphy_cfg_en";
+				clocks = <0x11 0x43 0x11 0x25 0x11 0x1d 0x11 0x10 0x11 0x68>;
+				phandle = <0x1b1>;
+			};
+			modem-dbg-log@530000 {
+				compatible = "sprd,dbg-log-qogirn6pro";
+				reg = <0x530000 0x4000>;
+				sprd,syscon-pmu-apb = <0x04>;
+				sprd,syscon-dsi-apb = <0x48>;
+				sprd,ch-name = "TRAINING", "PHYCP";
+				sprd,ch-index = <0x0f 0x00>;
+				sprd,dcfix;
+				status = "okay";
+				clock-names = "serdes0_eb", "serdes1_eb", "ana_eb", "dsi_cfg_eb", "cphy_cfg_en";
+				clocks = <0x11 0x43 0x11 0x25 0x11 0x1d 0x11 0x10 0x11 0x68>;
+				phandle = <0x1b2>;
+			};
+		};
+	};
+	sipa-eth0 {
+		compatible = "sprd,sipa_eth";
+		sprd,netid = <0x01>;
+		sprd,term-type = <0x06>;
+		phandle = <0x1e0>;
+	};
+	sipa-eth1 {
+		compatible = "sprd,sipa_eth";
+		sprd,netid = <0x02>;
+		sprd,term-type = <0x06>;
+		phandle = <0x1e1>;
+	};
+	sipa-eth2 {
+		compatible = "sprd,sipa_eth";
+		sprd,netid = <0x03>;
+		sprd,term-type = <0x06>;
+		phandle = <0x1e2>;
+	};
+	sipa-eth3 {
+		compatible = "sprd,sipa_eth";
+		sprd,netid = <0x04>;
+		sprd,term-type = <0x06>;
+		phandle = <0x1e3>;
+	};
+	sipa-eth4 {
+		compatible = "sprd,sipa_eth";
+		sprd,netid = <0x05>;
+		sprd,term-type = <0x06>;
+		phandle = <0x1e4>;
+	};
+	sipa-eth5 {
+		compatible = "sprd,sipa_eth";
+		sprd,netid = <0x06>;
+		sprd,term-type = <0x06>;
+		phandle = <0x1e5>;
+	};
+	sipa-eth6 {
+		compatible = "sprd,sipa_eth";
+		sprd,netid = <0x07>;
+		sprd,term-type = <0x06>;
+		phandle = <0x1e6>;
+	};
+	sipa-eth7 {
+		compatible = "sprd,sipa_eth";
+		sprd,netid = <0x08>;
+		sprd,term-type = <0x06>;
+		phandle = <0x1e7>;
+	};
+	sipa-eth8 {
+		compatible = "sprd,sipa_eth";
+		sprd,netid = <0x09>;
+		sprd,term-type = <0x06>;
+		phandle = <0x1e8>;
+	};
+	sipa-eth9 {
+		compatible = "sprd,sipa_eth";
+		sprd,netid = <0x0a>;
+		sprd,term-type = <0x06>;
+		phandle = <0x1e9>;
+	};
+	sipa-eth10 {
+		compatible = "sprd,sipa_eth";
+		sprd,netid = <0x0b>;
+		sprd,term-type = <0x06>;
+		phandle = <0x1ea>;
+	};
+	sipa-eth11 {
+		compatible = "sprd,sipa_eth";
+		sprd,netid = <0x0c>;
+		sprd,term-type = <0x06>;
+		phandle = <0x1eb>;
+	};
+	sipa-eth12 {
+		compatible = "sprd,sipa_eth";
+		sprd,netid = <0x0d>;
+		sprd,term-type = <0x06>;
+		phandle = <0x1ec>;
+	};
+	sipa-eth13 {
+		compatible = "sprd,sipa_eth";
+		sprd,netid = <0x0e>;
+		sprd,term-type = <0x06>;
+		phandle = <0x1ed>;
+	};
+	sipa-eth14 {
+		compatible = "sprd,sipa_eth";
+		sprd,netid = <0x0f>;
+		sprd,term-type = <0x06>;
+		phandle = <0x1ee>;
+	};
+	sipa-eth15 {
+		compatible = "sprd,sipa_eth";
+		sprd,netid = <0x10>;
+		sprd,term-type = <0x06>;
+		phandle = <0x1ef>;
+	};
+	sipa-usb {
+		compatible = "sprd,sipa_usb";
+		sprd,netid = <0x00>;
+		sprd,term-type = <0x01>;
+		phandle = <0x1f0>;
+	};
+	sipa-dummy {
+		compatible = "sprd,sipa_dummy";
+		phandle = <0x1f1>;
+	};
+	trusty {
+		compatible = "sprd,trusty-smc-v1";
+		irq {
+			compatible = "sprd,trusty-irq-v1";
+			interrupt-templates = <0x01 0x00 0x00 0x00 0x01 0x01 0x01 0x08 0x01 0x01 0x00 0x04>;
+			interrupt-ranges = <0x00 0x0f 0x00 0x10 0x1f 0x01 0x20 0xdf 0x02>;
+		};
+		virtio {
+			compatible = "sprd,trusty-virtio-v1";
+		};
+		log {
+			compatible = "sprd,trusty-log-v1";
+		};
+		sprd-tshm {
+			compatible = "sprd,tshm";
+			memory-region = <0x12f>;
+		};
+		tui {
+			compatible = "sprd,trusty-tui-v1";
+		};
+	};
+	modem@0 {
+		compatible = "unisoc,modem";
+		syscon0 = <0x02 0xff 0x00>;
+		syscon1 = <0x04 0xff 0x100000>;
+		syscon2 = <0x02 0x90 0x01>;
+		syscon3 = <0x02 0xff 0x00>;
+		syscon4 = <0x02 0xff 0x00>;
+		syscon-names = "shutdown", "deepsleep", "corereset", "sysreset", "getstatus";
+		sprd,sys-bus-ctrl = <0x02 0x128 0x01>;
+		sprd,version = <0x04>;
+		phandle = <0x229>;
+	};
+	modem@1 {
+		compatible = "unisoc,modem";
+		syscon0 = <0x02 0xff 0x00>;
+		syscon1 = <0x04 0xff 0x100000>;
+		syscon2 = <0x02 0x8c 0x01>;
+		syscon3 = <0x02 0xff 0x00>;
+		syscon4 = <0x02 0xff 0x00>;
+		syscon-names = "shutdown", "deepsleep", "corereset", "sysreset", "getstatus";
+		sprd,sys-bus-ctrl = <0x02 0x124 0x01>;
+		sprd,version = <0x04>;
+		phandle = <0x22a>;
+	};
+	modem@2 {
+		compatible = "unisoc,modem";
+		syscon0 = <0x04 0x330 0x2000000>;
+		syscon1 = <0x04 0x818 0x02>;
+		syscon2 = <0x02 0x174 0x3000>;
+		syscon3 = <0x02 0xff 0x00>;
+		syscon4 = <0x02 0xff 0x00>;
+		syscon-names = "shutdown", "deepsleep", "corereset", "sysreset", "getstatus";
+		sprd,version = <0x04>;
+		phandle = <0x22b>;
+	};
+	modem@3 {
+		compatible = "unisoc,modem";
+		syscon0 = <0x04 0xff 0x00>;
+		syscon1 = <0x04 0xff 0x00>;
+		syscon2 = <0x02 0xcb0 0x3000>;
+		syscon3 = <0x02 0xff 0x00>;
+		syscon4 = <0x02 0xff 0x00>;
+		syscon-names = "shutdown", "deepsleep", "corereset", "sysreset", "getstatus";
+		sprd,version = <0x04>;
+		phandle = <0x22c>;
+	};
+	cp_dump {
+		compatible = "sprd,cp_dump";
+		sprd,sys-bus-ctrl-sp = <0x02 0x128 0x01>;
+		sprd,sys-bus-ctrl-ch = <0x02 0x124 0x01>;
+		phandle = <0x22d>;
+	};
+	dvfs_pscp {
+		compatible = "sprd,pscp-dvfs";
+		sprd,core_id = <0x02>;
+		sprd,devices-num = <0x03>;
+		sprd,devices-name = "core", "axi", "apb";
+		sprd,devices-id = <0x00 0x01 0x02>;
+	};
+	dvfs_phycp {
+		compatible = "sprd,phycp-dvfs";
+		sprd,core_id = <0x03>;
+		sprd,devices-num = <0x03>;
+		sprd,devices-name = "core", "axi", "apb";
+		sprd,devices-id = <0x00 0x01 0x02>;
+	};
+	__symbols__ {
+		sipa = "/soc/ipa-apb/sipa@25220000";
+		ipa_delegate = "/soc/ipa-apb/sipa-dele";
+		mailbox = "/soc/aon/mailbox@600000";
+		pd_ipa_sys = "/soc/aon/sipa-sys";
+		serdes0 = "/soc/aon/modem-dbg-log@520000";
+		serdes1 = "/soc/aon/modem-dbg-log@530000";
+		sipa_eth0 = "/sipa-eth0";
+		sipa_eth1 = "/sipa-eth1";
+		sipa_eth2 = "/sipa-eth2";
+		sipa_eth3 = "/sipa-eth3";
+		sipa_eth4 = "/sipa-eth4";
+		sipa_eth5 = "/sipa-eth5";
+		sipa_eth6 = "/sipa-eth6";
+		sipa_eth7 = "/sipa-eth7";
+		sipa_eth8 = "/sipa-eth8";
+		sipa_eth9 = "/sipa-eth9";
+		sipa_eth10 = "/sipa-eth10";
+		sipa_eth11 = "/sipa-eth11";
+		sipa_eth12 = "/sipa-eth12";
+		sipa_eth13 = "/sipa-eth13";
+		sipa_eth14 = "/sipa-eth14";
+		sipa_eth15 = "/sipa-eth15";
+		sipa_usb0 = "/sipa-usb";
+		sipa_dummy = "/sipa-dummy";
+		nr_pm = "/modem@0";
+		nr_ch = "/modem@1";
+		nr_pscp = "/modem@2";
+		nr_phycp = "/modem@3";
+		nr_cp_dump = "/cp_dump";
+	};
+};

@@ -16,6 +16,7 @@
 #include <linux/kernel.h>
 #include <linux/mm.h>
 #include <linux/module.h>
+#include <linux/sched/signal.h>
 #include <linux/io.h>
 #include <linux/of_device.h>
 #include <linux/poll.h>
@@ -172,6 +173,98 @@ static void sprd_modem_pms_release_resource(struct sprd_pms *pms)
 	sprd_pms_release_resource(pms);
 }
 
+static struct modem_process_lock *modem_owner_lock(struct modem_device *modem,
+						  int b_rx)
+{
+	return b_rx ? &modem->rd_lock : &modem->wt_lock;
+}
+
+static bool modem_lock_owned(struct modem_process_lock *lock)
+{
+	return lock->owner == task_tgid(current);
+}
+
+/* Match pidfd's group-exit test, including a leader that exits before workers. */
+static bool modem_owner_exited(struct modem_process_lock *lock)
+{
+	struct task_struct *task;
+	bool exited;
+
+	rcu_read_lock();
+	task = pid_task(lock->owner, PIDTYPE_PID);
+	exited = !task || (READ_ONCE(task->exit_state) && !delay_group_leader(task));
+	rcu_read_unlock();
+	return exited;
+}
+
+/* Caller holds access. A retained struct pid prevents PID-reuse ownership. */
+static void modem_release_owner(struct modem_process_lock *lock)
+{
+	struct modem_device *modem = lock->modem;
+	struct sprd_pms *pms = lock->b_rx ? modem->rd_pms : modem->wt_pms;
+	char *name = lock->b_rx ? modem->rd_lock_name : modem->wt_lock_name;
+	struct pid *owner = lock->owner;
+
+	if (!owner)
+		return;
+	remove_wait_queue(&owner->wait_pidfd, &lock->exit_wait);
+	sprd_modem_pms_release_resource(pms);
+	name[0] = 0;
+	WRITE_ONCE(lock->owner, NULL);
+	put_pid(owner);
+	wake_up_all(&lock->available);
+}
+
+static void modem_owner_exit_work(struct work_struct *work)
+{
+	struct modem_process_lock *lock = container_of(work,
+					struct modem_process_lock, exit_work);
+
+	mutex_lock(&lock->access);
+	if (lock->owner && modem_owner_exited(lock))
+		modem_release_owner(lock);
+	mutex_unlock(&lock->access);
+}
+
+static int modem_owner_exit_wake(wait_queue_entry_t *wait, unsigned int mode,
+				 int flags, void *key)
+{
+	struct modem_process_lock *lock = container_of(wait,
+					struct modem_process_lock, exit_wait);
+
+	/* pidfd wakeups can run under tasklist/IRQ locks; cleanup must sleep. */
+	queue_work(system_unbound_wq, &lock->exit_work);
+	return 0;
+}
+
+static void modem_process_lock_init(struct modem_device *modem, int b_rx)
+{
+	struct modem_process_lock *lock = modem_owner_lock(modem, b_rx);
+
+	mutex_init(&lock->access);
+	init_waitqueue_head(&lock->available);
+	init_waitqueue_func_entry(&lock->exit_wait, modem_owner_exit_wake);
+	INIT_WORK(&lock->exit_work, modem_owner_exit_work);
+	lock->modem = modem;
+	lock->b_rx = b_rx;
+}
+
+static void modem_process_lock_destroy(struct modem_process_lock *lock)
+{
+	mutex_lock(&lock->access);
+	modem_release_owner(lock);
+	mutex_unlock(&lock->access);
+	cancel_work_sync(&lock->exit_work);
+	mutex_destroy(&lock->access);
+}
+
+static int modem_access_lock(struct file *filp, struct modem_process_lock *lock)
+{
+	if (filp->f_flags & O_NONBLOCK)
+		return mutex_trylock(&lock->access) ? 0 : -EBUSY;
+	return mutex_lock_interruptible(&lock->access);
+}
+
 static int modem_enter_sleep(struct modem_device *modem)
 {
 	int ret = sprd_mpm_disable_later_idle_for_sleep(modem->modem_dst);
@@ -192,6 +285,9 @@ static int modem_open(struct inode *inode, struct file *filp)
 
 static int modem_release(struct inode *inode, struct file *filp)
 {
+	/* Legacy modem_control closes/reopens between lock, region and data ops.
+	 * Ownership survives close; the pidfd exit notification releases it.
+	 */
 	return 0;
 }
 
@@ -450,7 +546,7 @@ static ssize_t modem_read_mini_dump(struct file *filp,
 	return total;
 }
 
-static ssize_t modem_read(struct file *filp,
+static ssize_t modem_read_locked(struct file *filp,
 			  char __user *buf, size_t count, loff_t *ppos)
 {
 	phys_addr_t base;
@@ -463,8 +559,7 @@ static ssize_t modem_read(struct file *filp,
 
 	dev_info(modem->p_dev, "read, %s!\n", modem->modem_name);
 
-	/* only get read lock task can be read */
-	if (strcmp(current->comm, modem->rd_lock_name) != 0) {
+	if (!modem_lock_owned(&modem->rd_lock)) {
 		dev_err(modem->p_dev,  "read, task %s need get rd lock!\n",
 			current->comm);
 		return -EACCES;
@@ -543,7 +638,7 @@ FAIL_READ:
 	return ret;
 }
 
-static ssize_t modem_write(struct file *filp,
+static ssize_t modem_write_locked(struct file *filp,
 			   const char __user *buf,
 			   size_t count, loff_t *ppos)
 {
@@ -557,8 +652,7 @@ static ssize_t modem_write(struct file *filp,
 
 	dev_dbg(modem->p_dev, "write, %s!\n", modem->modem_name);
 
-	/* only get write lock task can be write */
-	if (strcmp(current->comm, modem->wt_lock_name) != 0) {
+	if (!modem_lock_owned(&modem->wt_lock)) {
 		dev_err(modem->p_dev, "write, task %s need get wt lock!\n",
 			current->comm);
 		return -EACCES;
@@ -626,6 +720,32 @@ FAIL_WRITE:
 	return ret;
 }
 
+static ssize_t modem_read(struct file *filp, char __user *buf,
+			  size_t count, loff_t *ppos)
+{
+	struct modem_device *modem = filp->private_data;
+	ssize_t ret = modem_access_lock(filp, &modem->rd_lock);
+
+	if (ret)
+		return ret;
+	ret = modem_read_locked(filp, buf, count, ppos);
+	mutex_unlock(&modem->rd_lock.access);
+	return ret;
+}
+
+static ssize_t modem_write(struct file *filp, const char __user *buf,
+			   size_t count, loff_t *ppos)
+{
+	struct modem_device *modem = filp->private_data;
+	ssize_t ret = modem_access_lock(filp, &modem->wt_lock);
+
+	if (ret)
+		return ret;
+	ret = modem_write_locked(filp, buf, count, ppos);
+	mutex_unlock(&modem->wt_lock.access);
+	return ret;
+}
+
 static loff_t modem_lseek(struct file *filp, loff_t off, int whence)
 {
 	switch (whence) {
@@ -642,64 +762,54 @@ static loff_t modem_lseek(struct file *filp, loff_t off, int whence)
 static int modem_cmd_lock(struct file *filp,
 			  struct modem_device *modem, int b_rx)
 {
-	struct mutex *mut; /* mutex point to rd_mutex or wt_mutex*/
-	struct sprd_pms *pms;
-	char *name;
+	struct modem_process_lock *lock = modem_owner_lock(modem, b_rx);
+	struct sprd_pms *pms = b_rx ? modem->rd_pms : modem->wt_pms;
 	int ret;
 
-	mut = b_rx ? &modem->rd_mutex : &modem->wt_mutex;
-	pms = b_rx ? modem->rd_pms : modem->wt_pms;
-	name = b_rx ? modem->rd_lock_name : modem->wt_lock_name;
-
-	if (filp->f_flags & O_NONBLOCK) {
-		if (!mutex_trylock(mut)) {
-			dev_err(modem->p_dev, "lock, %s get lock %d busy!\n",
-				current->comm, b_rx);
+	for (;;) {
+		ret = modem_access_lock(filp, lock);
+		if (ret)
+			return ret;
+		if (lock->owner && modem_owner_exited(lock))
+			modem_release_owner(lock);
+		if (!lock->owner)
+			break;
+		if (modem_lock_owned(lock) || (filp->f_flags & O_NONBLOCK)) {
+			mutex_unlock(&lock->access);
 			return -EBUSY;
 		}
-	} else {
-		dev_dbg(modem->p_dev, "lock, %s has get lock %d !\n",
-			current->comm, b_rx);
-		mutex_lock(mut);
+		mutex_unlock(&lock->access);
+		ret = wait_event_interruptible(lock->available, !READ_ONCE(lock->owner));
+		if (ret)
+			return ret;
 	}
 
 	ret = sprd_modem_pms_request_resource(pms, -1);
-
-	if (ret < 0) {
-		mutex_unlock(mut);
-		return ret;
+	if (!ret) {
+		WRITE_ONCE(lock->owner, get_task_pid(current, PIDTYPE_TGID));
+		add_wait_queue(&lock->owner->wait_pidfd, &lock->exit_wait);
+		if (b_rx)
+			get_task_comm(modem->rd_lock_name, current);
+		else
+			get_task_comm(modem->wt_lock_name, current);
 	}
-
-	strcpy(name, current->comm);
-	return 0;
+	mutex_unlock(&lock->access);
+	return ret;
 }
 
 static int modem_cmd_unlock(struct modem_device *modem, int b_rx)
 {
-	struct mutex *mut; /* mutex point to rd_mutex or wt_mutex*/
-	struct sprd_pms *pms;
-	char *name;
+	struct modem_process_lock *lock = modem_owner_lock(modem, b_rx);
+	int ret = mutex_lock_interruptible(&lock->access);
 
-	mut = b_rx ? &modem->rd_mutex : &modem->wt_mutex;
-	pms = b_rx ? modem->rd_pms : modem->wt_pms;
-	name = b_rx ? modem->rd_lock_name : modem->wt_lock_name;
-
-	if (strlen(name) == 0)
-		/* means no lock, so don't unlock */
-		return 0;
-
-	/* release resource */
-	sprd_modem_pms_release_resource(pms);
-
-	/* unlock, set name[0] to 0 */
-	name[0] = 0;
-	mutex_unlock(mut);
-
-	dev_dbg(modem->p_dev,
-		"unlock, %s has unlock %d!\n",
-		current->comm, b_rx);
-
-	return 0;
+	if (ret)
+		return ret;
+	if (!modem_lock_owned(lock))
+		ret = -EPERM;
+	else
+		modem_release_owner(lock);
+	mutex_unlock(&lock->access);
+	return ret;
 }
 
 static int modem_get_something(struct modem_device *modem,
@@ -707,7 +817,7 @@ static int modem_get_something(struct modem_device *modem,
 			       unsigned int cmd,
 			       unsigned long arg)
 {
-	if (strcmp(current->comm, modem->rd_lock_name) != 0) {
+	if (!modem_lock_owned(&modem->rd_lock)) {
 		dev_err(modem->p_dev, "get, task %s need get rd lock!\n",
 			current->comm);
 		return -EBUSY;
@@ -726,7 +836,7 @@ static int modem_set_something(struct modem_device *modem,
 {
 	dev_dbg(modem->p_dev, "set, %s cmd 0x%x!\n", current->comm, cmd);
 
-	if (strcmp(current->comm, modem->wt_lock_name) != 0) {
+	if (!modem_lock_owned(&modem->wt_lock)) {
 		dev_err(modem->p_dev, "set, task %s need get wt lock!\n",
 		       current->comm);
 		return -EBUSY;
@@ -853,7 +963,7 @@ static int modem_assert(struct modem_device *modem)
 	return smsg_senddie(modem->modem_dst);
 }
 
-static long modem_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+static long modem_ioctl_cmd(struct file *filp, unsigned int cmd, unsigned long arg)
 {
 	int ret = -EINVAL;
 	int access = 0;
@@ -928,14 +1038,16 @@ static long modem_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 		ret = modem_set_something(modem,
 					  &param,
 					  cmd, arg);
-		modem->read_region = (u8)param;
+		if (!ret)
+			modem->read_region = (u8)param;
 		break;
 
 	case MODEM_SET_WRITE_GEGION_CMD:
 		ret = modem_set_something(modem,
 					  &param,
 					  cmd, arg);
-		modem->write_region = (u8)param;
+		if (!ret)
+			modem->write_region = (u8)param;
 		break;
 
 #ifdef CONFIG_SPRD_EXT_MODEM
@@ -1000,6 +1112,42 @@ static long modem_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 		break;
 	}
 
+	return ret;
+}
+
+static long modem_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+{
+	struct modem_device *modem = filp->private_data;
+	struct modem_process_lock *lock = NULL;
+	long ret;
+
+	switch (cmd) {
+	case MODEM_GET_LOAD_INFO_CMD:
+#ifdef CONFIG_SPRD_EXT_MODEM
+	case MODEM_GET_REMOTE_FLAG_CMD:
+#endif
+		lock = &modem->rd_lock;
+		break;
+	case MODEM_SET_LOAD_INFO_CMD:
+	case MODEM_SET_READ_REGION_CMD:
+	case MODEM_SET_WRITE_GEGION_CMD:
+#ifdef CONFIG_SPRD_EXT_MODEM
+	case MODEM_SET_REMOTE_FLAG_CMD:
+	case MODEM_CLR_REMOTE_FLAG_CMD:
+#endif
+		lock = &modem->wt_lock;
+		break;
+	default:
+		break;
+	}
+	if (lock) {
+		ret = modem_access_lock(filp, lock);
+		if (ret)
+			return ret;
+	}
+	ret = modem_ioctl_cmd(filp, cmd, arg);
+	if (lock)
+		mutex_unlock(&lock->access);
 	return ret;
 }
 
@@ -1212,6 +1360,14 @@ static int modem_debug_show(struct seq_file *m, void *private)
 		   modem->read_region, modem->write_region);
 	seq_printf(m, "run_state: %d, remote_flag: %d\n",
 		   modem->run_state, modem->remote_flag);
+	if (mutex_lock_interruptible(&modem->rd_lock.access))
+		return -ERESTARTSYS;
+	seq_printf(m, "read_owner: %d\n", pid_nr(modem->rd_lock.owner));
+	mutex_unlock(&modem->rd_lock.access);
+	if (mutex_lock_interruptible(&modem->wt_lock.access))
+		return -ERESTARTSYS;
+	seq_printf(m, "write_owner: %d\n", pid_nr(modem->wt_lock.owner));
+	mutex_unlock(&modem->wt_lock.access);
 	seq_printf(m, "modem_base: 0x%llx, size: 0x%lx\n",
 		   modem->modem_base, modem->modem_size);
 	seq_printf(m, "all_base: 0x%llx, size: 0x%lx\n",
@@ -1251,6 +1407,7 @@ static int modem_debug_open(struct inode *inode, struct file *file)
 }
 
 static const struct file_operations modem_debug_fops = {
+	.owner = THIS_MODULE,
 	.open = modem_debug_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
@@ -1322,10 +1479,26 @@ static int modem_probe(struct platform_device *pdev)
 	if (ret)
 		return ret;
 
+	/* Initialize process ownership and PMS before the cdev becomes openable. */
+	modem_process_lock_init(modem, 1);
+	modem_process_lock_init(modem, 0);
+	snprintf(modem->rd_pms_name, sizeof(modem->rd_pms_name),
+		 "%s-rd", modem->modem_name);
+	snprintf(modem->wt_pms_name, sizeof(modem->wt_pms_name),
+		 "%s-wt", modem->modem_name);
+	modem->rd_pms = sprd_pms_create(modem->modem_dst,
+				      modem->rd_pms_name, false);
+	modem->wt_pms = sprd_pms_create(modem->modem_dst,
+				      modem->wt_pms_name, false);
+	if (!modem->rd_pms || !modem->wt_pms) {
+		ret = -ENOMEM;
+		goto fail_pms;
+	}
+
 	ret = alloc_chrdev_region(&modem->devid, 0, 1, modem->modem_name);
 	if (ret != 0) {
 		dev_err(modem->p_dev, "get name fail, ret = %d!\n", ret);
-		return ret;
+		goto fail_pms;
 	}
 
 	cdev_init(&modem->cdev, &modem_fops);
@@ -1333,31 +1506,20 @@ static int modem_probe(struct platform_device *pdev)
 	if (ret != 0) {
 		unregister_chrdev_region(modem->devid, 1);
 		dev_err(modem->p_dev, "add dev fail, ret = %d!\n", ret);
-		return ret;
+		goto fail_pms;
 	}
 
 	dev = device_create(modem_class, NULL,
 		      modem->devid,
 		      NULL, "%s", modem->modem_name);
-	if (IS_ERR(dev))
+	if (IS_ERR(dev)) {
 		dev_err(modem->p_dev, "device_create fail,ERRNO = %ld!\n",
 			PTR_ERR(dev));
-
-	mutex_init(&modem->rd_mutex);
-	mutex_init(&modem->wt_mutex);
-	snprintf(modem->rd_pms_name,
-		 sizeof(modem->rd_pms_name), "%s-rd", modem->modem_name);
-	snprintf(modem->wt_pms_name,
-		 sizeof(modem->wt_pms_name), "%s-wt", modem->modem_name);
-	modem->rd_pms = sprd_pms_create(modem->modem_dst,
-					modem->rd_pms_name, false);
-	if (!modem->rd_pms)
-		pr_warn("create pms %s failed!\n", modem->rd_pms_name);
-
-	modem->wt_pms = sprd_pms_create(modem->modem_dst,
-					modem->wt_pms_name, false);
-	if (!modem->rd_pms)
-		pr_warn("create pms %s failed!\n", modem->wt_pms_name);
+		ret = PTR_ERR(dev);
+		cdev_del(&modem->cdev);
+		unregister_chrdev_region(modem->devid, 1);
+		goto fail_pms;
+	}
 
 	platform_set_drvdata(pdev, modem);
 
@@ -1366,6 +1528,13 @@ static int modem_probe(struct platform_device *pdev)
 #endif
 
 	return 0;
+
+fail_pms:
+	modem_process_lock_destroy(&modem->rd_lock);
+	modem_process_lock_destroy(&modem->wt_lock);
+	sprd_pms_destroy(modem->rd_pms);
+	sprd_pms_destroy(modem->wt_pms);
+	return ret;
 }
 
 static void  modem_remove(struct platform_device *pdev)
@@ -1373,10 +1542,10 @@ static void  modem_remove(struct platform_device *pdev)
 	struct modem_device *modem = platform_get_drvdata(pdev);
 
 	if (modem) {
+		modem_process_lock_destroy(&modem->rd_lock);
+		modem_process_lock_destroy(&modem->wt_lock);
 		sprd_pms_destroy(modem->rd_pms);
 		sprd_pms_destroy(modem->wt_pms);
-		mutex_destroy(&modem->rd_mutex);
-		mutex_destroy(&modem->wt_mutex);
 		device_destroy(modem_class, modem->devid);
 		cdev_del(&modem->cdev);
 		unregister_chrdev_region(modem->devid, 1);
@@ -1393,6 +1562,7 @@ static struct platform_driver modem_driver = {
 	.driver = {
 		.name = "modem",
 		.of_match_table = modem_match_table,
+		.suppress_bind_attrs = true,
 	},
 	.probe = modem_probe,
 	.remove = modem_remove,
@@ -1419,13 +1589,14 @@ static int __init modem_init(void)
 
 static void __exit modem_exit(void)
 {
+	/* Device removal still uses modem_class and the per-device debugfs files. */
+	platform_driver_unregister(&modem_driver);
 	class_destroy(modem_class);
 
 #if defined(CONFIG_DEBUG_FS)
 	debugfs_remove_recursive(modem_root);
 #endif
 
-	platform_driver_unregister(&modem_driver);
 }
 
 module_init(modem_init);
@@ -1434,3 +1605,4 @@ module_exit(modem_exit);
 MODULE_AUTHOR("Wenping zhou");
 MODULE_DESCRIPTION("External modem driver");
 MODULE_LICENSE("GPL v2");
+MODULE_VERSION("w202ds-process-lock-v5");

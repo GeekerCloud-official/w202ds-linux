@@ -40,29 +40,27 @@ static int sipa_dele_parse_dts_cfg(struct platform_device *pdev,
 	int ret;
 	struct resource *resource;
 
-	/* get modem IPA global register base  address */
+	/*
+	 * The CP-in-AP delegate communicates over SIPC and does not access these
+	 * legacy address ranges. Qogirn6Pro's stock DT omits both of them; keep
+	 * them optional instead of aborting before reading the FIFO properties.
+	 * No register address is inferred from another platform.
+	 */
 	resource = platform_get_resource_byname(pdev,
 						IORESOURCE_MEM,
 						"mem-base");
-	if (!resource) {
-		dev_err(&pdev->dev, "get resource failed for remote-base!\n");
-		return -ENODEV;
+	if (resource) {
+		cfg->mem_base = resource->start;
+		cfg->mem_end = resource->end;
 	}
 
-	cfg->mem_base = resource->start;
-	cfg->mem_end = resource->end;
-
-	/* get mapped modem IPA global register base  address */
 	resource = platform_get_resource_byname(pdev,
 						IORESOURCE_MEM,
 						"reg-base");
-	if (!resource) {
-		dev_err(&pdev->dev, "get resource failed for mapped-base!\n");
-		return -ENODEV;
+	if (resource) {
+		cfg->reg_base = resource->start;
+		cfg->reg_end = resource->end;
 	}
-
-	cfg->reg_base = resource->start;
-	cfg->reg_end = resource->end;
 
 	/* get ul fifo depth */
 	ret = of_property_read_u32(pdev->dev.of_node,
@@ -99,7 +97,7 @@ static int sipa_dele_plat_drv_probe(struct platform_device *pdev_p)
 
 	ret = sipa_dele_parse_dts_cfg(pdev_p, cfg);
 	if (ret)
-		dev_err(dev, "dts parsing failed\n");
+		return dev_err_probe(dev, ret, "dts parsing failed\n");
 
 	create_params.pdev = dev;
 	create_params.cfg = cfg;
@@ -166,6 +164,8 @@ static struct platform_driver sipa_dele_plat_drv = {
 		.name = DRV_NAME,
 		.pm = &sipa_dele_pm_ops,
 		.of_match_table = sipa_dele_plat_drv_match,
+		/* The SIPC thread currently has no supported remove path. */
+		.suppress_bind_attrs = true,
 	},
 };
 

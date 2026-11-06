@@ -353,8 +353,8 @@ static int __init spipe_init(void)
 
 static void __exit spipe_exit(void)
 {
-	class_destroy(spipe_class);
 	platform_driver_unregister(&spipe_driver);
+	class_destroy(spipe_class);
 }
 
 module_init(spipe_init);

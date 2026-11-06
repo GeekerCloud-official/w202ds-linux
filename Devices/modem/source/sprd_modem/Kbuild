@@ -11,8 +11,11 @@ VENDOR_Y := UNISOC_MAILBOX_R2 UNISOC_SIPC_SLOG_BRIDGE_5G
 $(foreach c,$(VENDOR_M),$(eval export CONFIG_$(c) := m))
 $(foreach c,$(VENDOR_Y),$(eval export CONFIG_$(c) := y))
 
+ifndef WCN_BSP_DIR
+$(error WCN_BSP_DIR must point to the shared WCN compatibility headers)
+endif
 MU300_FLAGS := $(foreach c,$(VENDOR_M),-DCONFIG_$(c)_MODULE=1) $(foreach c,$(VENDOR_Y),-DCONFIG_$(c)=1) \
-	-include $(src)/../wcn_bsp/kinclude/mu300_compat.h -I$(src)/kinclude -I$(src)/../wcn_bsp/kinclude -I$(src)/trusty
+	-include $(WCN_BSP_DIR)/kinclude/mu300_compat.h -I$(src)/kinclude -I$(WCN_BSP_DIR)/kinclude -I$(src)/trusty
 subdir-ccflags-y += $(MU300_FLAGS)
 ccflags-y += $(MU300_FLAGS)
 

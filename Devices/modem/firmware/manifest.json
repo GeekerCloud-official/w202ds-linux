@@ -1,0 +1,95 @@
+{
+  "schema": 1,
+  "status": "nr_modem_a/b、nr_phy_a/b、pm_sys_a/b 原厂分区实体已归位；CH 固件由 sensorhub 统一存放",
+  "files": [
+    {
+      "path": "firmware/stock-partitions/nr_modem_a.img",
+      "bytes": 52428800,
+      "sha256": "2c6fc2063abb5119c19ee2e9484cac14a9dbb876dd9b15a8d9cac06e8c4cbc4e",
+      "storage": "regular",
+      "source": "w202ds-research/firmware/full/nr_modem_a.img",
+      "source_path_base": "workspace",
+      "format": "raw-stock-partition"
+    },
+    {
+      "path": "firmware/stock-partitions/nr_modem_b.img",
+      "bytes": 52428800,
+      "sha256": "3a3d405b651cde99f79ea8aefc120667b16aebc452946a5a967fef63ac94f50e",
+      "storage": "regular",
+      "source": "w202ds-research/firmware/full/nr_modem_b.img",
+      "source_path_base": "workspace",
+      "format": "raw-stock-partition"
+    },
+    {
+      "path": "firmware/stock-partitions/nr_phy_a.img",
+      "bytes": 52428800,
+      "sha256": "bea368f57381b0249504108c0bcef12109c0d36f59974cc8f4b2c47c35081bde",
+      "storage": "regular",
+      "source": "w202ds-research/firmware/full/nr_phy_a.img",
+      "source_path_base": "workspace",
+      "format": "raw-stock-partition"
+    },
+    {
+      "path": "firmware/stock-partitions/nr_phy_b.img",
+      "bytes": 52428800,
+      "sha256": "5dc1f03d14d12b037d1757c08ad1662386d1d166ceb5aeb545e0fe7ecc437dbe",
+      "storage": "regular",
+      "source": "w202ds-research/firmware/full/nr_phy_b.img",
+      "source_path_base": "workspace",
+      "format": "raw-stock-partition"
+    },
+    {
+      "path": "firmware/stock-partitions/pm_sys_a.img",
+      "bytes": 1048576,
+      "sha256": "9ce2c1e8d2def7d818cc90a56ed3bd9ed1fb7f8bfd9bb541ee5ee6e7b61686c3",
+      "storage": "regular",
+      "source": "w202ds-research/firmware/full/pm_sys_a.img",
+      "source_path_base": "workspace",
+      "format": "raw-stock-partition"
+    },
+    {
+      "path": "firmware/stock-partitions/pm_sys_b.img",
+      "bytes": 1048576,
+      "sha256": "0f3ce707ef01fef29f23d3f4d56d56115da4c3630695fba98c9e6267eca9f8b1",
+      "storage": "regular",
+      "source": "w202ds-research/firmware/full/pm_sys_b.img",
+      "source_path_base": "workspace",
+      "format": "raw-stock-partition"
+    },
+    {
+      "path": "firmware/boot-prepare/vbmeta.bin",
+      "bytes": 65536,
+      "sha256": "b6fd2da4238a5e25c8ddb8da23a3914fee4aa2c041fbfcc76ba1a831ba38bbc9",
+      "storage": "regular",
+      "source": "W202DS original vbmeta and A LK public key, see boot-prepare/README.md",
+      "format": "signed-avb-metadata"
+    },
+    {
+      "path": "firmware/boot-prepare/vboot-key-hash.bin",
+      "bytes": 32,
+      "sha256": "93d0945b4ee77ad8ea5d123df8d807936561968fdb85848742c28a0e7cd0739e",
+      "storage": "regular",
+      "source": "W202DS original vbmeta and A LK public key, see boot-prepare/README.md",
+      "format": "sha256-public-key"
+    }
+  ],
+  "redistribution": "Original vendor binaries have no newly established redistribution license; preserve provenance.",
+  "shared_firmware": [
+    {
+      "device": "w202ds-sensorhub-driver",
+      "manifest": "../../sensorhub/firmware/manifest.json",
+      "files": [
+        "firmware/stock-partitions/ch_sys_a.img",
+        "firmware/stock-partitions/ch_sys_b.img"
+      ],
+      "manifest_path_base": "this-manifest-directory"
+    }
+  ],
+  "notes": [
+    "pm_sys 是 SoC 电源管理协处理器，保留在现有基带运行依赖内；不是 UMP9620 PMIC 固件。",
+    "原厂容器不是通用 request_firmware 输入；不修改当前 loader 和固定 bundle。",
+    "nr_deltanv、fixnv、runtimenv 仍是独立私有输入，不作为公共固件复制。"
+  ],
+  "placement": "Known firmware is stored as regular files beneath this device firmware directory; shared chip firmware has one owner.",
+  "imported_from": "w202ds-research/bsp/Devices/modem/firmware"
+}

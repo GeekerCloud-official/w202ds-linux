@@ -19,6 +19,7 @@
 #include <linux/cdev.h>
 #include <linux/genalloc.h>
 #include <linux/kernel.h>
+#include <linux/io.h>
 #include <linux/list.h>
 #include <linux/mm.h>
 #include <linux/module.h>
@@ -95,7 +96,8 @@ struct smem_map {
 	struct task_struct	*task;
 	const void		*mem;
 	unsigned int		count;
-	bool			vmapped;	/* vmap() (non-cached alias) vs memremap() */
+	bool			vmapped;	/* vmap() of struct pages */
+	bool			iomapped;	/* Device mapping for non-RAM SRAM */
 };
 
 static struct smem_phead	sipc_smem_phead[SIPC_ID_NR];
@@ -181,9 +183,25 @@ static void *soc_modem_ram_vmap(phys_addr_t start, size_t size, E_MMAP_TYPE mtyp
 		}
 	}
 	map->vmapped = vaddr != NULL;
-	if (!vaddr)	/* no struct pages (a real no-map region): memremap can still map it */
+	/* Regions without struct pages include CH SRAM at 0x6500d000. Never
+	 * offer WB as a fallback for a noncached request: memremap tries WB
+	 * first whenever that flag is present, even with WC also requested.
+	 * The CM4 does not snoop AP caches; cached TX pointers/payloads then
+	 * remain invisible to it. A read-only M23 page-table audit measured
+	 * MAIR 0xff on the previous WC|WB fallback for this SRAM. */
+	if (!vaddr && mtype == MMAP_NONCACHE) {
+		/* Match pgprot_noncached() for SRAM too. WC is Normal-NC on
+		 * arm64 and permits gathered writes. On W202DS PM SRAM the
+		 * firmware readback then contains zeroed 16-byte spans, so its
+		 * signed content hash fails before the PM processor starts.
+		 */
+		vaddr = (__force void *)ioremap(page_start,
+					       page_count * PAGE_SIZE);
+		map->iomapped = vaddr != NULL;
+	} else if (!vaddr) {
 		vaddr = memremap(page_start, page_count * PAGE_SIZE,
-				 mtype == MMAP_CACHE ? MEMREMAP_WB : MEMREMAP_WC | MEMREMAP_WB);
+				 mtype == MMAP_CACHE ? MEMREMAP_WB : MEMREMAP_WC);
+	}
 	if (!vaddr) {
 		pr_err("smem: cannot map %pa (%u pages)\n", &page_start, page_count);
 		kfree(map);
@@ -255,6 +273,8 @@ static void soc_modem_ram_unmap(const void *mem)
 
 			if (map->vmapped)
 				vunmap(base);
+			else if (map->iomapped)
+				iounmap((__force void __iomem *)base);
 			else
 				memunmap(base);
 			kfree(map);

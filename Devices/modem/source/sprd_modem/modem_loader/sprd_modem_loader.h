@@ -13,7 +13,11 @@
 #ifndef SPRD_MODEM_LOADER_H
 #define SPRD_MODEM_LOADER_H
 
+#include <linux/mutex.h>
+#include <linux/pid.h>
 #include <linux/soc/sprd/sprd_mpm.h>
+#include <linux/wait.h>
+#include <linux/workqueue.h>
 
 /* modem region data define */
 #define MAX_REGION_NAME_LEN	20
@@ -79,6 +83,19 @@ struct pm_reg_ctrl {
 	struct regmap	*ctrl_map;
 };
 
+struct modem_device;
+
+struct modem_process_lock {
+	/* Never held across syscalls. The legacy ABI reopens the node for each op. */
+	struct mutex access;
+	wait_queue_head_t available;
+	struct pid *owner;
+	wait_queue_entry_t exit_wait;
+	struct work_struct exit_work;
+	struct modem_device *modem;
+	bool b_rx;
+};
+
 struct modem_device {
 	struct modem_load_info	*load;
 	const char		*modem_name;
@@ -111,8 +128,8 @@ struct modem_device {
 	phys_addr_t	all_base;
 	size_t		all_size;
 
-	struct mutex	rd_mutex;/* mutex for read lock */
-	struct mutex	wt_mutex;/* mutex for write lock */
+	struct modem_process_lock rd_lock;
+	struct modem_process_lock wt_lock;
 	char	rd_lock_name[TASK_COMM_LEN];
 	char	wt_lock_name[TASK_COMM_LEN];
 

@@ -55,26 +55,22 @@ static int trusty_sync_boot_time(void)
 	return ret;
 }
 
-static void trusty_pm_resume(void *data)
+static void trusty_pm_resume(void)
 {
 	trusty_sync_boot_time();
 }
 
-static const struct syscore_ops trusty_pm_ops = {
+/* Linux 6.18 stores its list node in syscore_ops itself. */
+static struct syscore_ops trusty_pm_ops = {
 	.resume = trusty_pm_resume,
 };
-
-static struct syscore trusty_pm_syscore = {
-	.ops = &trusty_pm_ops,
-};
-
 
 static int __init trusty_pm_init(void)
 {
 	/* Fist time sync on boot up */
 	trusty_sync_boot_time();
 
-	register_syscore(&trusty_pm_syscore);
+	register_syscore_ops(&trusty_pm_ops);
 	/*
 	 * MU300: the ACK PSCI vendor hooks (keep the CPU that Trusty resides on from powering down) do not exist in
 	 * mainline; the secure firmware migrates or refuses on its own (PSCI MIGRATE_INFO_TYPE: not supported).
@@ -85,7 +81,7 @@ static int __init trusty_pm_init(void)
 
 static void __exit trusty_pm_exit(void)
 {
-	unregister_syscore(&trusty_pm_syscore);
+	unregister_syscore_ops(&trusty_pm_ops);
 }
 
 module_init(trusty_pm_init);
