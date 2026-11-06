@@ -1,0 +1,144 @@
+{
+  "description": "Existing W202DS modem userspace source and per-device service templates; no proprietary runtime, NV, credentials or compiled kernel modules.",
+  "files": [
+    {
+      "source": "bsp/Devices/modem/userspace/w202-modem-at.c",
+      "path": "at/w202-modem-at.c",
+      "source_sha256": "0d64e0bb434cf1b5f08dba195de79d1c020846fcfecdeda0cc8ca60d6d84f2ba",
+      "sha256": "0d64e0bb434cf1b5f08dba195de79d1c020846fcfecdeda0cc8ca60d6d84f2ba"
+    },
+    {
+      "source": "bsp/Devices/modem/userspace/w202-modem-netcheck.c",
+      "path": "at/w202-modem-netcheck.c",
+      "source_sha256": "67e2a2d45a8eb19a7393578efbed112fb695202b3621435ba72ffd2e472ac8b5",
+      "sha256": "67e2a2d45a8eb19a7393578efbed112fb695202b3621435ba72ffd2e472ac8b5"
+    },
+    {
+      "source": "bsp/Devices/modem/userspace/bionic/w202-android-runtime.c",
+      "path": "runtime/w202-android-runtime.c",
+      "source_sha256": "d30367e061057dde2cae6f6fdfa6e472b440275beda8971801b7a80854d4a99a",
+      "sha256": "d30367e061057dde2cae6f6fdfa6e472b440275beda8971801b7a80854d4a99a"
+    },
+    {
+      "source": "bsp/Devices/modem/userspace/bionic/runtime-properties.json",
+      "path": "runtime/runtime-properties.json",
+      "source_sha256": "1845fb0d511dcfd7512b014890058b3724c5cc2caa36dfec45beaac4cfe7410f",
+      "sha256": "1845fb0d511dcfd7512b014890058b3724c5cc2caa36dfec45beaac4cfe7410f"
+    },
+    {
+      "source": "bsp/Devices/modem/userspace/bionic/make-property-area.py",
+      "path": "runtime/make-property-area.py",
+      "source_sha256": "b8593d3f9db5356b0e375e4457eb2afa2b3d410a55f9f4d3f556d6dc6d91761a",
+      "sha256": "b8593d3f9db5356b0e375e4457eb2afa2b3d410a55f9f4d3f556d6dc6d91761a"
+    },
+    {
+      "source": "bsp/Devices/modem/userspace/tests/modem-at-fixture.c",
+      "path": "tests/modem-at-fixture.c",
+      "source_sha256": "311091e4665b8ce69b183395eed0434f2f1410cb29a417938cf7c19e4acb0494",
+      "sha256": "174d26f950c55ecb92c66b33fdb272e36abe4129bc9a6ce4360b6464efcfabae",
+      "change": "Adjusted relative include after moving AT sources to at/."
+    },
+    {
+      "source": "bsp/Devices/modem/userspace/tests/test_modem_at.py",
+      "path": "tests/test_modem_at.py",
+      "source_sha256": "fd488c7fa92fd2fb09749c2d511b3f9a77b683033ac8e101ac1ce26476e90e78",
+      "sha256": "fd488c7fa92fd2fb09749c2d511b3f9a77b683033ac8e101ac1ce26476e90e78"
+    },
+    {
+      "source": "bsp/Devices/modem/userspace/tests/modem-loader-process-lock-test.c",
+      "path": "tests/modem-loader-process-lock-test.c",
+      "source_sha256": "a33284043c0f8af67a2d40ce8d3f067268f343f25405d56cb2aed1f465fbac27",
+      "sha256": "a33284043c0f8af67a2d40ce8d3f067268f343f25405d56cb2aed1f465fbac27"
+    },
+    {
+      "source": "bsp/integration/server-overlay/usr/libexec/w202-modem-runtime",
+      "path": "rootfs/usr/libexec/w202-modem-runtime",
+      "source_sha256": "7077fb929a163a4ed7c0bde87034b432c26b9b60756fcc9a9c458258387e8476",
+      "sha256": "7077fb929a163a4ed7c0bde87034b432c26b9b60756fcc9a9c458258387e8476"
+    },
+    {
+      "source": "bsp/integration/server-overlay/usr/libexec/w202-cellular",
+      "path": "rootfs/usr/libexec/w202-cellular",
+      "source_sha256": "9c25c80e6bb60699c073376d434bdb8fa32804db305a7a711e537c2f8873fe24",
+      "sha256": "9c25c80e6bb60699c073376d434bdb8fa32804db305a7a711e537c2f8873fe24"
+    },
+    {
+      "source": "bsp/integration/server-overlay/usr/local/sbin/w202-cellular",
+      "path": "rootfs/usr/local/sbin/w202-cellular",
+      "source_sha256": "bf7a3a7cd3ec2816640c4f2e18973fdecb70ec2eee71f92f2ed7d5fe67fbe489",
+      "sha256": "bf7a3a7cd3ec2816640c4f2e18973fdecb70ec2eee71f92f2ed7d5fe67fbe489"
+    },
+    {
+      "source": "bsp/integration/server-overlay/etc/default/w202-modem-runtime",
+      "path": "rootfs/etc/default/w202-modem-runtime",
+      "source_sha256": "c206429158e785e235d0e5aa370a3c5822f12e13d015cd273b6e67ee340df0e6",
+      "sha256": "c206429158e785e235d0e5aa370a3c5822f12e13d015cd273b6e67ee340df0e6"
+    },
+    {
+      "source": "bsp/integration/server-overlay/etc/default/w202-cellular",
+      "path": "rootfs/etc/default/w202-cellular",
+      "source_sha256": "18eb8255a4c3b4f1aeef7b61425af85713f35eb1e96b0a43f590581ff280e4a0",
+      "sha256": "18eb8255a4c3b4f1aeef7b61425af85713f35eb1e96b0a43f590581ff280e4a0"
+    },
+    {
+      "source": "bsp/integration/server-overlay/usr/lib/sysusers.d/w202-modem.conf",
+      "path": "rootfs/usr/lib/sysusers.d/w202-modem.conf",
+      "source_sha256": "0e50c8eb0b5140bb1e23e67aa1833729b08fd96d122c12d1dd8eab7b97794a46",
+      "sha256": "0e50c8eb0b5140bb1e23e67aa1833729b08fd96d122c12d1dd8eab7b97794a46"
+    },
+    {
+      "source": "bsp/integration/server-overlay/usr/lib/systemd/system/w202-modem-loader.service",
+      "path": "rootfs/usr/lib/systemd/system/w202-modem-loader.service",
+      "source_sha256": "5512971ee5b7c743679801ddd57e3f1453c9555c10a87b99e122cff37986578d",
+      "sha256": "5512971ee5b7c743679801ddd57e3f1453c9555c10a87b99e122cff37986578d"
+    },
+    {
+      "source": "bsp/integration/server-overlay/usr/lib/systemd/system/w202-modem-properties.service",
+      "path": "rootfs/usr/lib/systemd/system/w202-modem-properties.service",
+      "source_sha256": "eba52c375de2625a39b2a0283cb93e40c9b30feb004331e69a471b524ea20a70",
+      "sha256": "eba52c375de2625a39b2a0283cb93e40c9b30feb004331e69a471b524ea20a70"
+    },
+    {
+      "source": "bsp/integration/server-overlay/usr/lib/systemd/system/w202-modem-private-root.service",
+      "path": "rootfs/usr/lib/systemd/system/w202-modem-private-root.service",
+      "source_sha256": "3c4efd0a750dc0ae9c17986e152d19cf55185b012776268d0d11df733e16682e",
+      "sha256": "3c4efd0a750dc0ae9c17986e152d19cf55185b012776268d0d11df733e16682e"
+    },
+    {
+      "source": "bsp/integration/server-overlay/usr/lib/systemd/system/w202-modem-runtime.service",
+      "path": "rootfs/usr/lib/systemd/system/w202-modem-runtime.service",
+      "source_sha256": "293ce85a42c7299aab373ed41a73d5fe43d5cc81437a12dfb3b036b8c42ae5eb",
+      "sha256": "293ce85a42c7299aab373ed41a73d5fe43d5cc81437a12dfb3b036b8c42ae5eb"
+    },
+    {
+      "source": "bsp/integration/server-overlay/usr/lib/systemd/system/w202-modem-log.service",
+      "path": "rootfs/usr/lib/systemd/system/w202-modem-log.service",
+      "source_sha256": "20b1b4d33e40668cb9aaba0a2fd4ca329d049722f5a96b899bba4beeba1360c2",
+      "sha256": "20b1b4d33e40668cb9aaba0a2fd4ca329d049722f5a96b899bba4beeba1360c2"
+    },
+    {
+      "source": "bsp/integration/server-overlay/usr/lib/systemd/system/w202-modem-foundation.service",
+      "path": "rootfs/usr/lib/systemd/system/w202-modem-foundation.service",
+      "source_sha256": "543d0018a52bec7218e76bb58c1566cd37bde2bab39ba7395483bd839c8876a8",
+      "sha256": "543d0018a52bec7218e76bb58c1566cd37bde2bab39ba7395483bd839c8876a8"
+    },
+    {
+      "source": "bsp/integration/server-overlay/usr/lib/systemd/system/w202-cp-diskserver.service",
+      "path": "rootfs/usr/lib/systemd/system/w202-cp-diskserver.service",
+      "source_sha256": "e3cad1383a832ad4bab8ba11447bf72bdc09f55687bc4fbcdaa7b9108e7dc9eb",
+      "sha256": "e3cad1383a832ad4bab8ba11447bf72bdc09f55687bc4fbcdaa7b9108e7dc9eb"
+    },
+    {
+      "source": "bsp/integration/server-overlay/usr/lib/systemd/system/w202-cellular.service",
+      "path": "rootfs/usr/lib/systemd/system/w202-cellular.service",
+      "source_sha256": "e31a6f55b4b94a40047fe650a3afb366f729c1ef1d21816efc633a45dd4d6cfd",
+      "sha256": "e31a6f55b4b94a40047fe650a3afb366f729c1ef1d21816efc633a45dd4d6cfd"
+    },
+    {
+      "source": "bsp/Devices/modem/userspace/server-runtime-20261103-v5/private-inputs.json",
+      "path": "runtime/private-inputs.json",
+      "source_sha256": "4ae324adcb3840ec959aed79790a5465f35e126128e25e786c4a203d973dee42",
+      "sha256": "4ae324adcb3840ec959aed79790a5465f35e126128e25e786c4a203d973dee42"
+    }
+  ]
+}

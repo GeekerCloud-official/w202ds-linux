@@ -1,0 +1,10 @@
+[Unit]
+Description=W202DS modem SIPC Trusty and IPA foundation
+PartOf=w202-modem-runtime.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+EnvironmentFile=/etc/default/w202-modem-runtime
+ExecStart=/usr/libexec/w202-modem-runtime foundation
+TimeoutStartSec=40

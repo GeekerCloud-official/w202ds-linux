@@ -1,0 +1,14 @@
+[Unit]
+Description=W202DS private Android modem root
+Requires=w202-modem-foundation.service
+After=w202-modem-foundation.service
+PartOf=w202-modem-runtime.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+EnvironmentFile=/etc/default/w202-modem-runtime
+ExecStart=/usr/libexec/w202-modem-runtime private-root
+ExecStop=/usr/libexec/w202-modem-runtime unmount-root
+TimeoutStartSec=30
+TimeoutStopSec=10

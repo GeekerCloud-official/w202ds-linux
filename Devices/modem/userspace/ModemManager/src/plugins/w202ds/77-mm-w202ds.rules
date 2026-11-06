@@ -1,0 +1,6 @@
+# SPDX-License-Identifier: GPL-2.0-or-later
+# Only the verified SIM1 AT endpoint and matching M-ETHER network port.
+ACTION!="add|change|move|bind", GOTO="mm_w202ds_end"
+SUBSYSTEM=="spipe", KERNEL=="stty_nr0", ENV{ID_MM_CANDIDATE}="1", ENV{ID_MM_W202DS}="1", ENV{ID_MM_DEVICE_PROCESS}="1", ENV{ID_MM_PHYSDEV_UID}="w202ds-sipc", ENV{ID_MM_PORT_TYPE_AT_PRIMARY}="1"
+SUBSYSTEM=="net", KERNEL=="sipa_eth0", ENV{ID_MM_CANDIDATE}="1", ENV{ID_MM_W202DS}="1", ENV{ID_MM_DEVICE_PROCESS}="1", ENV{ID_MM_PHYSDEV_UID}="w202ds-sipc"
+LABEL="mm_w202ds_end"

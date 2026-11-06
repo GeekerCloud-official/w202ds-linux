@@ -1,0 +1,239 @@
+#!/bin/sh
+# SPDX-License-Identifier: MIT
+# CID1 network service. Firmware/Trusty/SIPA initialization is a separate layer.
+set -eu
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+export PATH
+state=/run/w202-cellular
+device=sipa_eth0
+channel=/dev/stty_nr0
+table=202
+priority=32020
+metric=900
+protocol=200
+backend=${W202_CELLULAR_BACKEND:-at}
+case "$backend" in at|modemmanager) ;; *) echo "Unknown cellular backend" >&2; exit 2 ;; esac
+
+fail() { echo "w202-cellular: $*" >&2; exit 1; }
+root() { test "$(id -u)" = 0 || fail 'Run this operation with sudo.'; }
+valid_apn() {
+    test -n "$1" && test "${#1}" -le 100 || return 1
+    case "$1" in *[!a-zA-Z0-9.-]*) return 1 ;; esac
+}
+valid_ipv4() {
+    printf '%s\n' "$1" | awk -F. '
+        NF != 4 { exit 1 }
+        { for (i=1;i<=4;i++) if ($i !~ /^[0-9]+$/ || $i > 255 || length($i)>3) exit 1 }
+        $1 == 0 || $1 == 127 || $1 >= 224 { exit 1 }'
+}
+prepare_state() {
+    root
+    test ! -L "$state" || fail 'State directory is a symlink.'
+    if test ! -e "$state"; then install -d -m 0750 "$state"; fi
+    test "$(stat -c '%u:%a' "$state")" = 0:750 || fail 'Unsafe state directory owner/mode.'
+    umask 077
+    exec 9>"$state/controller.lock"
+    flock -w 60 9 || fail 'Controller busy.'
+}
+at() {
+    attempt=0
+    while :; do
+        result=0
+        w202-modem-at "$channel" "$@" || result=$?
+        test "$result" != 75 && return "$result"
+        attempt=$((attempt + 1))
+        test "$attempt" -lt 5 || return 75
+        sleep 1
+    done
+}
+mm() { LD_LIBRARY_PATH=/opt/w202ds/modemmanager/lib /opt/w202ds/modemmanager/bin/mmcli --timeout=90 "$@"; }
+mm_modem() { mm -m w202ds-sipc "$@"; }
+context_info() {
+    if test "$backend" = at; then at --context-info; return; fi
+    bearer=$(cat "$state/mm-bearer") || return 1
+    case "$bearer" in /org/freedesktop/ModemManager1/Bearer/[0-9]*) ;; *) return 1 ;; esac
+    mm -b "$bearer" -K | awk '
+        $1=="bearer.status.connected" { connected=$3 }
+        $1=="bearer.status.interface" { interface=$3 }
+        $1=="bearer.ipv4-config.address" { address=$3 }
+        $1=="bearer.ipv4-config.prefix" { prefix=$3 }
+        $1=="bearer.ipv4-config.dns.value[1]" { dns1=$3 }
+        $1=="bearer.ipv4-config.dns.value[2]" { dns2=$3 }
+        END {
+            if (connected!="yes" || interface!="sipa_eth0" || prefix!=32 || address=="") exit 1
+            printf "IPV4=%s\nDNS1=%s\nDNS2=%s\n", address, dns1, dns2
+        }'
+}
+read_info() {
+    ip_address= dns1= dns2=
+    while IFS='=' read -r key value; do
+        case "$key" in
+            IPV4) ip_address=$value ;;
+            DNS1) dns1=$value ;;
+            DNS2) dns2=$value ;;
+            *) return 1 ;;
+        esac
+    done <<EOF
+$1
+EOF
+    valid_ipv4 "$ip_address" || return 1
+    test -z "$dns1" || valid_ipv4 "$dns1" || return 1
+    test -z "$dns2" || valid_ipv4 "$dns2" || return 1
+    test -n "$dns1$dns2"
+}
+remove_network() {
+    if test -f "$state/network"; then
+        read_info "$(cat "$state/network")" || fail 'Invalid saved network state.'
+        # Each delete selects this service's address, source rule and route protocol.
+        resolvectl revert "$device" || :
+        ip -4 rule del priority "$priority" from "$ip_address/32" table "$table" 2>/dev/null || :
+        ip -4 route del table "$table" default dev "$device" src "$ip_address" proto "$protocol" 2>/dev/null || :
+        ip -4 route del default dev "$device" src "$ip_address" metric "$metric" proto "$protocol" 2>/dev/null || :
+        ip -4 address del "$ip_address/32" dev "$device" 2>/dev/null || :
+        rm "$state/network"
+    fi
+}
+cleanup() {
+    remove_network
+    if test -f "$state/context-owned"; then
+        if test "$backend" = modemmanager; then
+            if ! mm_modem --simple-disconnect; then
+                # A crashed MM has no usable D-Bus connection. Retain ownership
+                # and retry after its service has restarted; never race raw AT.
+                echo 'w202-cellular: MM disconnect failed; retaining CID1 ownership.' >&2
+                return 1
+            fi
+            if test -f "$state/mm-bearer"; then
+                mm_modem --delete-bearer="$(cat "$state/mm-bearer")" || :
+                rm "$state/mm-bearer"
+            fi
+        elif ! at --deactivate-context; then
+            echo 'w202-cellular: CID1 cleanup failed; ownership retained for retry.' >&2
+            return 1
+        fi
+        rm "$state/context-owned"
+        rm -f "$state/context-backend"
+    fi
+    if test -f "$state/link-was-down"; then
+        ip link set "$device" down || return 1
+        rm "$state/link-was-down"
+    fi
+}
+finish() {
+    if test -n "${idle_pid:-}"; then
+        kill "$idle_pid" 2>/dev/null || :
+        wait "$idle_pid" 2>/dev/null || :
+    fi
+    cleanup
+}
+apply_network() {
+    new_info=$1
+    remove_network
+    read_info "$new_info" || fail 'Invalid modem network response.'
+    # Record intent before mutation, so stop/failure can remove partial setup too.
+    printf '%s\n' "$new_info" > "$state/network.new"
+    mv "$state/network.new" "$state/network"
+    ip link set "$device" up
+    ip -4 address add "$ip_address/32" dev "$device" noprefixroute
+    ip -4 route add table "$table" default dev "$device" src "$ip_address" proto "$protocol"
+    ip -4 rule add priority "$priority" from "$ip_address/32" table "$table"
+    ip -4 route add default dev "$device" src "$ip_address" metric "$metric" proto "$protocol"
+    set --
+    if test -n "$dns1"; then set -- "$@" "$dns1"; fi
+    if test -n "$dns2" && test "$dns2" != "$dns1"; then set -- "$@" "$dns2"; fi
+    resolvectl dns "$device" "$@"
+    resolvectl default-route "$device" yes
+}
+
+operation=${1:-status}
+case "$operation" in
+    setup)
+        root
+        test "$#" = 2 && valid_apn "$2" || fail 'Usage: w202-cellular setup APN'
+        install -d -m 0755 /etc/default
+        umask 077
+        temporary=$(mktemp /etc/default/.w202-cellular.XXXXXX)
+        trap 'rm -f "$temporary"' EXIT
+        printf 'W202_CELLULAR_APN=%s\n' "$2" > "$temporary"
+        mv "$temporary" /etc/default/w202-cellular
+        echo 'APN configured. Start with: sudo systemctl start w202-cellular'
+        ;;
+    status)
+        systemctl show w202-cellular.service -p ActiveState -p SubState -p StatusText
+        ip -brief address show "$device"
+        ip -4 route show dev "$device"
+        if test -r "$state/network"; then cat "$state/network"; fi
+        ;;
+    start|stop|restart)
+        root
+        exec systemctl "$operation" w202-cellular.service
+        ;;
+    cleanup)
+        prepare_state
+        cleanup
+        ;;
+    run)
+        prepare_state
+        valid_apn "${W202_CELLULAR_APN:-}" || fail 'Configure the SIM APN first.'
+        test -c "$channel" && test -d /sys/module/sipa_dele || fail 'Modem runtime/delegate is not ready.'
+        test ! -e "$state/context-owned" && test ! -e "$state/network" || fail 'Unclean previous session.'
+        test -z "$(ip -4 -o address show dev "$device")" || fail 'Interface has an existing IPv4 owner.'
+        test -z "$(ip -4 route show table "$table")" || fail 'Policy table is already in use.'
+        if ip -4 rule show | awk -v p="$priority:" '$1==p {found=1} END {exit !found}'; then
+            fail 'Policy priority is already in use.'
+        fi
+        test -z "$(ip -4 route show dev "$device")" || fail 'Interface already has routes.'
+        if test "$backend" = modemmanager; then
+            attempt=0
+            until modem_info=$(mm_modem -K 2>/dev/null); do
+                attempt=$((attempt + 1))
+                test "$attempt" -lt 30 || fail 'MM did not discover w202ds-sipc.'
+                sleep 1
+            done
+            modem_state=$(printf '%s\n' "$modem_info" | awk '$1=="modem.generic.state" {print $3}')
+            case "$modem_state" in connected|connecting|disconnecting) fail 'MM connection already has an owner.' ;; esac
+        else
+        attached=$(at 'AT+CGATT?')
+        printf '%s\n' "$attached" | tr -d '\r' | grep -qx '+CGATT: 1' || fail 'SIM is not attached.'
+        contexts=$(at 'AT+CGACT?')
+        if printf '%s\n' "$contexts" | tr -d '\r' | grep -Eq '^\+CGACT: *1, *1$'; then
+            fail 'CID1 is already active; stop its existing owner first.'
+        fi
+        at --define-context "$W202_CELLULAR_APN"
+        fi
+        test $(( $(cat "/sys/class/net/$device/flags") & 1 )) != 0 || : > "$state/link-was-down"
+        : > "$state/context-owned"
+        printf '%s\n' "$backend" > "$state/context-backend"
+        trap 'exit 0' TERM INT HUP
+        trap 'finish' EXIT
+        if test "$backend" = modemmanager; then
+            connected=$(mm_modem --simple-connect="apn=$W202_CELLULAR_APN,ip-type=ipv4")
+            bearer=$(printf '%s\n' "$connected" | awk '{for(i=1;i<=NF;i++) if($i ~ /^\/org\/freedesktop\/ModemManager1\/Bearer\/[0-9]+$/) print $i}')
+            case "$bearer" in /org/freedesktop/ModemManager1/Bearer/[0-9]*) ;; *) fail 'MM did not return a bearer path.' ;; esac
+            printf '%s\n' "$bearer" > "$state/mm-bearer"
+        else
+            at --activate-context
+            at --connect-context
+        fi
+        current_info=$(context_info)
+        apply_network "$current_info"
+        systemd-notify --ready --status="CID1 connected on $device ($ip_address); route metric $metric"
+        while :; do
+            # Modem status check only; touchscreen remains IRQ driven.
+            sleep 30 &
+            idle_pid=$!
+            wait "$idle_pid"
+            idle_pid=
+            if ! next_info=$(context_info); then
+                systemd-notify --status='CID1 lost; cleaning up before reconnect'
+                exit 1
+            fi
+            if test "$next_info" != "$current_info"; then
+                apply_network "$next_info"
+                current_info=$next_info
+                systemd-notify --status="CID1 updated on $device ($ip_address)"
+            fi
+        done
+        ;;
+    *) fail 'Usage: w202-cellular status | setup APN | start | stop | restart' ;;
+esac

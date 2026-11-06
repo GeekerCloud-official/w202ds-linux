@@ -1,0 +1,252 @@
+#!/bin/sh
+# SPDX-License-Identifier: MIT
+# W202DS original modem runtime. Provisioning firmware/NV is a separate action.
+set -eu
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+export PATH
+state=${W202_MODEM_STATE:-/var/lib/w202ds/modem-runtime}
+root="$state/android"
+modules="/usr/lib/w202ds/modem/$(uname -r)"
+broker=/usr/libexec/w202-android-runtime
+properties=/usr/share/w202ds/modem/runtime-properties.bin
+ldpath=/apex/com.android.runtime/lib64/bionic:/system/lib64:/vendor/lib64
+fail() { echo "w202-modem-runtime: $*" >&2; exit 1; }
+check_state() {
+    test "$(id -u)" = 0 || fail 'Root is required.'
+    test "$(uname -r)" = 6.18.35-w202ds-m23-wifi || fail 'Unmatched kernel release.'
+    case "$state" in /var/lib/w202ds/*) ;; *) fail 'Unexpected private runtime path.' ;; esac
+    test "$(readlink -f "$state")" = "$state" || fail 'Private runtime must have a canonical path.'
+    test -d "$root" && test ! -L "$root" || fail 'Missing private Android root.'
+    for directory in "$state" "$root"; do
+        test "$(stat -c %u "$directory")" = 0 || fail 'Private runtime must be root-owned.'
+        permissions=$(stat -c %a "$directory")
+        test $(( 0$permissions & 0022 )) = 0 || fail 'Private runtime is writable by others.'
+    done
+    id w202modem >/dev/null
+}
+at() { w202-modem-at /dev/stty_nr0 "$@"; }
+# Opt in only with matching modules and this device's signed AVB inputs provisioned.
+# Run after foundation, before the original loader, and only while CP is stopped.
+prepare_boot() {
+    case "${W202_MODEM_BOOT_PREPARE:-0}" in
+        0) return ;;
+        1) ;;
+        *) fail 'W202_MODEM_BOOT_PREPARE must be 0 or 1.' ;;
+    esac
+    for processor in modem pmsys chsys; do
+        run_state=$(awk '/^run_state:/ {gsub(/,/,"",$2); print $2; exit}' "/sys/kernel/debug/modem/$processor")
+        case "$run_state" in 0|255) ;; *) fail "Cannot prepare a running $processor." ;; esac
+    done
+    if test ! -d /sys/module/w202_avb_seed; then
+        insmod "$modules/w202_avb_seed.ko" run=1
+    fi
+    test "$(cat /sys/module/w202_avb_seed/parameters/verify_result)" = 0 &&
+        test "$(cat /sys/module/w202_avb_seed/parameters/live_result)" = 0 ||
+        fail 'AVB preparation incomplete; reboot before retrying.'
+    if test ! -d /sys/module/w202_cp_prepare; then
+        insmod "$modules/w202_cp_prepare.ko" prepare=1
+    fi
+    test "$(cat /sys/module/w202_cp_prepare/parameters/prepare)" = Y ||
+        fail 'CP preparation module was loaded without prepare=1.'
+    echo 'Linux AVB and CP RAM/PHY preparation complete.'
+}
+load_module() {
+    name=$1
+    file=$2
+    if test ! -d "/sys/module/$name"; then insmod "$modules/$file"; fi
+    test -d "/sys/module/$name" || fail "Module $name is not present."
+}
+check_code() {
+    test -f "$state/runtime-code.sha256" && test ! -L "$state/runtime-code.sha256"
+    test "$(stat -c %u "$state/runtime-code.sha256")" = 0
+    (cd "$state"; sha256sum -c --quiet runtime-code.sha256)
+}
+copy_character() {
+    source=$1
+    target="$root$source"
+    test -c "$source" && test ! -L "$source" || fail "Missing character device $source."
+    test ! -L "$target" || fail "Unexpected device symlink $target."
+    if test -e "$target"; then
+        test -c "$target" || fail "Private device is not a character node: $target."
+        test "$(stat -c '%d:%i' "$source")" != "$(stat -c '%d:%i' "$target")" || fail 'Shared device inode.'
+        if test "$(stat -c '%t:%T' "$source")" != "$(stat -c '%t:%T' "$target")"; then rm "$target"; fi
+    fi
+    if test ! -e "$target"; then cp -a "$source" "$target"; fi
+    chown w202modem:w202modem "$target"
+    chmod 0600 "$target"
+}
+wait_brokers() {
+    for attempt in $(seq 1 50); do
+        if test -S "$root/dev/socket/property_service" && test -S "$root/dev/socket/logdw"; then return; fi
+        sleep 0.1
+    done
+    fail 'Android log/property sockets did not become ready.'
+}
+android_program() {
+    program=$1
+    capabilities=$2
+    export LD_LIBRARY_PATH="$ldpath"
+    exec /usr/bin/setpriv --reuid=w202modem --regid=w202modem --clear-groups --no-new-privs \
+        --inh-caps="$capabilities" --ambient-caps="$capabilities" --bounding-set="$capabilities" \
+        /usr/sbin/chroot "$root" "$program"
+}
+clean_socket() {
+    path="$root/dev/socket/$1"
+    test ! -L "$path" || fail 'Socket path is a symlink.'
+    if test -e "$path"; then
+        test -S "$path" && test "$(stat -c %u "$path")" = "$(id -u w202modem)" || fail 'Unexpected socket owner/type.'
+        rm "$path"
+    fi
+}
+
+operation=${1:-status}
+case "$operation" in
+    status)
+        systemctl show w202-modem-runtime.service -p ActiveState -p SubState -p Result
+        systemctl is-active w202-modem-log.service w202-modem-properties.service w202-cp-diskserver.service || :
+        exit
+        ;;
+esac
+check_state
+case "$operation" in
+    foundation)
+        test -d "$modules" && test -f "$modules/SHA256SUMS"
+        (cd "$modules"; sha256sum -c --quiet SHA256SUMS)
+        load_module sprd_power_manager sprd_power_manager.ko
+        load_module unisoc_mailbox unisoc-mailbox.ko
+        load_module sipc_core sipc-core.ko
+        load_module sprd_sipc_virt_bus sprd-sipc-virt-bus.ko
+        for core in 6 9 5 7; do
+            test "$(basename "$(readlink "/sys/bus/platform/devices/sipc-virt:core@$core/driver")")" = sprd-sipc || fail "SIPC core $core is not bound."
+        done
+        load_module sprd_modem_loader sprd_modem_loader.ko
+        load_module spipe spipe.ko
+        load_module trusty trusty.ko
+        load_module trusty_irq trusty-irq.ko
+        load_module trusty_ipc trusty-ipc.ko
+        load_module trusty_virtio trusty-virtio.ko
+        load_module sprd_shm sprd_shm.ko
+        load_module sipa_core sipa-core.ko
+        load_module sipa_eth sipa_eth.ko
+        for node in modem pmsys chsys phycp spipe_nr2 stty_nr0 snv_nr trusty-ipc-dev0 tshm; do
+            test -c "/dev/$node" || fail "Missing /dev/$node."
+        done
+        # No unload/unbind path: these modules remain until the next OS reboot.
+        ;;
+    private-root)
+        check_code
+        test -z "$(find "$root/dev" -xdev -type b -print -quit)" || fail 'Raw block device in private root.'
+        for forbidden in dev/mem dev/kmem dev/mmcblk0 sys/power/wake_lock; do
+            test ! -e "$root/$forbidden" || fail "Unexpected $forbidden."
+        done
+        for node in /dev/null /dev/zero /dev/random /dev/urandom /dev/modem /dev/phycp /dev/pmsys /dev/chsys \
+            /dev/trusty-ipc-dev0 /dev/tshm /dev/sctl_pm /dev/sctl_ch /dev/spipe_nr[0-9]* /dev/stty_nr[0-9]* /dev/snv_nr; do
+            copy_character "$node"
+        done
+        for partition in nr_fixnv1_a nr_fixnv2_a nr_runtimenv1 nr_runtimenv2; do
+            path="$root/dev/block/by-name/$partition"
+            test -f "$path" && test ! -L "$path" || fail "NV is not a regular working file: $partition."
+            test "$(stat -c %U "$path")" = w202modem || fail 'Unexpected NV owner.'
+        done
+        install -d -m 0750 -o root -g w202modem "$root/dev/socket"
+        if test ! -d "$root/proc"; then install -d -m 0755 "$root/proc"; fi
+        if ! mountpoint -q "$root/proc"; then
+            mount -t proc -o ro,nosuid,nodev,noexec,hidepid=2 proc "$root/proc"
+        fi
+        test "$(findmnt -n -o FSTYPE --mountpoint "$root/proc")" = proc
+        options=$(findmnt -n -o OPTIONS --mountpoint "$root/proc")
+        case ",$options," in *,ro,*) ;; *) fail 'Private proc is not read-only.' ;; esac
+        case ",$options," in *,hidepid=2,*|*,hidepid=invisible,*) ;; *) fail 'Private proc has no hidepid protection.' ;; esac
+        if ! mountpoint -q "$root/proc/cmdline"; then
+            mount --bind "$state/android-cmdline-A.txt" "$root/proc/cmdline"
+            mount -o remount,bind,ro,nosuid,nodev,noexec "$root/proc/cmdline"
+        fi
+        cmp "$root/proc/cmdline" "$state/android-cmdline-A.txt"
+        test "$(grep -o 'modem=[^ ]*' "$root/proc/cmdline")" = modem=shutdown
+        install -m 0444 "$properties" "$root/dev/.properties.new"
+        mv "$root/dev/.properties.new" "$root/dev/__properties__"
+        ;;
+    unmount-root)
+        if mountpoint -q "$root/proc/cmdline"; then umount "$root/proc/cmdline"; fi
+        if mountpoint -q "$root/proc"; then umount "$root/proc"; fi
+        ;;
+    clean-log) clean_socket logdw ;;
+    clean-properties) clean_socket property_service ;;
+    log) exec "$broker" log "$root/dev/socket/logdw" "$(id -u w202modem)" ;;
+    properties)
+        exec "$broker" properties "$root/dev/socket/property_service" "$(id -u w202modem)" \
+            "$root/dev/__properties__" --cp-diskserver-service
+        ;;
+    cp-check) check_code; wait_brokers ;;
+    cp) android_program /vendor/bin/cp_diskserver '-all,+sys_chroot,+block_suspend' ;;
+    loader) android_program /vendor/bin/modem_control '-all,+sys_chroot,+chown,+block_suspend' ;;
+    initialize)
+        wait_brokers
+        systemctl start w202-cp-diskserver.service
+        install -d -m 0755 /run/w202-modem
+        if at AT > /run/w202-modem/initial-at-response; then
+            echo 'Adopting already responsive CP; original firmware loader will not run.'
+        else
+            run_state=$(awk '/^run_state:/ {gsub(/,/,"",$2); print $2; exit}' /sys/kernel/debug/modem/modem)
+            case "$run_state" in 0|255) ;; *) fail 'CP already marked running but not responding; automatic firmware reload refused.' ;; esac
+            prepare_boot
+            trap 'systemctl stop w202-modem-loader.service' EXIT
+            systemctl start w202-modem-loader.service
+            alive=0
+            deadline=$(( $(cut -d. -f1 /proc/uptime) + 30 ))
+            while test "$(cut -d. -f1 /proc/uptime)" -lt "$deadline"; do
+                if at AT > /run/w202-modem/initial-at-response; then
+                    processors_ready=1
+                    for processor in modem pmsys chsys; do
+                        run_state=$(awk '/^run_state:/ {gsub(/,/,"",$2); print $2; exit}' "/sys/kernel/debug/modem/$processor")
+                        if test "$run_state" != 1; then processors_ready=0; break; fi
+                    done
+                    if test "$processors_ready" = 1; then alive=1; break; fi
+                fi
+                systemctl is-active --quiet w202-modem-loader.service || fail 'Original loader exited before CP became ready.'
+                sleep 0.2
+            done
+            test "$alive" = 1 || fail 'Original loader did not produce a responsive CP.'
+            # Allow its Alive monitor to consume the startup notifications too.
+            sleep 0.5
+            systemctl stop w202-modem-loader.service
+            trap - EXIT
+        fi
+        systemctl is-active --quiet w202-cp-diskserver.service || fail 'CP NV service is not active.'
+        deadline=$(( $(cut -d. -f1 /proc/uptime) + 30 ))
+        sim_ready=0
+        while test "$(cut -d. -f1 /proc/uptime)" -lt "$deadline"; do
+            if sim=$(at 'AT+CPIN?'); then
+                if printf '%s\n' "$sim" | tr -d '\r' | grep -qx '+CPIN: READY'; then sim_ready=1; break; fi
+            fi
+            sleep 1
+        done
+        test "$sim_ready" = 1 || fail 'SIM did not become READY (PIN/absent/busy needs attention).'
+        radio=$(at 'AT+CFUN?')
+        if printf '%s\n' "$radio" | tr -d '\r' | grep -qx '+CFUN: 0'; then
+            at --radio-on
+        else
+            printf '%s\n' "$radio" | tr -d '\r' | grep -qx '+CFUN: 1' || fail 'Unsupported radio state.'
+        fi
+        deadline=$(( $(cut -d. -f1 /proc/uptime) + 120 ))
+        attached=0
+        while test "$(cut -d. -f1 /proc/uptime)" -lt "$deadline"; do
+            answer=$(at 'AT+CGATT?')
+            if printf '%s\n' "$answer" | tr -d '\r' | grep -qx '+CGATT: 1'; then attached=1; break; fi
+            sleep 1
+        done
+        test "$attached" = 1 || fail 'Packet attachment timed out.'
+        if test ! -d /sys/module/sipa_dele; then
+            contexts=$(at 'AT+CGACT?')
+            if printf '%s\n' "$contexts" | tr -d '\r' | grep -Eq '^\+CGACT: *1, *1$'; then
+                fail 'CID1 is active before delegate initialization.'
+            fi
+            load_module sipa_dele sipa-dele.ko
+        fi
+        test "$(basename "$(readlink /sys/bus/platform/devices/soc:ipa-apb:sipa-dele/driver)")" = sipa_delegate
+        # IPA resources may legitimately be Released while no data link is up.
+        # Actual grant/traffic is verified by the network layer's live data test.
+        echo 'Original CP/NV runtime attached; IPA delegate bound.'
+        ;;
+    *) fail 'Internal operation is not recognized.' ;;
+esac

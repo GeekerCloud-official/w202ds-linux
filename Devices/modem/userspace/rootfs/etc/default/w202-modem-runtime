@@ -1,0 +1,5 @@
+# Provision the private local firmware/runtime/NV before enabling this service.
+W202_MODEM_STATE=/var/lib/w202ds/modem-runtime
+# Independent Linux boot: enable only after provisioning the boot_prepare modules
+# and verified, device-matching w202-diag AVB metadata; never bypass verification.
+W202_MODEM_BOOT_PREPARE=0

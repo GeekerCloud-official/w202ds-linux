@@ -1,0 +1,2 @@
+# Configure the APN for this SIM: sudo w202-cellular setup APN
+W202_CELLULAR_APN=

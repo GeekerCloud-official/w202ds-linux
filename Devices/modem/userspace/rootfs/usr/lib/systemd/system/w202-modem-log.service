@@ -1,0 +1,15 @@
+[Unit]
+Description=W202DS private Android modem logging
+Requires=w202-modem-private-root.service
+After=w202-modem-private-root.service
+PartOf=w202-modem-runtime.service
+
+[Service]
+Type=exec
+EnvironmentFile=/etc/default/w202-modem-runtime
+ExecStartPre=/usr/libexec/w202-modem-runtime clean-log
+ExecStart=/usr/libexec/w202-modem-runtime log
+ExecStopPost=/usr/libexec/w202-modem-runtime clean-log
+Restart=on-failure
+RestartSec=2
+LimitCORE=0

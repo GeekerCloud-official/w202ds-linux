@@ -1,0 +1,15 @@
+[Unit]
+Description=W202DS original CP NV service using private regular files
+Requires=w202-modem-private-root.service w202-modem-log.service w202-modem-properties.service
+After=w202-modem-private-root.service w202-modem-log.service w202-modem-properties.service
+PartOf=w202-modem-runtime.service
+
+[Service]
+Type=exec
+EnvironmentFile=/etc/default/w202-modem-runtime
+ExecStartPre=/usr/libexec/w202-modem-runtime cp-check
+ExecStart=/usr/libexec/w202-modem-runtime cp
+Restart=on-failure
+RestartSec=2
+TimeoutStopSec=5
+LimitCORE=0

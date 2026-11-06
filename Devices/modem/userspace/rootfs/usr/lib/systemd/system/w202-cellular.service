@@ -1,0 +1,27 @@
+[Unit]
+Description=W202DS CID1 cellular IPv4 network
+Requires=systemd-resolved.service w202-modem-runtime.service
+After=systemd-resolved.service w202-modem-runtime.service
+ConditionPathExists=/dev/stty_nr0
+ConditionPathExists=/sys/module/sipa_dele
+StartLimitIntervalSec=0
+
+[Service]
+Type=notify
+NotifyAccess=all
+EnvironmentFile=/etc/default/w202-cellular
+RuntimeDirectory=w202-cellular
+RuntimeDirectoryMode=0750
+RuntimeDirectoryPreserve=yes
+ExecStartPre=/usr/libexec/w202-cellular cleanup
+ExecStart=/usr/libexec/w202-cellular run
+ExecStopPost=/usr/libexec/w202-cellular cleanup
+TimeoutStartSec=120
+TimeoutStopSec=70
+Restart=on-failure
+RestartSec=10
+KillMode=mixed
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

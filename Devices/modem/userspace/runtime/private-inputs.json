@@ -1,0 +1,61 @@
+{
+  "schema": 1,
+  "kind": "w202ds-modem-private-inputs",
+  "board": "w202ds",
+  "slot": "_a",
+  "partitions": {
+    "nr_fixnv1_a": {
+      "source": "nr_fixnv1_a.img",
+      "bytes": 52428800,
+      "mutable": true
+    },
+    "nr_fixnv2_a": {
+      "source": "nr_fixnv2_a.img",
+      "bytes": 52428800,
+      "mutable": true
+    },
+    "nr_runtimenv1": {
+      "source": "nr_runtimenv1.img",
+      "bytes": 57671680,
+      "mutable": true
+    },
+    "nr_runtimenv2": {
+      "source": "nr_runtimenv2.img",
+      "bytes": 57671680,
+      "mutable": true
+    },
+    "nr_modem_a": {
+      "source": "nr_modem_a.img",
+      "bytes": 52428800,
+      "mutable": false,
+      "sha256": "2c6fc2063abb5119c19ee2e9484cac14a9dbb876dd9b15a8d9cac06e8c4cbc4e"
+    },
+    "nr_deltanv_a": {
+      "source": "nr_deltanv_a.img",
+      "bytes": 1048576,
+      "mutable": false,
+      "sha256": "84d710a4f62c918a4cf8b3c173cb3aefd37be4c9039cf494758eb75977a1d7e5"
+    },
+    "nr_phy_a": {
+      "source": "nr_phy_a.img",
+      "bytes": 52428800,
+      "mutable": false,
+      "sha256": "bea368f57381b0249504108c0bcef12109c0d36f59974cc8f4b2c47c35081bde"
+    },
+    "pm_sys_a": {
+      "source": "pm_sys_a.img",
+      "bytes": 1048576,
+      "mutable": false,
+      "sha256": "9ce2c1e8d2def7d818cc90a56ed3bd9ed1fb7f8bfd9bb541ee5ee6e7b61686c3"
+    },
+    "ch_sys_a": {
+      "source": "ch_sys_a.img",
+      "bytes": 16777216,
+      "mutable": false,
+      "sha256": "ecf4ade2e5024f1b9f707fa609ab7312052ae3a2191763d9b5342f39856e3a71"
+    }
+  },
+  "cmdline_file": "android-cmdline-A.txt",
+  "cmdline_required_token": "modem=shutdown",
+  "note": "Explicit same-device offline snapshots only; mutable NV is never a common input or reset on reinstall."
+}

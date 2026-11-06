@@ -1,0 +1,14 @@
+[Unit]
+Description=W202DS bounded original modem firmware loader
+Requires=w202-modem-private-root.service w202-modem-log.service w202-modem-properties.service
+After=w202-modem-private-root.service w202-modem-log.service w202-modem-properties.service
+PartOf=w202-modem-runtime.service
+
+[Service]
+Type=exec
+EnvironmentFile=/etc/default/w202-modem-runtime
+ExecStart=/usr/libexec/w202-modem-runtime loader
+RuntimeMaxSec=45
+TimeoutStopSec=3
+CPUQuota=100%
+LimitCORE=0

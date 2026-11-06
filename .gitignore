@@ -17,6 +17,13 @@ SOURCES*.json
 !/Devices/*/firmware/
 !/Devices/*/source/
 
+# Publish modem userspace sources and configuration; keep delivery packages local.
+!/Devices/modem/userspace/
+!/Devices/modem/userspace/SOURCES.json
+/Devices/modem/userspace/releases/
+/Devices/modem/userspace/server-runtime-20261103-v5/
+/Devices/modem/userspace/output/
+
 # Publish the GPU implementation already verified on W202DS.
 /Devices/gpu/source/*
 !/Devices/gpu/source/panfrost/

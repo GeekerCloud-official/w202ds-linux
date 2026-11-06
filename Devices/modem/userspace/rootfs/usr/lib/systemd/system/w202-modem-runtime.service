@@ -1,0 +1,15 @@
+[Unit]
+Description=W202DS original modem runtime and packet attachment
+Requires=w202-modem-foundation.service w202-modem-private-root.service w202-modem-log.service w202-modem-properties.service
+After=w202-modem-foundation.service w202-modem-private-root.service w202-modem-log.service w202-modem-properties.service
+ConditionPathExists=/etc/default/w202-modem-runtime
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+EnvironmentFile=/etc/default/w202-modem-runtime
+ExecStart=/usr/libexec/w202-modem-runtime initialize
+TimeoutStartSec=210
+
+[Install]
+WantedBy=multi-user.target
