@@ -1,0 +1,46 @@
+/dts-v1/;
+/memreserve/	0x00000000bd040000 0x0000000000020000;
+
+/ {
+	interrupt-parent = <0x01>;
+	#address-cells = <0x02>;
+	#size-cells = <0x02>;
+	cpuinfo_hardware = "Unisoc T760";
+	soc-module = "T760";
+	soc-manufacturer = "Spreadtrum";
+	model = "Spreadtrum UMS9620 SoC";
+	compatible = "sprd,ums9620";
+	sprd,sc-id = "ums9620 1000 1000";
+};
+
+// Shared SoC resources first; hardware fragments own their properties.
+/include/ "soc/ums9620-buses.dtsi"
+/include/ "soc/ums9620-clocks.dtsi"
+/include/ "soc/ums9620-coresight.dtsi"
+/include/ "soc/ums9620-cpu.dtsi"
+/include/ "soc/ums9620-memory-controller.dtsi"
+/include/ "soc/ums9620-pinctrl.dtsi"
+/include/ "soc/ums9620-platform.dtsi"
+/include/ "soc/ums9620-syscon.dtsi"
+/include/ "../Devices/charging/devicetree/w202ds-charging.dtsi"
+/include/ "../Devices/drm/devicetree/w202ds-drm.dtsi"
+/include/ "../Devices/gpu/devicetree/w202ds-gpu.dtsi"
+/include/ "../Devices/hall/devicetree/w202ds-hall.dtsi"
+/include/ "../Devices/keyboard/devicetree/w202ds-keyboard.dtsi"
+/include/ "../Devices/modem/devicetree/w202ds-modem.dtsi"
+/include/ "../Devices/pmic/devicetree/w202ds-adi.dtsi"
+/include/ "../Devices/pmic/devicetree/w202ds-ump9620.dtsi"
+/include/ "../Devices/pmic/devicetree/w202ds-ump9621.dtsi"
+/include/ "../Devices/pmic/devicetree/w202ds-ump9622.dtsi"
+/include/ "../Devices/sensorhub/devicetree/w202ds-sensorhub.dtsi"
+/include/ "../Devices/touchscreen/devicetree/w202ds-touchscreen.dtsi"
+/include/ "../Devices/usb3/devicetree/w202ds-usb3.dtsi"
+/include/ "../Devices/vpu/devicetree/w202ds-vpu.dtsi"
+/include/ "../Devices/wcn/devicetree/w202ds-wcn.dtsi"
+/include/ "../Devices/audio/devicetree/w202ds-audio.dtsi"
+/include/ "../Devices/camera/devicetree/w202ds-camera.dtsi"
+/include/ "../Devices/vdsp/devicetree/w202ds-vdsp.dtsi"
+/include/ "../Devices/npu/devicetree/w202ds-npu.dtsi"
+/include/ "../Devices/storage/devicetree/w202ds-storage.dtsi"
+/include/ "../Devices/thermal/devicetree/w202ds-thermal.dtsi"
+/include/ "w202ds-memory.dtsi"

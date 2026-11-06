@@ -3,15 +3,9 @@
 ```text
 camera/
 ├── build.mk
-├── device.json
 ├── devicetree/
-├── evidence/
-├── modules/
 ├── README.md
-├── reference/
-├── research/
-├── source/
-└── SOURCES.json
+└── source/
 ```
 
 | 功能 | 可用性 | 问题描述 |

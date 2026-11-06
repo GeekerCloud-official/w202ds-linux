@@ -1,0 +1,15 @@
+[Unit]
+Description=W202DS serial keyboard and touchpad
+Requires=dev-ttyS2.device
+After=dev-ttyS2.device systemd-modules-load.service
+Before=display-manager.service
+
+[Service]
+Type=simple
+ExecStartPre=/sbin/modprobe w202_zsk
+ExecStart=/usr/libexec/w202-keyboard-attach /dev/ttyS2
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target

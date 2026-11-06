@@ -1,0 +1,158 @@
+// W202DS Server hardware layout; split from the validated imported tree.
+/ {
+	soc {
+		mm {
+			power-domain@0 {
+				compatible = "sprd,vpu-pd";
+				pmu-vpu-force-shutdown-syscon = <0x04 0x308 0x2000000>;
+				pmu-vpu-auto-shutdown-syscon = <0x04 0x308 0x1000000>;
+				pmu-pwr-status-syscon = <0x04 0x510 0x1f000000>;
+				pmu-apb-pixelpll-syscon = <0x04 0xa5c 0x04>;
+				vpu-domain-eb-syscon = <0x02 0x00 0x200000>;
+				#power-domain-cells = <0x00>;
+				label = "vpu_pd_top";
+				status = "okay";
+				phandle = <0x2f>;
+			};
+			power-domain@1 {
+				compatible = "sprd,vpu-pd";
+				pmu-vpu-force-shutdown-syscon = <0x04 0x30c 0x2000000>;
+				pmu-vpu-auto-shutdown-syscon = <0x04 0x30c 0x1000000>;
+				pmu-pwr-status-syscon = <0x04 0x514 0x1f>;
+				#power-domain-cells = <0x00>;
+				power-domains = <0x2f>;
+				label = "vpu_pd_enc0";
+				status = "okay";
+				phandle = <0x51>;
+			};
+			power-domain@2 {
+				compatible = "sprd,vpu-pd";
+				pmu-vpu-force-shutdown-syscon = <0x04 0x310 0x2000000>;
+				pmu-vpu-auto-shutdown-syscon = <0x04 0x310 0x1000000>;
+				pmu-pwr-status-syscon = <0x04 0x514 0x1f00>;
+				#power-domain-cells = <0x00>;
+				power-domains = <0x2f>;
+				label = "vpu_pd_enc1";
+				status = "okay";
+				phandle = <0x53>;
+			};
+			power-domain@3 {
+				compatible = "sprd,vpu-pd";
+				pmu-vpu-force-shutdown-syscon = <0x04 0x314 0x2000000>;
+				pmu-vpu-auto-shutdown-syscon = <0x04 0x314 0x1000000>;
+				pmu-pwr-status-syscon = <0x04 0x514 0x1f0000>;
+				#power-domain-cells = <0x00>;
+				power-domains = <0x2f>;
+				label = "vpu_pd_dec";
+				status = "okay";
+				phandle = <0x55>;
+			};
+			video-codec@32000000 {
+				compatible = "sprd,vpu-enc-core0";
+				reg = <0x00 0x32000000 0x00 0xc000>;
+				interrupts = <0x00 0x95 0x04>;
+				sprd,video_ip_version = <0x15>;
+				reset-syscon = <0x2d 0x04 0x8608>;
+				vsp-domain-eb-syscon = <0x02 0x00 0x200000>;
+				iommus = <0x50>;
+				power-domains = <0x51>;
+				status = "okay";
+				clock-names = "clk_domain_eb", "clk_dev_eb", "clk_ckg_eb", "clk_ahb_vsp", "clk_ahb_vsp_parent", "clk_src_256m", "clk_src_307m2", "clk_src_384m", "clk_src_512m", "clk_vsp";
+				clocks = <0x11 0x0f 0x33 0x03 0x33 0x09 0x32 0x01 0x0b 0x0f 0x0b 0x0c 0x0b 0x0d 0x0b 0x0e 0x0b 0x0f 0x32 0x02>;
+				phandle = <0x16a>;
+			};
+			iommu@32000000 {
+				compatible = "unisoc,iommuvaul6p-vsp1";
+				reg = <0x00 0x32000000 0x00 0x80 0x00 0x32000000 0x00 0x80>;
+				iova-base = <0x20000000>;
+				iova-size = <0x20000000>;
+				reg_name = "mmu_interrupt_reg", "mmu_reg";
+				status = "okay";
+				#iommu-cells = <0x00>;
+				phandle = <0x50>;
+			};
+			enc-core1@32100000 {
+				compatible = "sprd,vpu-enc-core1";
+				reg = <0x00 0x32100000 0x00 0xc000>;
+				sprd,video_ip_version = <0x15>;
+				interrupts = <0x00 0x94 0x04>;
+				reset-syscon = <0x2d 0x04 0x11810>;
+				vsp-domain-eb-syscon = <0x02 0x00 0x200000>;
+				iommus = <0x52>;
+				power-domains = <0x53>;
+				status = "okay";
+				clock-names = "clk_domain_eb", "clk_dev_eb", "clk_ckg_eb", "clk_ahb_vsp", "clk_ahb_vsp_parent", "clk_src_256m", "clk_src_307m2", "clk_src_384m", "clk_src_512m", "clk_vsp";
+				clocks = <0x11 0x0f 0x33 0x04 0x33 0x09 0x32 0x01 0x0b 0x0f 0x0b 0x0c 0x0b 0x0d 0x0b 0x0e 0x0b 0x0f 0x32 0x02>;
+				phandle = <0x16b>;
+			};
+			iommu@32100000 {
+				compatible = "unisoc,iommuvaul6p-vsp2";
+				reg = <0x00 0x32100000 0x00 0x80 0x00 0x32100000 0x00 0x80>;
+				iova-base = <0x20000000>;
+				iova-size = <0x20000000>;
+				reg_name = "mmu_interrupt_reg", "mmu_reg";
+				status = "okay";
+				#iommu-cells = <0x00>;
+				phandle = <0x52>;
+			};
+			video-codec@32200000 {
+				compatible = "sprd,vpu-dec-core0";
+				reg = <0x00 0x32200000 0x00 0xc000>;
+				interrupts = <0x00 0x93 0x04>;
+				sprd,video_ip_version = <0x15>;
+				reset-syscon = <0x2d 0x04 0x26020>;
+				vsp-domain-eb-syscon = <0x02 0x00 0x200000>;
+				iommus = <0x54>;
+				power-domains = <0x55>;
+				status = "okay";
+				clock-names = "clk_domain_eb", "clk_dev_eb", "clk_ckg_eb", "clk_ahb_vsp", "clk_ahb_vsp_parent", "clk_src_256m", "clk_src_307m2", "clk_src_384m", "clk_src_512m", "clk_src_680m", "clk_vsp";
+				clocks = <0x11 0x0f 0x33 0x05 0x33 0x09 0x32 0x01 0x0b 0x0f 0x0b 0x0c 0x0b 0x0d 0x0b 0x0e 0x0b 0x0f 0x46 0x0d 0x32 0x03>;
+				phandle = <0x16c>;
+			};
+			iommu@32200000 {
+				compatible = "unisoc,iommuvaul6p-vsp";
+				reg = <0x00 0x32200000 0x00 0x80 0x00 0x32200000 0x00 0x80>;
+				iova-base = <0x20000000>;
+				iova-size = <0x40000000>;
+				reg_name = "mmu_interrupt_reg", "mmu_reg";
+				status = "okay";
+				#iommu-cells = <0x00>;
+				phandle = <0x54>;
+			};
+		};
+	};
+	vpudec-dvfs {
+		compatible = "sprd,hwdvfs-vsp-qogirn6pro";
+		sprd,dvfs-work-freq = <0x27d4af90>;
+		sprd,dvfs-idle-freq = <0xf424000>;
+		sprd,dvfs-enable-flag = <0x01>;
+		sprd,freq-upd-delay-en = <0x00>;
+		sprd,freq-upd-hdsk-en = <0x01>;
+		operating-points = <0x3e800 0x927c0 0x4b000 0x927c0 0x5dc00 0x9eb10 0x7d000 0xaae60 0xa325a 0xb71b0>;
+		phandle = <0x1fa>;
+	};
+	vpuenc-dvfs {
+		compatible = "sprd,hwdvfs-vpuenc-qogirn6pro";
+		sprd,dvfs-work-freq = <0x1e848000>;
+		sprd,dvfs-idle-freq = <0xf424000>;
+		sprd,dvfs-enable-flag = <0x01>;
+		sprd,freq-upd-delay-en = <0x00>;
+		sprd,freq-upd-hdsk-en = <0x01>;
+		operating-points = <0x3e800 0x927c0 0x4b000 0x9eb10 0x5dc00 0xaae60 0x7d000 0xb71b0>;
+		phandle = <0x1fb>;
+	};
+	__symbols__ {
+		vpu_pd_top = "/soc/mm/power-domain@0";
+		vpu_pd_enc0 = "/soc/mm/power-domain@1";
+		vpu_pd_enc1 = "/soc/mm/power-domain@2";
+		vpu_pd_dec = "/soc/mm/power-domain@3";
+		vpu_enc0 = "/soc/mm/video-codec@32000000";
+		iommu_vpuenc0 = "/soc/mm/iommu@32000000";
+		vpu_enc1 = "/soc/mm/enc-core1@32100000";
+		iommu_vpuenc1 = "/soc/mm/iommu@32100000";
+		vpu_dec = "/soc/mm/video-codec@32200000";
+		iommu_vpudec = "/soc/mm/iommu@32200000";
+		vpudec_dvfs = "/vpudec-dvfs";
+		vpuenc_dvfs = "/vpuenc-dvfs";
+	};
+};

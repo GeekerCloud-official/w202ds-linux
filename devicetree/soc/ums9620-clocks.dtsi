@@ -1,0 +1,285 @@
+// W202DS Server hardware layout; split from the validated imported tree.
+/ {
+	soc {
+		pmu-gate {
+			compatible = "sprd,ums9620-pmu-gate";
+			sprd,syscon = <0x04>;
+			clocks = <0x09>;
+			clock-names = "ext-26m";
+			#clock-cells = <0x01>;
+			#reset-cells = <0x01>;
+			phandle = <0x28>;
+		};
+		g1-pll {
+			compatible = "sprd,ums9620-g1-pll";
+			sprd,syscon = <0xc0>;
+			clocks = <0x09>;
+			clock-names = "ext-26m";
+			#clock-cells = <0x01>;
+			phandle = <0x16>;
+		};
+		g1l-pll {
+			compatible = "sprd,ums9620-g1l-pll";
+			sprd,syscon = <0xc1>;
+			clocks = <0x09>;
+			clock-names = "ext-26m";
+			#clock-cells = <0x01>;
+			phandle = <0x1be>;
+		};
+		g5l-pll {
+			compatible = "sprd,ums9620-g5l-pll";
+			sprd,syscon = <0xc2>;
+			clocks = <0x09>;
+			clock-names = "ext-26m";
+			#clock-cells = <0x01>;
+			phandle = <0x0b>;
+		};
+		g5r-pll {
+			compatible = "sprd,ums9620-g5r-pll";
+			sprd,syscon = <0xc3>;
+			clocks = <0x09>;
+			clock-names = "ext-26m";
+			#clock-cells = <0x01>;
+			phandle = <0x46>;
+		};
+		g8-pll {
+			compatible = "sprd,ums9620-g8-pll";
+			sprd,syscon = <0xc4>;
+			clocks = <0x09>;
+			clock-names = "ext-26m";
+			#clock-cells = <0x01>;
+			phandle = <0x1bf>;
+		};
+		g9-pll {
+			compatible = "sprd,ums9620-g9-pll";
+			sprd,syscon = <0xc5>;
+			clocks = <0x09>;
+			clock-names = "ext-26m";
+			#clock-cells = <0x01>;
+			phandle = <0x1c0>;
+		};
+		g10-pll {
+			compatible = "sprd,ums9620-g10-pll";
+			sprd,syscon = <0xc6>;
+			clocks = <0x09>;
+			clock-names = "ext-26m";
+			#clock-cells = <0x01>;
+			phandle = <0x1c1>;
+		};
+		apapb-gate {
+			compatible = "sprd,ums9620-apapb-gate";
+			sprd,syscon = <0x15>;
+			clocks = <0x09>;
+			clock-names = "ext-26m";
+			#clock-cells = <0x01>;
+			#reset-cells = <0x01>;
+			phandle = <0x07>;
+		};
+		clock-controller@20010000 {
+			compatible = "sprd,ums9620-ap-clk";
+			reg = <0x00 0x20010000 0x00 0x3000>;
+			clocks = <0x09>;
+			clock-names = "ext-26m";
+			#clock-cells = <0x01>;
+			phandle = <0x08>;
+		};
+		apahb-gate {
+			compatible = "sprd,ums9620-apahb-gate";
+			sprd,syscon = <0xc7>;
+			clocks = <0x09>;
+			clock-names = "ext-26m";
+			#clock-cells = <0x01>;
+			#reset-cells = <0x01>;
+			phandle = <0x0d>;
+		};
+		aonapb-gate {
+			compatible = "sprd,ums9620-aon-gate";
+			sprd,syscon = <0x02>;
+			clocks = <0x09 0x64>;
+			clock-names = "ext-26m", "ext-32k";
+			#clock-cells = <0x01>;
+			#reset-cells = <0x01>;
+			phandle = <0x11>;
+		};
+		clock-controller@64920000 {
+			compatible = "sprd,ums9620-aonapb-clk";
+			reg = <0x00 0x64920000 0x00 0x3000>;
+			clocks = <0x09 0xc8 0x64 0x10 0xc9>;
+			clock-names = "ext-26m", "ext-52m", "ext-32k", "rco-100m", "rco-60m";
+			#clock-cells = <0x01>;
+			phandle = <0x0a>;
+		};
+		clock-controller@64940000 {
+			compatible = "sprd,ums9620-topdvfs-clk";
+			reg = <0x00 0x64940000 0x00 0x3000>;
+			clocks = <0x09>;
+			clock-names = "ext-26m";
+			#clock-cells = <0x01>;
+			phandle = <0x1c2>;
+		};
+		ipaapb-gate {
+			compatible = "sprd,ums9620-ipaapb-gate";
+			sprd,syscon = <0x60>;
+			clocks = <0x09>;
+			clock-names = "ext-26m";
+			#clock-cells = <0x01>;
+			#reset-cells = <0x01>;
+			phandle = <0x63>;
+		};
+		clock-controller@25010000 {
+			compatible = "sprd,ums9620-ipa-clk";
+			reg = <0x00 0x25010000 0x00 0x3000>;
+			clocks = <0x09>;
+			clock-names = "ext-26m";
+			#clock-cells = <0x01>;
+			phandle = <0x5c>;
+		};
+		clock-controller@25240000 {
+			compatible = "sprd,ums9620-ipaglb-gate";
+			reg = <0x00 0x25240000 0x00 0x3000>;
+			clocks = <0x09>;
+			clock-names = "ext-26m";
+			#clock-cells = <0x01>;
+			#reset-cells = <0x01>;
+			phandle = <0x1c3>;
+		};
+		clock-controller@31800000 {
+			compatible = "sprd,ums9620-ipadispc-gate";
+			reg = <0x00 0x31800000 0x00 0x3000>;
+			clocks = <0x09>;
+			clock-names = "ext_26m";
+			#clock-cells = <0x01>;
+			#reset-cells = <0x01>;
+			phandle = <0x5d>;
+		};
+		clock-controller@26000000 {
+			compatible = "sprd,ums9620-pcieapb-gate";
+			reg = <0x00 0x26000000 0x00 0x3000>;
+			clocks = <0x09>;
+			clock-names = "ext-26m";
+			#clock-cells = <0x01>;
+			#reset-cells = <0x01>;
+			status = "disable";
+			phandle = <0x1c4>;
+		};
+		clock-controller@26004000 {
+			compatible = "sprd,ums9620-pcie-clk";
+			reg = <0x00 0x26004000 0x00 0x3000>;
+			clocks = <0x09>;
+			clock-names = "ext-26m";
+			#clock-cells = <0x01>;
+			status = "disable";
+			phandle = <0x1c5>;
+		};
+		clock-controller@27000000 {
+			compatible = "sprd,ums9620-aiapb-gate";
+			reg = <0x00 0x27000000 0x00 0x3000>;
+			clocks = <0x09>;
+			clock-names = "ext-26m";
+			#clock-cells = <0x01>;
+			#reset-cells = <0x01>;
+			phandle = <0xbe>;
+		};
+		clock-controller@27004000 {
+			compatible = "sprd,ums9620-ai-clk";
+			reg = <0x00 0x27004000 0x00 0x3000>;
+			clocks = <0x09>;
+			clock-names = "ext-26m";
+			#clock-cells = <0x01>;
+			phandle = <0x1c6>;
+		};
+		clock-controller@27008000 {
+			compatible = "sprd,ums9620-ai-dvfs-clk";
+			reg = <0x00 0x27008000 0x00 0x3000>;
+			syscons = <0x02 0x00 0x2000 0x04 0x320 0x2000000>;
+			syscon-names = "enable", "power";
+			clocks = <0x09>;
+			clock-names = "ext-26m";
+			#clock-cells = <0x01>;
+			phandle = <0x1c7>;
+		};
+		mm-gate {
+			compatible = "sprd,ums9620-mm-gate";
+			sprd,syscon = <0x40>;
+			clocks = <0x09>;
+			clock-names = "ext-26m";
+			#clock-cells = <0x01>;
+			#reset-cells = <0x01>;
+			phandle = <0x1a>;
+		};
+		clock-controller@30010000 {
+			compatible = "sprd,ums9620-mm-clk";
+			reg = <0x00 0x30010000 0x00 0x3000>;
+			clocks = <0x09>;
+			clock-names = "ext-26m";
+			#clock-cells = <0x01>;
+			phandle = <0x19>;
+		};
+		clock-controller@30100000 {
+			compatible = "sprd,ums9620-dpu-vsp-gate";
+			reg = <0x00 0x30100000 0x00 0x3000>;
+			clocks = <0x09>;
+			clock-names = "ext-26m";
+			#clock-cells = <0x01>;
+			#reset-cells = <0x01>;
+			phandle = <0x33>;
+		};
+		clock-controller@30110000 {
+			compatible = "sprd,ums9620-dpu-vsp-clk";
+			reg = <0x00 0x30110000 0x00 0x3000>;
+			clocks = <0x09 0x30 0x31>;
+			clock-names = "ext-26m", "dphy-312m5", "dphy-416m7";
+			#clock-cells = <0x01>;
+			phandle = <0x32>;
+		};
+		clock-controller@56200000 {
+			compatible = "sprd,ums9620-audcpglb-gate";
+			reg = <0x00 0x56200000 0x00 0x3000>;
+			clocks = <0x09>;
+			clock-names = "ext-26m";
+			#clock-cells = <0x01>;
+			#reset-cells = <0x01>;
+			phandle = <0xbb>;
+		};
+		clock-controller@56390000 {
+			compatible = "sprd,ums9620-audcpapb-gate";
+			reg = <0x00 0x56390000 0x00 0x3000>;
+			clocks = <0x09>;
+			clock-names = "ext-26m";
+			#clock-cells = <0x01>;
+			#reset-cells = <0x01>;
+			phandle = <0x1c8>;
+		};
+	};
+	__symbols__ {
+		pmu_gate = "/soc/pmu-gate";
+		g1_pll = "/soc/g1-pll";
+		g1l_pll = "/soc/g1l-pll";
+		g5l_pll = "/soc/g5l-pll";
+		g5r_pll = "/soc/g5r-pll";
+		g8_pll = "/soc/g8-pll";
+		g9_pll = "/soc/g9-pll";
+		g10_pll = "/soc/g10-pll";
+		apapb_gate = "/soc/apapb-gate";
+		ap_clk = "/soc/clock-controller@20010000";
+		apahb_gate = "/soc/apahb-gate";
+		aonapb_gate = "/soc/aonapb-gate";
+		aonapb_clk = "/soc/clock-controller@64920000";
+		topdvfs_clk = "/soc/clock-controller@64940000";
+		ipaapb_gate = "/soc/ipaapb-gate";
+		ipa_clk = "/soc/clock-controller@25010000";
+		ipaglb_gate = "/soc/clock-controller@25240000";
+		ipadispc_gate = "/soc/clock-controller@31800000";
+		pcieapb_gate = "/soc/clock-controller@26000000";
+		pcie_clk = "/soc/clock-controller@26004000";
+		aiapb_gate = "/soc/clock-controller@27000000";
+		ai_clk = "/soc/clock-controller@27004000";
+		ai_dvfs_clk = "/soc/clock-controller@27008000";
+		mm_gate = "/soc/mm-gate";
+		mm_clk = "/soc/clock-controller@30010000";
+		dpu_vsp_gate = "/soc/clock-controller@30100000";
+		dpu_vsp_clk = "/soc/clock-controller@30110000";
+		audcpglb_gate = "/soc/clock-controller@56200000";
+		audcpapb_gate = "/soc/clock-controller@56390000";
+	};
+};

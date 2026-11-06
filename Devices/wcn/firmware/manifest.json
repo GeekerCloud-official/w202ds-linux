@@ -1,0 +1,42 @@
+{
+  "schema": 1,
+  "status": "原厂 WCN/GNSS 启动固件和两份板配置已存在",
+  "files": [
+    {
+      "path": "firmware/gnssmodem.bin",
+      "bytes": 323412,
+      "sha256": "f488317c533bae9d55ac1c17b0a8626f8469211205039a86b82fd3b11abbb7d2",
+      "storage": "regular",
+      "format": "vendor-firmware"
+    },
+    {
+      "path": "firmware/wcnmodem.bin",
+      "bytes": 986032,
+      "sha256": "763cd70aa7c2553ace350aaee020438f9ad362fe3c12aedfbbde4577655401ff",
+      "storage": "regular",
+      "format": "vendor-firmware"
+    },
+    {
+      "path": "firmware/wifi_board_config.ini",
+      "bytes": 7351,
+      "sha256": "e5756eff6e77924984c62bc5afd1ea5c84b3baa389605cdc090fbe2e4afb5fd4",
+      "storage": "regular",
+      "format": "board-configuration"
+    },
+    {
+      "path": "firmware/wifi_board_config_ab.ini",
+      "bytes": 6831,
+      "sha256": "c062fd2cafc17b8878b5be1db3861c83dde16e1b1377e913ba77776173c69470",
+      "storage": "regular",
+      "format": "board-configuration"
+    }
+  ],
+  "redistribution": "Original vendor binaries have no newly established redistribution license; preserve provenance.",
+  "shared_with": [
+    "wifi",
+    "bluetooth",
+    "gnss"
+  ],
+  "placement": "Known firmware is stored as regular files beneath this device firmware directory; shared chip firmware has one owner.",
+  "imported_from": "w202ds-research/bsp/Devices/wcn/firmware"
+}

@@ -1,0 +1,12 @@
+// W202DS Server hardware layout; split from the validated imported tree.
+/ {
+	soc {
+		hall_sensor {
+			compatible = "ah,hall_ic";
+			linux,min-uv = <0x1b7740>;
+			linux,max-uv = <0x1b7740>;
+			ah,gpio_irq = <0x0c 0x94 0x00>;
+			linux,name = "hall_sensor";
+		};
+	};
+};

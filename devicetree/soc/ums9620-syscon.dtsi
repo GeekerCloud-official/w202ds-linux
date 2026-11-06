@@ -1,0 +1,280 @@
+// W202DS Server hardware layout; split from the validated imported tree.
+/ {
+	soc {
+		syscon@20000000 {
+			compatible = "sprd,ums9620-glbregs", "syscon";
+			#syscon-cells = <0x02>;
+			reg = <0x00 0x20000000 0x00 0x6000>;
+			phandle = <0xc7>;
+		};
+		syscon@20100000 {
+			compatible = "sprd,ums9620-glbregs", "syscon";
+			#syscon-cells = <0x02>;
+			reg = <0x00 0x20100000 0x00 0x3000>;
+			phandle = <0x15>;
+		};
+		syscon@23000000 {
+			compatible = "sprd,ums9620-glbregs", "syscon";
+			#syscon-cells = <0x02>;
+			reg = <0x00 0x23000000 0x00 0x3000>;
+			phandle = <0x42>;
+		};
+		syscon@23014000 {
+			compatible = "sprd,ums9620-glbregs", "syscon";
+			#syscon-cells = <0x02>;
+			reg = <0x00 0x23014000 0x00 0x3000>;
+			phandle = <0x43>;
+		};
+		syscon@25000000 {
+			compatible = "sprd,ums9620-glbregs", "syscon";
+			#syscon-cells = <0x02>;
+			reg = <0x00 0x25000000 0x00 0x3000>;
+			phandle = <0x60>;
+		};
+		syscon@25240000 {
+			compatible = "sprd,ums9620-glbregs", "syscon";
+			#syscon-cells = <0x02>;
+			reg = <0x00 0x25240000 0x00 0x3000>;
+			phandle = <0x58>;
+		};
+		syscon@26000000 {
+			compatible = "sprd,ums9620-glbregs", "syscon";
+			#syscon-cells = <0x02>;
+			reg = <0x00 0x26000000 0x00 0x3000>;
+			phandle = <0x05>;
+		};
+		syscon@30100000 {
+			compatible = "sprd,ums9520-glbregs", "syscon";
+			#syscon-cells = <0x02>;
+			reg = <0x00 0x30100000 0x00 0x4000>;
+			phandle = <0x2d>;
+		};
+		syscon@31810000 {
+			compatible = "sprd,ums9520-glbregs", "syscon";
+			#syscon-cells = <0x02>;
+			reg = <0x00 0x31810000 0x00 0x1000>;
+			phandle = <0x5f>;
+		};
+		syscon@31890000 {
+			compatible = "sprd,ums9520-glbregs", "syscon";
+			#syscon-cells = <0x02>;
+			reg = <0x00 0x31890000 0x00 0x10000>;
+			phandle = <0x68>;
+		};
+		syscon@2600C000 {
+			compatible = "sprd,ums9620-glbregs", "syscon";
+			#syscon-cells = <0x02>;
+			reg = <0x00 0x2600c000 0x00 0x3000>;
+			phandle = <0x06>;
+		};
+		syscon@27000000 {
+			compatible = "sprd,ums9620-glbregs", "syscon";
+			#syscon-cells = <0x02>;
+			reg = <0x00 0x27000000 0x00 0x4000>;
+			phandle = <0xbd>;
+		};
+		syscon@30000000 {
+			compatible = "sprd,ums9620-glbregs", "syscon";
+			#syscon-cells = <0x02>;
+			reg = <0x00 0x30000000 0x00 0x3000>;
+			phandle = <0x40>;
+		};
+		syscon@30014000 {
+			compatible = "sprd,ums9620-glbregs", "syscon";
+			#syscon-cells = <0x02>;
+			reg = <0x00 0x30014000 0x00 0x4000>;
+			phandle = <0x41>;
+		};
+		syscon@31800000 {
+			compatible = "sprd,ums9620-glbregs", "syscon";
+			#syscon-cells = <0x02>;
+			reg = <0x00 0x31800000 0x00 0x3000>;
+			phandle = <0x5a>;
+		};
+		syscon@3b600000 {
+			compatible = "sprd,ums9620-glbregs", "syscon";
+			#syscon-cells = <0x02>;
+			reg = <0x00 0x3b600000 0x00 0x3000>;
+			phandle = <0x49>;
+		};
+		syscon@0x56200000 {
+			compatible = "sprd,ums9620-glbregs", "syscon";
+			#syscon-cells = <0x02>;
+			reg = <0x00 0x56200000 0x00 0x20c8>;
+			phandle = <0x9a>;
+		};
+		syscon@0x562000c8 {
+			compatible = "sprd,ums9620-glbregs", "syscon";
+			#syscon-cells = <0x02>;
+			reg = <0x00 0x562000c8 0x00 0x22f8>;
+			phandle = <0x139>;
+		};
+		syscon@0x56240000 {
+			compatible = "sprd,ums9620-glbregs", "syscon";
+			#syscon-cells = <0x02>;
+			reg = <0x00 0x56240000 0x00 0x10000>;
+			phandle = <0xbc>;
+		};
+		syscon@0x56250000 {
+			compatible = "sprd,ums9620-glbregs", "syscon";
+			#syscon-cells = <0x02>;
+			reg = <0x00 0x56250000 0x00 0x4000>;
+			phandle = <0x7d>;
+		};
+		syscon@56390000 {
+			compatible = "sprd,ums9620-glbregs", "syscon";
+			reg = <0x00 0x56390000 0x00 0x3000>;
+			#syscon-cells = <0x02>;
+			phandle = <0x7b>;
+		};
+		syscon@56394000 {
+			compatible = "sprd,ums9620-glbregs", "syscon";
+			reg = <0x00 0x56394000 0x00 0x400>;
+			#syscon-cells = <0x02>;
+			phandle = <0x7c>;
+		};
+		syscon@60050000 {
+			compatible = "sprd,ums9620-glbregs", "syscon";
+			#syscon-cells = <0x02>;
+			reg = <0x00 0x60050000 0x00 0x10000>;
+			phandle = <0x80>;
+		};
+		syscon@25304000 {
+			compatible = "sprd,ums9620-glbregs", "syscon";
+			#syscon-cells = <0x02>;
+			reg = <0x00 0x25304000 0x00 0x3000>;
+			phandle = <0x6a>;
+		};
+		syscon@64300000 {
+			compatible = "sprd,ums9620-glbregs", "syscon";
+			#syscon-cells = <0x02>;
+			reg = <0x00 0x64300000 0x00 0x3000>;
+			phandle = <0x67>;
+		};
+		syscon@64304000 {
+			compatible = "sprd,ums9620-glbregs", "syscon";
+			#syscon-cells = <0x02>;
+			reg = <0x00 0x64304000 0x00 0x3000>;
+			phandle = <0xc0>;
+		};
+		syscon@64308000 {
+			compatible = "sprd,ums9620-glbregs", "syscon";
+			#syscon-cells = <0x02>;
+			reg = <0x00 0x64308000 0x00 0x3000>;
+			phandle = <0xc1>;
+		};
+		syscon@64318000 {
+			compatible = "sprd,ums9620-glbregs", "syscon";
+			#syscon-cells = <0x02>;
+			reg = <0x00 0x64318000 0x00 0x3000>;
+			phandle = <0x48>;
+		};
+		syscon@6434c000 {
+			compatible = "sprd,ums9620-glbregs", "syscon";
+			#syscon-cells = <0x02>;
+			reg = <0x00 0x6434c000 0x00 0x3000>;
+			phandle = <0x47>;
+		};
+		syscon@64320000 {
+			compatible = "sprd,ums9620-glbregs", "syscon";
+			#syscon-cells = <0x02>;
+			reg = <0x00 0x64320000 0x00 0x3000>;
+			phandle = <0xc3>;
+		};
+		syscon@64324000 {
+			compatible = "sprd,ums9620-glbregs", "syscon";
+			#syscon-cells = <0x02>;
+			reg = <0x00 0x64324000 0x00 0x3000>;
+			phandle = <0xc2>;
+		};
+		syscon@6432C000 {
+			compatible = "sprd,ums9620-glbregs", "syscon";
+			#syscon-cells = <0x02>;
+			reg = <0x00 0x6432c000 0x00 0x3000>;
+			phandle = <0xc4>;
+		};
+		syscon@64330000 {
+			compatible = "sprd,ums9620-glbregs", "syscon";
+			#syscon-cells = <0x02>;
+			reg = <0x00 0x64330000 0x00 0x3000>;
+			phandle = <0xc5>;
+		};
+		syscon@64334000 {
+			compatible = "sprd,ums9620-glbregs", "syscon";
+			#syscon-cells = <0x02>;
+			reg = <0x00 0x64334000 0x00 0x3000>;
+			phandle = <0xc6>;
+		};
+		syscon@64380000 {
+			compatible = "sprd,ums9620-glbregs", "syscon";
+			#syscon-cells = <0x02>;
+			reg = <0x00 0x64380000 0x00 0x3000>;
+			phandle = <0x12>;
+		};
+		syscon@64900000 {
+			compatible = "sprd,ums9620-glbregs", "syscon";
+			#syscon-cells = <0x02>;
+			reg = <0x00 0x64900000 0x00 0x3000>;
+			phandle = <0x02>;
+		};
+		syscon@64910000 {
+			compatible = "sprd,ums9620-glbregs", "syscon";
+			#syscon-cells = <0x02>;
+			reg = <0x00 0x64910000 0x00 0x3000>;
+			phandle = <0x04>;
+		};
+		syscon@64930000 {
+			compatible = "sprd,ums9620-glbregs", "syscon";
+			#syscon-cells = <0x02>;
+			reg = <0x00 0x64930000 0x00 0x3000>;
+			phandle = <0x81>;
+		};
+		syscon@64940000 {
+			compatible = "sprd,ums9620-glbregs", "syscon";
+			#syscon-cells = <0x02>;
+			reg = <0x00 0x64940000 0x00 0x3000>;
+			phandle = <0x44>;
+		};
+	};
+	__symbols__ {
+		ap_ahb_regs = "/soc/syscon@20000000";
+		ap_apb_regs = "/soc/syscon@20100000";
+		gpu_apb_regs = "/soc/syscon@23000000";
+		gpu_dvfs_apb_regs = "/soc/syscon@23014000";
+		ipa_apb_regs = "/soc/syscon@25000000";
+		ipa_glb_apb_regs = "/soc/syscon@25240000";
+		pcie_apb_regs = "/soc/syscon@26000000";
+		dpu_vsp_apb_regs = "/soc/syscon@30100000";
+		ipa_usb31_dp_regs = "/soc/syscon@31810000";
+		ipa_usb31_dptx_regs = "/soc/syscon@31890000";
+		anlg_phy_pcie3_regs = "/soc/syscon@2600C000";
+		ai_apb_regs = "/soc/syscon@27000000";
+		mm_ahb_regs = "/soc/syscon@30000000";
+		mm_dvfs_regs = "/soc/syscon@30014000";
+		ipa_dispc_glb_apb_regs = "/soc/syscon@31800000";
+		mm_csi_switch_regs = "/soc/syscon@3b600000";
+		audcp_ahb_regs = "/soc/syscon@0x56200000";
+		audcp_apb_regs = "/soc/syscon@0x562000c8";
+		audcp_clk_rf_regs = "/soc/syscon@0x56240000";
+		audcp_dvfs_apb_rf_regs = "/soc/syscon@0x56250000";
+		audcp_aon_apb_regs = "/soc/syscon@56390000";
+		aud_aon_clk_regs = "/soc/syscon@56394000";
+		pub_apb_regs = "/soc/syscon@60050000";
+		anlg_phy_g0_regs = "/soc/syscon@25304000";
+		anlg_phy_g0l_regs = "/soc/syscon@64300000";
+		anlg_phy_g1_regs = "/soc/syscon@64304000";
+		anlg_phy_g1l_regs = "/soc/syscon@64308000";
+		anlg_phy_g4_regs = "/soc/syscon@64318000";
+		anlg_phy_g4l_regs = "/soc/syscon@6434c000";
+		anlg_phy_g5r_regs = "/soc/syscon@64320000";
+		anlg_phy_g5l_regs = "/soc/syscon@64324000";
+		anlg_phy_g8_regs = "/soc/syscon@6432C000";
+		anlg_phy_g9_regs = "/soc/syscon@64330000";
+		anlg_phy_g10_regs = "/soc/syscon@64334000";
+		anlg_phy_g12_regs = "/soc/syscon@64380000";
+		aon_apb_regs = "/soc/syscon@64900000";
+		pmu_apb_regs = "/soc/syscon@64910000";
+		aon_pre_div_clk_gen_regs = "/soc/syscon@64930000";
+		top_dvfs_apb_regs = "/soc/syscon@64940000";
+	};
+};

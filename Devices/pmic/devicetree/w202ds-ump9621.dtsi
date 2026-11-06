@@ -1,0 +1,92 @@
+// W202DS Server hardware layout; split from the validated imported tree.
+/ {
+	aliases {
+		pmic_efuse1 = "/soc/aon/spi@400000/pmic@1/efuse@800";
+	};
+	soc {
+		aon {
+			spi@400000 {
+				pmic@1 {
+					compatible = "sprd,ump9621";
+					reg = <0x01>;
+					spi-max-frequency = <0x18cba80>;
+					#address-cells = <0x01>;
+					#size-cells = <0x00>;
+					phandle = <0x1a6>;
+					syscon@2000 {
+						compatible = "sprd,ump9621-syscon";
+						reg = <0x2000>;
+					};
+					efuse@800 {
+						compatible = "sprd,ump9621-efuse", "sprd,sc27xx-efuse";
+						reg = <0x800>;
+						#address-cells = <0x01>;
+						#size-cells = <0x01>;
+						hwlocks = <0x69 0x0f>;
+						phandle = <0x1a7>;
+					};
+					power-controller@2000 {
+						compatible = "sprd,ump9621-regulator";
+						DCDC_SRAM1 {
+							regulator-name = "vddsram1";
+							regulator-min-microvolt = <0x493e0>;
+							regulator-max-microvolt = <0x185dcb>;
+							regulator-ramp-delay = <0x61a8>;
+							regulator-always-on;
+							phandle = <0x1a8>;
+						};
+						DCDC_SRAM2 {
+							regulator-name = "vddsram2";
+							regulator-min-microvolt = <0x493e0>;
+							regulator-max-microvolt = <0x185dcb>;
+							regulator-ramp-delay = <0x61a8>;
+							regulator-always-on;
+							phandle = <0x1a9>;
+						};
+						DCDC_AI {
+							regulator-name = "vddai";
+							regulator-min-microvolt = <0x30d40>;
+							regulator-max-microvolt = <0x185dcb>;
+							regulator-ramp-delay = <0x61a8>;
+							phandle = <0xbf>;
+						};
+						DCDC_MODEM {
+							status = "disabled";
+							regulator-name = "vddmodem";
+							regulator-min-microvolt = <0x30d40>;
+							regulator-max-microvolt = <0x185dcb>;
+							regulator-ramp-delay = <0x61a8>;
+							phandle = <0x1aa>;
+						};
+						DCDC_CPU0 {
+							regulator-name = "vddcpu0";
+							regulator-min-microvolt = <0x30d40>;
+							regulator-max-microvolt = <0x185dcb>;
+							regulator-ramp-delay = <0x61a8>;
+							regulator-always-on;
+							phandle = <0x1ab>;
+						};
+						DCDC_MM {
+							regulator-always-on;
+							regulator-name = "vddmm";
+							regulator-min-microvolt = <0x30d40>;
+							regulator-max-microvolt = <0x185dcb>;
+							regulator-ramp-delay = <0x61a8>;
+							phandle = <0x1ac>;
+						};
+					};
+				};
+			};
+		};
+	};
+	__symbols__ {
+		ump9621_pmic = "/soc/aon/spi@400000/pmic@1";
+		ump9621_efuse = "/soc/aon/spi@400000/pmic@1/efuse@800";
+		vddsram1 = "/soc/aon/spi@400000/pmic@1/power-controller@2000/DCDC_SRAM1";
+		vddsram2 = "/soc/aon/spi@400000/pmic@1/power-controller@2000/DCDC_SRAM2";
+		vddai = "/soc/aon/spi@400000/pmic@1/power-controller@2000/DCDC_AI";
+		vddmodem = "/soc/aon/spi@400000/pmic@1/power-controller@2000/DCDC_MODEM";
+		vddcpu0 = "/soc/aon/spi@400000/pmic@1/power-controller@2000/DCDC_CPU0";
+		vddmm = "/soc/aon/spi@400000/pmic@1/power-controller@2000/DCDC_MM";
+	};
+};

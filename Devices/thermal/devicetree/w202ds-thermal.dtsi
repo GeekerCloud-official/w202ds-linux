@@ -1,0 +1,454 @@
+// W202DS Server hardware layout; split from the validated imported tree.
+/ {
+	chg-sensor {
+		phandle = <0x23d>;
+		temperature-lookup-table = <0xffff64c2 0x46b 0xffff8baf 0x456 0xffffb3e8 0x432 0xffffedb9 0x3d7 0x277e 0x346 0x60e5 0x28e 0xaf7a 0x19d 0xd677 0x13c 0xfd7f 0xee 0x12484 0xb2 0x14b93 0x85 0x172a3 0x64 0x199b0 0x4b 0x1c0c9 0x39 0x1e7c8 0x2b>;
+		io-channel-names = "sensor-channel";
+		io-channels = <0x75 0x04>;
+		#thermal-sensor-cells = <0x00>;
+		compatible = "generic-adc-thermal";
+	};
+	nr-sensor {
+		phandle = <0x23c>;
+		temperature-lookup-table = <0xffff64c2 0x46b 0xffff8baf 0x456 0xffffb3e8 0x432 0xffffedb9 0x3d7 0x277e 0x346 0x60e5 0x28e 0xaf7a 0x19d 0xd677 0x13c 0xfd7f 0xee 0x12484 0xb2 0x14b93 0x85 0x172a3 0x64 0x199b0 0x4b 0x1c0c9 0x39 0x1e7c8 0x2b>;
+		io-channel-names = "sensor-channel";
+		io-channels = <0x75 0x03>;
+		#thermal-sensor-cells = <0x00>;
+		compatible = "generic-adc-thermal";
+	};
+	pa-sensor {
+		phandle = <0x23b>;
+		temperature-lookup-table = <0xffff64c2 0x46b 0xffff8baf 0x456 0xffffb3e8 0x432 0xffffedb9 0x3d7 0x277e 0x346 0x60e5 0x28e 0xaf7a 0x19d 0xd677 0x13c 0xfd7f 0xee 0x12484 0xb2 0x14b93 0x85 0x172a3 0x64 0x199b0 0x4b 0x1c0c9 0x39 0x1e7c8 0x2b>;
+		io-channel-names = "sensor-channel";
+		io-channels = <0x75 0x02>;
+		#thermal-sensor-cells = <0x00>;
+		compatible = "generic-adc-thermal";
+	};
+	thermal-sensor {
+		phandle = <0x23a>;
+		temperature-lookup-table = <0xffff64c2 0x46b 0xffff8baf 0x456 0xffffb3e8 0x432 0xffffedb9 0x3d7 0x277e 0x346 0x60e5 0x28e 0xaf7a 0x19d 0xd677 0x13c 0xfd7f 0xee 0x12484 0xb2 0x14b93 0x85 0x172a3 0x64 0x199b0 0x4b 0x1c0c9 0x39 0x1e7c8 0x2b>;
+		io-channel-names = "sensor-channel";
+		io-channels = <0x75 0x01>;
+		#thermal-sensor-cells = <0x00>;
+		compatible = "generic-adc-thermal";
+	};
+	aliases {
+		thm-sensor0 = "/virtual-sensor@0";
+	};
+	soc {
+		aon {
+			thermal@270000 {
+				compatible = "sprd,thermal_r5p0";
+				reg = <0x270000 0x10000>;
+				clock-names = "enable";
+				clocks = <0x11 0x27>;
+				#thermal-sensor-cells = <0x01>;
+				nvmem-cells = <0x83>;
+				nvmem-cell-names = "thm_ratio_cal";
+				#address-cells = <0x01>;
+				#size-cells = <0x00>;
+				phandle = <0x11f>;
+				sensor@0 {
+					reg = <0x00>;
+					nvmem-cells = <0x84>;
+					nvmem-cell-names = "sen_delta_cal";
+				};
+				sensor@1 {
+					reg = <0x01>;
+					nvmem-cells = <0x85>;
+					nvmem-cell-names = "sen_delta_cal";
+				};
+			};
+			thermal@280000 {
+				compatible = "sprd,thermal_r5p0";
+				reg = <0x280000 0x10000>;
+				clock-names = "enable";
+				clocks = <0x11 0x28>;
+				#thermal-sensor-cells = <0x01>;
+				nvmem-cells = <0x86>;
+				nvmem-cell-names = "thm_ratio_cal";
+				#address-cells = <0x01>;
+				#size-cells = <0x00>;
+				phandle = <0x120>;
+				sensor@0 {
+					reg = <0x00>;
+					nvmem-cells = <0x87>;
+					nvmem-cell-names = "sen_delta_cal";
+				};
+				sensor@1 {
+					reg = <0x01>;
+					nvmem-cells = <0x88>;
+					nvmem-cell-names = "sen_delta_cal";
+				};
+				sensor@2 {
+					reg = <0x02>;
+					nvmem-cells = <0x89>;
+					nvmem-cell-names = "sen_delta_cal";
+				};
+				sensor@3 {
+					reg = <0x03>;
+					nvmem-cells = <0x8a>;
+					nvmem-cell-names = "sen_delta_cal";
+				};
+			};
+			thermal@290000 {
+				compatible = "sprd,thermal_r5p0";
+				reg = <0x290000 0x10000>;
+				clock-names = "enable";
+				clocks = <0x11 0x29>;
+				#thermal-sensor-cells = <0x01>;
+				nvmem-cells = <0x8b>;
+				nvmem-cell-names = "thm_ratio_cal";
+				#address-cells = <0x01>;
+				#size-cells = <0x00>;
+				phandle = <0x121>;
+				sensor@0 {
+					reg = <0x00>;
+					nvmem-cells = <0x8c>;
+					nvmem-cell-names = "sen_delta_cal";
+				};
+				sensor@1 {
+					reg = <0x01>;
+					nvmem-cells = <0x8d>;
+					nvmem-cell-names = "sen_delta_cal";
+				};
+				sensor@2 {
+					reg = <0x02>;
+					nvmem-cells = <0x8e>;
+					nvmem-cell-names = "sen_delta_cal";
+				};
+				sensor@3 {
+					reg = <0x03>;
+					nvmem-cells = <0x8f>;
+					nvmem-cell-names = "sen_delta_cal";
+				};
+				sensor@4 {
+					reg = <0x04>;
+					nvmem-cells = <0x90>;
+					nvmem-cell-names = "sen_delta_cal";
+				};
+				sensor@5 {
+					reg = <0x05>;
+					nvmem-cells = <0x91>;
+					nvmem-cell-names = "sen_delta_cal";
+				};
+				sensor@6 {
+					reg = <0x06>;
+					nvmem-cells = <0x92>;
+					nvmem-cell-names = "sen_delta_cal";
+				};
+			};
+			thermal@2A0000 {
+				compatible = "sprd,thermal_r5p0";
+				reg = <0x2a0000 0x10000>;
+				clock-names = "enable";
+				clocks = <0x11 0x2a>;
+				#thermal-sensor-cells = <0x01>;
+				nvmem-cells = <0x93>;
+				nvmem-cell-names = "thm_ratio_cal";
+				#address-cells = <0x01>;
+				#size-cells = <0x00>;
+				phandle = <0x122>;
+				sensor@0 {
+					reg = <0x00>;
+					nvmem-cells = <0x94>;
+					nvmem-cell-names = "sen_delta_cal";
+				};
+				sensor@1 {
+					reg = <0x01>;
+					nvmem-cells = <0x95>;
+					nvmem-cell-names = "sen_delta_cal";
+				};
+				sensor@2 {
+					reg = <0x02>;
+					nvmem-cells = <0x96>;
+					nvmem-cell-names = "sen_delta_cal";
+				};
+				sensor@3 {
+					reg = <0x03>;
+					nvmem-cells = <0x97>;
+					nvmem-cell-names = "sen_delta_cal";
+				};
+				sensor@4 {
+					reg = <0x04>;
+					nvmem-cells = <0x98>;
+					nvmem-cell-names = "sen_delta_cal";
+				};
+				sensor@5 {
+					reg = <0x05>;
+					nvmem-cells = <0x99>;
+					nvmem-cell-names = "sen_delta_cal";
+				};
+			};
+		};
+	};
+	thermal-zones {
+		phandle = <0x209>;
+		chg-thmzone {
+			phandle = <0x25d>;
+			thermal-sensors = <0x23d>;
+			polling-delay = <0x00>;
+			polling-delay-passive = <0x00>;
+		};
+		nr-thmzone {
+			phandle = <0x25c>;
+			thermal-sensors = <0x23c>;
+			polling-delay = <0x00>;
+			polling-delay-passive = <0x00>;
+		};
+		pa-thmzone {
+			phandle = <0x25b>;
+			thermal-sensors = <0x23b>;
+			polling-delay = <0x00>;
+			polling-delay-passive = <0x00>;
+		};
+		board-thmzone {
+			phandle = <0x25a>;
+			thermal-sensors = <0x23a>;
+			polling-delay = <0x00>;
+			polling-delay-passive = <0x00>;
+		};
+		soc-thmzone {
+			polling-delay-passive = <0x64>;
+			polling-delay = <0x3e8>;
+			sustainable-power = <0xbb8>;
+			thermal-sensors = <0x118 0x00>;
+			phandle = <0x20a>;
+			trips {
+				trip-point@0 {
+					temperature = <0x11170>;
+					hysteresis = <0x3e8>;
+					type = "passive";
+					phandle = <0x20b>;
+				};
+				trip-point@1 {
+					temperature = <0x14c08>;
+					hysteresis = <0x3e8>;
+					type = "passive";
+					phandle = <0x119>;
+				};
+				soc_crit {
+					temperature = <0x1adb0>;
+					hysteresis = <0x7d0>;
+					type = "critical";
+					phandle = <0x20c>;
+				};
+			};
+			cooling-maps {
+				map0 {
+					trip = <0x119>;
+					contribution = <0x400>;
+					cooling-device = <0xde 0xffffffff 0xffffffff>;
+				};
+				map1 {
+					trip = <0x119>;
+					contribution = <0x19a>;
+					cooling-device = <0xe6 0xffffffff 0xffffffff>;
+				};
+				map2 {
+					trip = <0x119>;
+					contribution = <0x19a>;
+					cooling-device = <0xec 0xffffffff 0xffffffff>;
+				};
+				map3 {
+					trip = <0x119>;
+					contribution = <0x400>;
+					cooling-device = <0x11a 0xffffffff 0xffffffff>;
+				};
+				map4 {
+					trip = <0x119>;
+					contribution = <0x400>;
+					cooling-device = <0x11b 0xffffffff 0xffffffff>;
+				};
+				map5 {
+					trip = <0x119>;
+					contribution = <0x400>;
+					cooling-device = <0x11c 0xffffffff 0xffffffff>;
+				};
+				map7 {
+					trip = <0x119>;
+					contribution = <0x400>;
+					cooling-device = <0x11d 0xffffffff 0xffffffff>;
+				};
+				map8 {
+					trip = <0x119>;
+					contribution = <0x400>;
+					cooling-device = <0x11e 0xffffffff 0xffffffff>;
+				};
+			};
+		};
+		big7mid4-thmzone {
+			polling-delay-passive = <0x00>;
+			polling-delay = <0x00>;
+			thermal-sensors = <0x11f 0x00>;
+			phandle = <0x20d>;
+		};
+		big7-thmzone {
+			polling-delay-passive = <0x00>;
+			polling-delay = <0x00>;
+			thermal-sensors = <0x11f 0x01>;
+			phandle = <0x12b>;
+		};
+		mid5mid6-thmzone {
+			polling-delay-passive = <0x00>;
+			polling-delay = <0x00>;
+			thermal-sensors = <0x120 0x00>;
+			phandle = <0x20e>;
+		};
+		mid4-thmzone {
+			polling-delay-passive = <0x00>;
+			polling-delay = <0x00>;
+			thermal-sensors = <0x120 0x01>;
+			phandle = <0x128>;
+		};
+		mid5-thmzone {
+			polling-delay-passive = <0x00>;
+			polling-delay = <0x00>;
+			thermal-sensors = <0x120 0x02>;
+			phandle = <0x129>;
+		};
+		mid6-thmzone {
+			polling-delay-passive = <0x00>;
+			polling-delay = <0x00>;
+			thermal-sensors = <0x120 0x03>;
+			phandle = <0x12a>;
+		};
+		apcpu0-thmzone {
+			polling-delay-passive = <0x00>;
+			polling-delay = <0x00>;
+			thermal-sensors = <0x121 0x00>;
+			phandle = <0x20f>;
+		};
+		lit0-thmzone {
+			polling-delay-passive = <0x00>;
+			polling-delay = <0x00>;
+			thermal-sensors = <0x121 0x01>;
+			phandle = <0x124>;
+		};
+		lit1-thmzone {
+			polling-delay-passive = <0x00>;
+			polling-delay = <0x00>;
+			thermal-sensors = <0x121 0x02>;
+			phandle = <0x125>;
+		};
+		lit2-thmzone {
+			polling-delay-passive = <0x00>;
+			polling-delay = <0x00>;
+			thermal-sensors = <0x121 0x03>;
+			phandle = <0x126>;
+		};
+		lit3-thmzone {
+			polling-delay-passive = <0x00>;
+			polling-delay = <0x00>;
+			thermal-sensors = <0x121 0x04>;
+			phandle = <0x127>;
+		};
+		gpu-thmzone {
+			polling-delay-passive = <0x00>;
+			polling-delay = <0x00>;
+			thermal-sensors = <0x121 0x05>;
+			phandle = <0x12c>;
+		};
+		apcpu1-thmzone {
+			polling-delay-passive = <0x00>;
+			polling-delay = <0x00>;
+			thermal-sensors = <0x121 0x06>;
+			phandle = <0x210>;
+		};
+		ai0-thmzone {
+			polling-delay-passive = <0x00>;
+			polling-delay = <0x00>;
+			thermal-sensors = <0x122 0x00>;
+			phandle = <0x12d>;
+		};
+		ai1-thmzone {
+			polling-delay-passive = <0x00>;
+			polling-delay = <0x00>;
+			thermal-sensors = <0x122 0x01>;
+			phandle = <0x12e>;
+		};
+		mm-thmzone {
+			polling-delay-passive = <0x00>;
+			polling-delay = <0x00>;
+			thermal-sensors = <0x122 0x02>;
+			phandle = <0x211>;
+		};
+		lte-thmzone {
+			polling-delay-passive = <0x00>;
+			polling-delay = <0x00>;
+			thermal-sensors = <0x122 0x03>;
+			phandle = <0x212>;
+		};
+		nr0-thmzone {
+			polling-delay-passive = <0x00>;
+			polling-delay = <0x00>;
+			thermal-sensors = <0x122 0x04>;
+			phandle = <0x213>;
+		};
+		nr1-thmzone {
+			polling-delay-passive = <0x00>;
+			polling-delay = <0x00>;
+			thermal-sensors = <0x122 0x05>;
+			phandle = <0x214>;
+		};
+		osctsen-thmzone {
+			polling-delay-passive = <0x00>;
+			polling-delay = <0x00>;
+			thermal-sensors = <0x123 0x00>;
+			phandle = <0x215>;
+		};
+		outtsen-thmzone {
+			polling-delay-passive = <0x00>;
+			polling-delay = <0x00>;
+			thermal-sensors = <0x123 0x01>;
+			phandle = <0x216>;
+		};
+	};
+	virtual-sensor@0 {
+		compatible = "virtual-thermal";
+		#thermal-sensor-cells = <0x01>;
+		thmzone-cells = <0x124 0x125 0x126 0x127 0x128 0x129 0x12a 0x12b 0x12c 0x12d 0x12e>;
+		phandle = <0x118>;
+	};
+	__symbols__ {
+		chg_thmzone = "/thermal-zones/chg-thmzone";
+		nr_thmzone = "/thermal-zones/nr-thmzone";
+		pa_thmzone = "/thermal-zones/pa-thmzone";
+		bd_thmzone = "/thermal-zones/board-thmzone";
+		chg_thermistor = "/chg-sensor";
+		nr_thermistor = "/nr-sensor";
+		pa_thermistor = "/pa-sensor";
+		tboard_thermistor = "/thermal-sensor";
+		ap_thm0 = "/soc/aon/thermal@270000";
+		ap_thm1 = "/soc/aon/thermal@280000";
+		ap_thm2 = "/soc/aon/thermal@290000";
+		ap_thm3 = "/soc/aon/thermal@2A0000";
+		thm_zone = "/thermal-zones";
+		soc_thmzone = "/thermal-zones/soc-thmzone";
+		soc_threshold = "/thermal-zones/soc-thmzone/trips/trip-point@0";
+		soc_target = "/thermal-zones/soc-thmzone/trips/trip-point@1";
+		soc_crit = "/thermal-zones/soc-thmzone/trips/soc_crit";
+		big7mid4_thmzone = "/thermal-zones/big7mid4-thmzone";
+		big7_thmzone = "/thermal-zones/big7-thmzone";
+		mid5mid6_thmzone = "/thermal-zones/mid5mid6-thmzone";
+		mid4_thmzone = "/thermal-zones/mid4-thmzone";
+		mid5_thmzone = "/thermal-zones/mid5-thmzone";
+		mid6_thmzone = "/thermal-zones/mid6-thmzone";
+		apcpu0_thmzone = "/thermal-zones/apcpu0-thmzone";
+		lit0_thmzone = "/thermal-zones/lit0-thmzone";
+		lit1_thmzone = "/thermal-zones/lit1-thmzone";
+		lit2_thmzone = "/thermal-zones/lit2-thmzone";
+		lit3_thmzone = "/thermal-zones/lit3-thmzone";
+		gpu_thmzone = "/thermal-zones/gpu-thmzone";
+		apcpu1_thmzone = "/thermal-zones/apcpu1-thmzone";
+		ai0_thmzone = "/thermal-zones/ai0-thmzone";
+		ai1_thmzone = "/thermal-zones/ai1-thmzone";
+		mm_thmzone = "/thermal-zones/mm-thmzone";
+		lte_thmzone = "/thermal-zones/lte-thmzone";
+		nr0_thmzone = "/thermal-zones/nr0-thmzone";
+		nr1_thmzone = "/thermal-zones/nr1-thmzone";
+		osctsen_thmzone = "/thermal-zones/osctsen-thmzone";
+		outtsen_thmzone = "/thermal-zones/outtsen-thmzone";
+		virtual_sensor = "/virtual-sensor@0";
+	};
+};

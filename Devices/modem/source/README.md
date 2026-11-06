@@ -27,7 +27,7 @@ git diff bb7ca0a..HEAD -- Devices/modem/source/sprd_modem
 
 ## 构建输入与输出
 
-完整内核和独立模块在 CM2 构建。从主仓库根目录使用外层入口：
+完整内核和独立模块在本地构建。从主仓库根目录使用外层入口：
 
 ```sh
 export LOCALVERSION=

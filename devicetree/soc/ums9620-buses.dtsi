@@ -1,0 +1,76 @@
+// W202DS Server hardware layout; split from the validated imported tree.
+/ {
+	aliases {
+	};
+	soc {
+		compatible = "simple-bus";
+		#address-cells = <0x02>;
+		#size-cells = <0x02>;
+		ranges;
+		phandle = <0x136>;
+		ap-apb {
+			compatible = "simple-bus";
+			#address-cells = <0x01>;
+			#size-cells = <0x01>;
+			ranges = <0x00 0x00 0x20200000 0x100000>;
+		};
+		ap-ahb {
+			compatible = "simple-bus";
+			#address-cells = <0x01>;
+			#size-cells = <0x01>;
+			ranges = <0x00 0x00 0x20000000 0x22d0040>;
+		};
+		ch-ahb {
+			compatible = "simple-bus";
+			#address-cells = <0x02>;
+			#size-cells = <0x02>;
+			ranges;
+		};
+		dpuvsp {
+			compatible = "simple-bus";
+			#address-cells = <0x02>;
+			#size-cells = <0x02>;
+			ranges;
+		};
+		mm {
+			compatible = "simple-bus";
+			#address-cells = <0x02>;
+			#size-cells = <0x02>;
+			ranges;
+		};
+		ipa-apb {
+			compatible = "simple-bus";
+			#address-cells = <0x02>;
+			#size-cells = <0x02>;
+			ranges;
+		};
+		aon {
+			compatible = "simple-bus";
+			#address-cells = <0x01>;
+			#size-cells = <0x01>;
+			ranges = <0x00 0x00 0x64000000 0x1016000>;
+		};
+		agcp {
+			compatible = "simple-bus";
+			#address-cells = <0x02>;
+			#size-cells = <0x02>;
+			ranges;
+		};
+		pub {
+			compatible = "simple-bus";
+			#address-cells = <0x02>;
+			#size-cells = <0x02>;
+			ranges;
+		};
+		ai-axi {
+			compatible = "simple-bus";
+			#address-cells = <0x02>;
+			#size-cells = <0x02>;
+			ranges;
+		};
+	};
+	__symbols__ {
+		soc = "/soc";
+		iq_reserved = "/reserved-memory/iq-mem@aa000000";
+	};
+};

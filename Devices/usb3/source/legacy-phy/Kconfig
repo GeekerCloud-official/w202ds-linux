@@ -1,0 +1,6 @@
+config USB_W202DS_DUMMY_PHY
+	tristate "W202DS legacy USB2 PHY compatibility"
+	depends on ARCH_SPRD && USB_PHY && OF
+	help
+	  Supply the legacy usb-phy phandle expected by the board's DWC3.
+	  Keep built-in for early USB; module mode is for isolated tests.

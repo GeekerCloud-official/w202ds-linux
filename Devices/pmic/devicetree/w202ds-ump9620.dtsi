@@ -1,0 +1,678 @@
+// W202DS Server hardware layout; split from the validated imported tree.
+/ {
+	aliases {
+		pmic_efuse0 = "/soc/aon/spi@400000/pmic@0/efuse@c00";
+	};
+	soc {
+		aon {
+			spi@400000 {
+				pmic@0 {
+					compatible = "sprd,ump9620";
+					reg = <0x00>;
+					spi-max-frequency = <0x18cba80>;
+					interrupt-controller;
+					#interrupt-cells = <0x02>;
+					#address-cells = <0x01>;
+					#size-cells = <0x00>;
+					interrupts = <0x00 0xe6 0x04>;
+					phandle = <0x6b>;
+					watchdog@40 {
+						compatible = "sprd,ump9620-wdt", "sprd,sc27xx-wdt";
+						reg = <0x40>;
+						phandle = <0x180>;
+					};
+					led-controller@180 {
+						compatible = "sprd,ump9620-bltc", "sprd,sc27xx-bltc";
+						#address-cells = <0x01>;
+						#size-cells = <0x00>;
+						reg = <0x180>;
+						led@0 {
+							label = "red";
+							reg = <0x00>;
+						};
+						led@1 {
+							label = "green";
+							reg = <0x01>;
+						};
+						led@2 {
+							label = "blue";
+							reg = <0x02>;
+						};
+					};
+					rtc@200 {
+						compatible = "sprd,ump96xx-rtc", "sprd,sc27xx-rtc";
+						reg = <0x200>;
+						interrupt-parent = <0x6b>;
+						interrupts = <0x01 0x04>;
+					};
+					gpio@280 {
+						compatible = "sprd,ump96xx-eic", "sprd,sc27xx-eic", "sprd,sc2731-eic";
+						reg = <0x280>;
+						interrupt-parent = <0x6b>;
+						interrupts = <0x04 0x04>;
+						gpio-controller;
+						#gpio-cells = <0x02>;
+						interrupt-controller;
+						#interrupt-cells = <0x02>;
+						phandle = <0x73>;
+					};
+					fchg@400 {
+						compatible = "sprd,ump9620-fast-chg", "sprd,sc27xx-fast-chg";
+						reg = <0x400>;
+						interrupt-parent = <0x6b>;
+						interrupts = <0x05 0x04>;
+						nvmem-cell-names = "fchg_cur_calib";
+						nvmem-cells = <0x6c>;
+						status = "okay";
+						sprd,input-voltage-microvolt = <0x4c4b40>;
+						phys = <0x24>;
+						phandle = <0x181>;
+					};
+					adc@504 {
+						compatible = "sprd,ump9620-adc", "sprd,sc27xx-adc";
+						reg = <0x504>;
+						interrupt-parent = <0x6b>;
+						interrupts = <0x00 0x04>;
+						sprd_adc_pm_reg = <0x02 0x350 0x100>;
+						#io-channel-cells = <0x01>;
+						hwlocks = <0x69 0x04>;
+						nvmem-cells = <0x6d 0x6e 0x6f 0x70 0x71 0x72>;
+						nvmem-cell-names = "big_scale_calib1", "big_scale_calib2", "small_scale_calib1", "small_scale_calib2", "vbat_det_cal1", "vbat_det_cal2";
+						phandle = <0x75>;
+					};
+					fgu@800 {
+						extcon = <0x2c>;
+						use-typec-extcon;
+						sprd,basp;
+						sprd,capacity-charge-cycle;
+						sprd,capacity-boot-calibration;
+						sprd,capacity-sleep-calibration;
+						sprd,relax-current-threshold = <0x1e>;
+						sprd,relax-counter-threshold = <0x244>;
+						phys = <0x24>;
+						fgu-capacity-track;
+						compatible = "sprd,ump9620-fgu", "sprd,sc27xx-fgu";
+						reg = <0x800>;
+						bat-detect-gpio = <0x73 0x03 0x00>;
+						nvmem-cell-names = "fgu_calib";
+						nvmem-cells = <0x74>;
+						io-channels = <0x75 0x06 0x75 0x00 0x75 0x0e>;
+						io-channel-names = "adc-batt-id", "bat-temp", "charge-vol";
+						interrupt-parent = <0x6b>;
+						interrupts = <0x03 0x04>;
+						monitored-battery = <0x25 0x26>;
+						sprd,calib-resistance-micro-ohms = <0x12f2>;
+						sprd,comp-resistance-mohm = <0x0b>;
+						phandle = <0x182>;
+					};
+					efuse@c00 {
+						compatible = "sprd,ump9620-efuse", "sprd,sc27xx-efuse";
+						reg = <0xc00>;
+						#address-cells = <0x01>;
+						#size-cells = <0x01>;
+						hwlocks = <0x69 0x0c>;
+						phandle = <0x183>;
+						calib@38 {
+							reg = <0x38 0x02>;
+							phandle = <0x6d>;
+						};
+						calib@3a {
+							reg = <0x3a 0x02>;
+							phandle = <0x6e>;
+						};
+						calib@42 {
+							reg = <0x42 0x02>;
+							phandle = <0x6f>;
+						};
+						calib@40 {
+							reg = <0x40 0x02>;
+							phandle = <0x70>;
+						};
+						calib@46 {
+							reg = <0x46 0x02>;
+							phandle = <0x71>;
+						};
+						calib@44 {
+							reg = <0x44 0x02>;
+							phandle = <0x72>;
+						};
+						calib@1b {
+							reg = <0x48 0x02>;
+							phandle = <0x76>;
+						};
+						calib@1c {
+							reg = <0x4a 0x02>;
+							phandle = <0x77>;
+						};
+						calib@4 {
+							reg = <0x4c 0x02>;
+							phandle = <0x74>;
+						};
+						calib@32 {
+							reg = <0x32 0x02>;
+							phandle = <0x7e>;
+						};
+						calib@4a {
+							reg = <0x4a 0x02>;
+							phandle = <0x6c>;
+						};
+						calib@3c {
+							reg = <0x3c 0x02>;
+							phandle = <0x105>;
+						};
+						calib@3e {
+							reg = <0x3e 0x02>;
+							phandle = <0x106>;
+						};
+						calib@2e {
+							reg = <0x2e 0x02>;
+							phandle = <0x107>;
+						};
+						calib@48 {
+							reg = <0x48 0x02>;
+							phandle = <0x79>;
+						};
+						calib@2c {
+							reg = <0x2c 0x02>;
+							phandle = <0x78>;
+						};
+					};
+					typec@380 {
+						status = "okay";
+						extcon = <0x27>;
+						use_pdhub_c2c;
+						compatible = "sprd,ump96xx-typec", "sprd,sc27xx-typec";
+						interrupt-parent = <0x6b>;
+						interrupts = <0x08 0x04>;
+						reg = <0x380>;
+						sprd,mode = <0x02>;
+						nvmem-cells = <0x76 0x77>;
+						nvmem-cell-names = "typec_cc1_cal", "typec_cc2_cal";
+						phandle = <0x2c>;
+					};
+					pd@e00 {
+						compatible = "sprd,sc27xx-pd", "sprd,ump9620-pd";
+						reg = <0xe00 0x380>;
+						interrupt-parent = <0x6b>;
+						interrupts = <0x09 0x04>;
+						extcon = <0x2c>;
+						nvmem-cells = <0x78 0x79>;
+						nvmem-cell-names = "pdrc_calib", "pddelta_calib";
+						status = "okay";
+						sprd,syscon-aon-apb = <0x02>;
+						vbus-supply = <0x7a>;
+						use-pdhub-c2c;
+						phandle = <0x61>;
+						connector {
+							compatible = "usb-c-connector";
+							label = "USB-C";
+							power-role = "dual";
+							try-power-role = "sink";
+							source-pdos = <0x26019064>;
+							sink-pdos = <0x2601912c 0xc0dc2178>;
+							op-sink-microwatt = <0x989680>;
+							phandle = <0x184>;
+						};
+					};
+					audio-codec@1000 {
+						compatible = "unisoc,ump9620-audio-codec", "sprd,sc27xx-audio-codec";
+						#sound-dai-cells = <0x01>;
+						reg = <0x1000>;
+						sprd,syscon-pmu-apb = <0x04>;
+						sprd,syscon-aon-apb = <0x02>;
+						clk26m_sinout_pmic_en = <0x02 0x350 0x40>;
+						sprd,syscon-agcp-apb = <0x7b>;
+						sprd,syscon-audaon-clk = <0x7c>;
+						sprd,syscon-dvfs-apb = <0x7d>;
+						nvmem-cells = <0x7e 0x74>;
+						nvmem-cell-names = "neg_cp_efuse", "fgu_4p2_efuse";
+						status = "okay";
+						hp-use-inter-pa = <0x01>;
+						fixed-sample-rate = <0xbb80 0xbb80 0xbb80>;
+						digital-codec = <0x7f>;
+						set-offset = <0x1000>;
+						clr-offset = <0x2000>;
+						lrdat-sel = <0x01>;
+						phandle = <0x10e>;
+					};
+					syscon@2000 {
+						compatible = "sprd,ump962x-syscon";
+						reg = <0x2000 0x23a0 0x2398>;
+					};
+					smpl@2000 {
+						compatible = "sprd,ump9620-smpl", "sprd,sc27xx-smpl";
+						reg = <0x2000>;
+						sprd,smpl-timer-threshold = <0xfa>;
+						phandle = <0x185>;
+					};
+					power-controller@2000 {
+						compatible = "sprd,ump962x-regulator", "sprd,sc27xx-regulator";
+						DCDC_CPU2 {
+							regulator-name = "vddcpu2";
+							regulator-min-microvolt = <0x30d40>;
+							regulator-max-microvolt = <0x185dcb>;
+							regulator-ramp-delay = <0x61a8>;
+							regulator-always-on;
+							phandle = <0x186>;
+						};
+						DCDC_CPU1 {
+							regulator-name = "vddcpu1";
+							regulator-min-microvolt = <0x30d40>;
+							regulator-max-microvolt = <0x185dcb>;
+							regulator-ramp-delay = <0x61a8>;
+							regulator-always-on;
+							phandle = <0x187>;
+						};
+						DCDC_CORE {
+							regulator-name = "vddcore";
+							regulator-min-microvolt = <0x30d40>;
+							regulator-max-microvolt = <0x185dcb>;
+							regulator-ramp-delay = <0x61a8>;
+							regulator-always-on;
+							phandle = <0x188>;
+						};
+						DCDC_PUB {
+							regulator-name = "vddpub";
+							regulator-min-microvolt = <0x493e0>;
+							regulator-max-microvolt = <0x185dcb>;
+							regulator-ramp-delay = <0x61a8>;
+							regulator-always-on;
+							phandle = <0x189>;
+						};
+						DCDC_SRAM0 {
+							regulator-name = "vddsram0";
+							regulator-min-microvolt = <0x30d40>;
+							regulator-max-microvolt = <0x185dcb>;
+							regulator-ramp-delay = <0x61a8>;
+							regulator-always-on;
+							phandle = <0x18a>;
+						};
+						w202_vddgpu: DCDC_GPU {
+							status = "okay";
+							regulator-name = "vddgpu";
+							regulator-min-microvolt = <0x30d40>;
+							regulator-max-microvolt = <0x185dcb>;
+							regulator-ramp-delay = <0x61a8>;
+							phandle = <0x18b>;
+						};
+						DCDC_MEMQ {
+							regulator-name = "vddmemq";
+							regulator-min-microvolt = <0x61a80>;
+							regulator-max-microvolt = <0x185dcb>;
+							regulator-ramp-delay = <0x61a8>;
+							regulator-always-on;
+							phandle = <0x18c>;
+						};
+						DCDC_MEM {
+							regulator-name = "vddmem";
+							regulator-min-microvolt = <0x61a80>;
+							regulator-max-microvolt = <0x185196>;
+							regulator-ramp-delay = <0x61a8>;
+							regulator-always-on;
+							phandle = <0x18d>;
+						};
+						DCDC_GEN0 {
+							regulator-name = "vddgen0";
+							regulator-min-microvolt = <0x124f80>;
+							regulator-max-microvolt = <0x247a61>;
+							regulator-ramp-delay = <0x61a8>;
+							regulator-always-on;
+							phandle = <0x18e>;
+						};
+						DCDC_GEN1 {
+							regulator-name = "vddgen1";
+							regulator-min-microvolt = <0x61a80>;
+							regulator-max-microvolt = <0x185196>;
+							regulator-ramp-delay = <0x61a8>;
+							regulator-always-on;
+							phandle = <0x18f>;
+						};
+						DCDC_WPA {
+							status = "disabled";
+							regulator-name = "vddwpa";
+							regulator-min-microvolt = <0x60630>;
+							regulator-max-microvolt = <0x36dcec>;
+							regulator-ramp-delay = <0x61a8>;
+							phandle = <0x190>;
+						};
+						LDO_VDDCAMA0 {
+							regulator-name = "vddcama0";
+							regulator-min-microvolt = <0x124f80>;
+							regulator-max-microvolt = <0x393870>;
+							regulator-ramp-delay = <0x61a8>;
+							phandle = <0x21>;
+						};
+						LDO_VDDCAMA1 {
+							regulator-name = "vddcama1";
+							regulator-min-microvolt = <0x124f80>;
+							regulator-max-microvolt = <0x393870>;
+							regulator-ramp-delay = <0x61a8>;
+							phandle = <0x29>;
+						};
+						LDO_VDDCAMA2 {
+							regulator-name = "vddcama2";
+							regulator-min-microvolt = <0x124f80>;
+							regulator-max-microvolt = <0x393870>;
+							regulator-ramp-delay = <0x61a8>;
+							phandle = <0x1c>;
+						};
+						LDO_VDDCAMMOT0 {
+							regulator-name = "vddcammot0";
+							regulator-min-microvolt = <0x124f80>;
+							regulator-max-microvolt = <0x393870>;
+							regulator-ramp-delay = <0x61a8>;
+							phandle = <0x1e>;
+						};
+						LDO_VDDCAMMOT1 {
+							regulator-name = "vddcammot1";
+							regulator-min-microvolt = <0x124f80>;
+							regulator-max-microvolt = <0x393870>;
+							regulator-ramp-delay = <0x61a8>;
+							phandle = <0x191>;
+						};
+						LDO_VDDSIM0 {
+							status = "disabled";
+							regulator-name = "vddsim0";
+							regulator-min-microvolt = <0x124f80>;
+							regulator-max-microvolt = <0x393870>;
+							regulator-ramp-delay = <0x61a8>;
+							phandle = <0x192>;
+						};
+						LDO_VDDSIM1 {
+							status = "disabled";
+							regulator-name = "vddsim1";
+							regulator-min-microvolt = <0x124f80>;
+							regulator-max-microvolt = <0x393870>;
+							regulator-ramp-delay = <0x61a8>;
+							phandle = <0x193>;
+						};
+						LDO_VDDSIM2 {
+							regulator-name = "vddsim2";
+							regulator-min-microvolt = <0x124f80>;
+							regulator-max-microvolt = <0x393870>;
+							regulator-ramp-delay = <0x61a8>;
+							phandle = <0x194>;
+						};
+						LDO_VDDEMMCCORE {
+							regulator-name = "vddemmccore";
+							regulator-min-microvolt = <0x124f80>;
+							regulator-max-microvolt = <0x393870>;
+							regulator-ramp-delay = <0x61a8>;
+							phandle = <0x0e>;
+						};
+						LDO_VDDSDCORE {
+							regulator-always-on;
+							regulator-name = "vddsdcore";
+							regulator-min-microvolt = <0x30d400>;
+							regulator-max-microvolt = <0x30d400>;
+							regulator-ramp-delay = <0x61a8>;
+							phandle = <0x17>;
+						};
+						LDO_VDDSDIO {
+							regulator-name = "vddsdio";
+							regulator-min-microvolt = <0x124f80>;
+							regulator-max-microvolt = <0x393870>;
+							regulator-ramp-delay = <0x61a8>;
+							phandle = <0x18>;
+						};
+						LDO_VDD28 {
+							regulator-always-on;
+							regulator-name = "vdd28";
+							regulator-min-microvolt = <0x124f80>;
+							regulator-max-microvolt = <0x393870>;
+							regulator-ramp-delay = <0x61a8>;
+							phandle = <0x195>;
+						};
+						LDO_VDDVIB {
+							regulator-name = "vddvib";
+							regulator-min-microvolt = <0x124f80>;
+							regulator-max-microvolt = <0x393870>;
+							regulator-ramp-delay = <0x61a8>;
+							phandle = <0x196>;
+						};
+						LDO_VDDKPLED {
+							regulator-always-on;
+							regulator-name = "vddkpled";
+							regulator-min-microvolt = <0x325aa0>;
+							regulator-max-microvolt = <0x325aa0>;
+							regulator-ramp-delay = <0x61a8>;
+							phandle = <0x197>;
+						};
+						LDO_VDDWIFIPA {
+							regulator-name = "vddwifipa";
+							regulator-min-microvolt = <0x124f80>;
+							regulator-max-microvolt = <0x393870>;
+							regulator-ramp-delay = <0x61a8>;
+							phandle = <0x198>;
+						};
+						LDO_VDD18_DCXO {
+							regulator-name = "vdd18_dcxo";
+							regulator-min-microvolt = <0x124f80>;
+							regulator-max-microvolt = <0x393870>;
+							regulator-ramp-delay = <0x61a8>;
+							regulator-always-on;
+							phandle = <0x199>;
+						};
+						LDO_VDDUSB33 {
+							regulator-name = "vddusb33";
+							regulator-min-microvolt = <0x124f80>;
+							regulator-max-microvolt = <0x393870>;
+							regulator-ramp-delay = <0x61a8>;
+							phandle = <0x19a>;
+						};
+						LDO_VDDLDO0 {
+							status = "disabled";
+							regulator-name = "vddldo0";
+							regulator-min-microvolt = <0x124f80>;
+							regulator-max-microvolt = <0x393870>;
+							regulator-ramp-delay = <0x61a8>;
+							phandle = <0x19b>;
+						};
+						LDO_VDDLDO1 {
+							regulator-always-on;
+							regulator-name = "vddldo1";
+							regulator-min-microvolt = <0x124f80>;
+							regulator-max-microvolt = <0x393870>;
+							regulator-ramp-delay = <0x61a8>;
+							phandle = <0x19c>;
+						};
+						LDO_VDDLDO2 {
+							regulator-always-on;
+							regulator-name = "vddldo2";
+							regulator-min-microvolt = <0x124f80>;
+							regulator-max-microvolt = <0x393870>;
+							regulator-ramp-delay = <0x61a8>;
+							phandle = <0x19d>;
+						};
+						LDO_VDDLDO3 {
+							regulator-name = "vddldo3";
+							regulator-min-microvolt = <0x124f80>;
+							regulator-max-microvolt = <0x393870>;
+							regulator-ramp-delay = <0x61a8>;
+							phandle = <0x19e>;
+						};
+						LDO_AVDD18 {
+							regulator-always-on;
+							regulator-name = "avdd18";
+							regulator-min-microvolt = <0x11edd8>;
+							regulator-max-microvolt = <0x1b8ac8>;
+							regulator-ramp-delay = <0x61a8>;
+							phandle = <0x19f>;
+						};
+						LDO_VDDRF1V8 {
+							status = "disabled";
+							regulator-name = "vddrf1v8";
+							regulator-min-microvolt = <0x11edd8>;
+							regulator-max-microvolt = <0x1b8ac8>;
+							regulator-ramp-delay = <0x61a8>;
+							phandle = <0x1a0>;
+						};
+						LDO_VDDCAMIO {
+							regulator-name = "vddcamio";
+							regulator-min-microvolt = <0x124f80>;
+							regulator-max-microvolt = <0x1bec70>;
+							regulator-ramp-delay = <0x61a8>;
+							phandle = <0x1b>;
+						};
+						LDO_VDDWCN {
+							regulator-name = "vddwcn";
+							regulator-min-microvolt = <0xdbba0>;
+							regulator-max-microvolt = <0x1c2708>;
+							regulator-ramp-delay = <0x61a8>;
+							phandle = <0x1a1>;
+						};
+						LDO_VDDCAMD0 {
+							regulator-name = "vddcamd0";
+							regulator-min-microvolt = <0xdbba0>;
+							regulator-max-microvolt = <0x14d408>;
+							regulator-ramp-delay = <0x61a8>;
+							phandle = <0x1d>;
+						};
+						LDO_VDDCAMD1 {
+							regulator-name = "vddcamd1";
+							regulator-min-microvolt = <0xdbba0>;
+							regulator-max-microvolt = <0x14d408>;
+							regulator-ramp-delay = <0x61a8>;
+							phandle = <0x2a>;
+						};
+						LDO_VDDCAMD2 {
+							regulator-name = "vddcamd2";
+							regulator-min-microvolt = <0xdbba0>;
+							regulator-max-microvolt = <0x14d408>;
+							regulator-ramp-delay = <0x61a8>;
+							phandle = <0x22>;
+						};
+						LDO_VDDRF1V1 {
+							status = "disabled";
+							regulator-name = "vddrf1v1";
+							regulator-min-microvolt = <0xdbba0>;
+							regulator-max-microvolt = <0x14d408>;
+							regulator-ramp-delay = <0x61a8>;
+							phandle = <0x1a2>;
+						};
+						LDO_VDDRF0V9 {
+							status = "disabled";
+							regulator-name = "vddrf0v9";
+							regulator-min-microvolt = <0xdbba0>;
+							regulator-max-microvolt = <0x14d408>;
+							regulator-ramp-delay = <0x61a8>;
+							phandle = <0x1a3>;
+						};
+						LDO_VDDUFS1V2 {
+							regulator-name = "vddufs1v2";
+							regulator-min-microvolt = <0xdbba0>;
+							regulator-max-microvolt = <0x14d408>;
+							regulator-ramp-delay = <0x61a8>;
+							phandle = <0x0f>;
+						};
+						LDO_AVDD12 {
+							regulator-always-on;
+							regulator-name = "avdd12";
+							regulator-min-microvolt = <0xdbba0>;
+							regulator-max-microvolt = <0x14d408>;
+							regulator-ramp-delay = <0x61a8>;
+							phandle = <0x1a4>;
+						};
+						LDO_VDDLDO4 {
+							status = "disabled";
+							regulator-name = "vddldo4";
+							regulator-min-microvolt = <0xdbba0>;
+							regulator-max-microvolt = <0x14d408>;
+							regulator-ramp-delay = <0x61a8>;
+							phandle = <0x1a5>;
+						};
+					};
+					vibrator@2390 {
+						compatible = "sprd,ump9620-vibrator", "sprd,sc27xx-vibrator";
+						reg = <0x2390>;
+					};
+					bc1p2@239c {
+						compatible = "sprd,ump9620-bc1p2", "sprd,ump96xx-bc1p2";
+					};
+					hw_reset@23c0 {
+						compatible = "sprd,ump9620-7sreset", "sprd,sc27xx-7sreset";
+						reg = <0x23b8 0x23c0>;
+					};
+					poweroff@2020 {
+						compatible = "sprd,ump9620-poweroff", "sprd,sc27xx-poweroff";
+						reg = <0x2020>;
+					};
+				};
+			};
+		};
+	};
+	__symbols__ {
+		ump9620_pmic = "/soc/aon/spi@400000/pmic@0";
+		pmic_wdt = "/soc/aon/spi@400000/pmic@0/watchdog@40";
+		pmic_eic = "/soc/aon/spi@400000/pmic@0/gpio@280";
+		pmic_fchg = "/soc/aon/spi@400000/pmic@0/fchg@400";
+		pmic_adc = "/soc/aon/spi@400000/pmic@0/adc@504";
+		pmic_fgu = "/soc/aon/spi@400000/pmic@0/fgu@800";
+		ump9620_efuse = "/soc/aon/spi@400000/pmic@0/efuse@c00";
+		adc_bcal1 = "/soc/aon/spi@400000/pmic@0/efuse@c00/calib@38";
+		adc_bcal2 = "/soc/aon/spi@400000/pmic@0/efuse@c00/calib@3a";
+		adc_scal1 = "/soc/aon/spi@400000/pmic@0/efuse@c00/calib@42";
+		adc_scal2 = "/soc/aon/spi@400000/pmic@0/efuse@c00/calib@40";
+		vbat_det_cal1 = "/soc/aon/spi@400000/pmic@0/efuse@c00/calib@46";
+		vbat_det_cal2 = "/soc/aon/spi@400000/pmic@0/efuse@c00/calib@44";
+		typec_cc1_cal = "/soc/aon/spi@400000/pmic@0/efuse@c00/calib@1b";
+		typec_cc2_cal = "/soc/aon/spi@400000/pmic@0/efuse@c00/calib@1c";
+		fgu_calib = "/soc/aon/spi@400000/pmic@0/efuse@c00/calib@4";
+		neg_cp_efuse = "/soc/aon/spi@400000/pmic@0/efuse@c00/calib@32";
+		headset_adc_fir = "/soc/aon/spi@400000/pmic@0/efuse@c00/calib@4a";
+		headset_adc_fir_1 = "/soc/aon/spi@400000/pmic@0/efuse@c00/calib@3c";
+		headset_adc_fir_2 = "/soc/aon/spi@400000/pmic@0/efuse@c00/calib@3e";
+		headset_adc_sec = "/soc/aon/spi@400000/pmic@0/efuse@c00/calib@2e";
+		pddelta_calib = "/soc/aon/spi@400000/pmic@0/efuse@c00/calib@48";
+		pdrc_calib = "/soc/aon/spi@400000/pmic@0/efuse@c00/calib@2c";
+		pmic_typec = "/soc/aon/spi@400000/pmic@0/typec@380";
+		pmic_pd = "/soc/aon/spi@400000/pmic@0/pd@e00";
+		usb_con = "/soc/aon/spi@400000/pmic@0/pd@e00/connector";
+		sprd_audio_codec_ana = "/soc/aon/spi@400000/pmic@0/audio-codec@1000";
+		pmic_smpl = "/soc/aon/spi@400000/pmic@0/smpl@2000";
+		vddcpu2 = "/soc/aon/spi@400000/pmic@0/power-controller@2000/DCDC_CPU2";
+		vddcpu1 = "/soc/aon/spi@400000/pmic@0/power-controller@2000/DCDC_CPU1";
+		vddcore = "/soc/aon/spi@400000/pmic@0/power-controller@2000/DCDC_CORE";
+		vddpub = "/soc/aon/spi@400000/pmic@0/power-controller@2000/DCDC_PUB";
+		vddsram = "/soc/aon/spi@400000/pmic@0/power-controller@2000/DCDC_SRAM0";
+		vddgpu = "/soc/aon/spi@400000/pmic@0/power-controller@2000/DCDC_GPU";
+		vddmemq = "/soc/aon/spi@400000/pmic@0/power-controller@2000/DCDC_MEMQ";
+		vddmem = "/soc/aon/spi@400000/pmic@0/power-controller@2000/DCDC_MEM";
+		vddgen0 = "/soc/aon/spi@400000/pmic@0/power-controller@2000/DCDC_GEN0";
+		vddgen1 = "/soc/aon/spi@400000/pmic@0/power-controller@2000/DCDC_GEN1";
+		vddwpa = "/soc/aon/spi@400000/pmic@0/power-controller@2000/DCDC_WPA";
+		vddcama0 = "/soc/aon/spi@400000/pmic@0/power-controller@2000/LDO_VDDCAMA0";
+		vddcama1 = "/soc/aon/spi@400000/pmic@0/power-controller@2000/LDO_VDDCAMA1";
+		vddcama2 = "/soc/aon/spi@400000/pmic@0/power-controller@2000/LDO_VDDCAMA2";
+		vddcammot0 = "/soc/aon/spi@400000/pmic@0/power-controller@2000/LDO_VDDCAMMOT0";
+		vddcammot1 = "/soc/aon/spi@400000/pmic@0/power-controller@2000/LDO_VDDCAMMOT1";
+		vddsim0 = "/soc/aon/spi@400000/pmic@0/power-controller@2000/LDO_VDDSIM0";
+		vddsim1 = "/soc/aon/spi@400000/pmic@0/power-controller@2000/LDO_VDDSIM1";
+		vddsim2 = "/soc/aon/spi@400000/pmic@0/power-controller@2000/LDO_VDDSIM2";
+		vddemmccore = "/soc/aon/spi@400000/pmic@0/power-controller@2000/LDO_VDDEMMCCORE";
+		vddsdcore = "/soc/aon/spi@400000/pmic@0/power-controller@2000/LDO_VDDSDCORE";
+		vddsdio = "/soc/aon/spi@400000/pmic@0/power-controller@2000/LDO_VDDSDIO";
+		vdd28 = "/soc/aon/spi@400000/pmic@0/power-controller@2000/LDO_VDD28";
+		vddvib = "/soc/aon/spi@400000/pmic@0/power-controller@2000/LDO_VDDVIB";
+		vddkpled = "/soc/aon/spi@400000/pmic@0/power-controller@2000/LDO_VDDKPLED";
+		vddwifipa = "/soc/aon/spi@400000/pmic@0/power-controller@2000/LDO_VDDWIFIPA";
+		vdd18_dcxo = "/soc/aon/spi@400000/pmic@0/power-controller@2000/LDO_VDD18_DCXO";
+		vddusb33 = "/soc/aon/spi@400000/pmic@0/power-controller@2000/LDO_VDDUSB33";
+		vddldo0 = "/soc/aon/spi@400000/pmic@0/power-controller@2000/LDO_VDDLDO0";
+		vddldo1 = "/soc/aon/spi@400000/pmic@0/power-controller@2000/LDO_VDDLDO1";
+		vddldo2 = "/soc/aon/spi@400000/pmic@0/power-controller@2000/LDO_VDDLDO2";
+		vddldo3 = "/soc/aon/spi@400000/pmic@0/power-controller@2000/LDO_VDDLDO3";
+		avdd18 = "/soc/aon/spi@400000/pmic@0/power-controller@2000/LDO_AVDD18";
+		vddrf18 = "/soc/aon/spi@400000/pmic@0/power-controller@2000/LDO_VDDRF1V8";
+		vddcamio = "/soc/aon/spi@400000/pmic@0/power-controller@2000/LDO_VDDCAMIO";
+		vddwcn = "/soc/aon/spi@400000/pmic@0/power-controller@2000/LDO_VDDWCN";
+		vddcamd0 = "/soc/aon/spi@400000/pmic@0/power-controller@2000/LDO_VDDCAMD0";
+		vddcamd1 = "/soc/aon/spi@400000/pmic@0/power-controller@2000/LDO_VDDCAMD1";
+		vddcamd2 = "/soc/aon/spi@400000/pmic@0/power-controller@2000/LDO_VDDCAMD2";
+		vddrf1v1 = "/soc/aon/spi@400000/pmic@0/power-controller@2000/LDO_VDDRF1V1";
+		vddrf0v9 = "/soc/aon/spi@400000/pmic@0/power-controller@2000/LDO_VDDRF0V9";
+		vddufs1v2 = "/soc/aon/spi@400000/pmic@0/power-controller@2000/LDO_VDDUFS1V2";
+		avdd12 = "/soc/aon/spi@400000/pmic@0/power-controller@2000/LDO_AVDD12";
+		vddldo4 = "/soc/aon/spi@400000/pmic@0/power-controller@2000/LDO_VDDLDO4";
+	};
+};

@@ -1,0 +1,1 @@
+obj-m += w202_ump9620_power.o

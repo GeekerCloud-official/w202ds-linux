@@ -3,15 +3,10 @@
 ```text
 audio/
 ├── build.mk
-├── device.json
 ├── devicetree/
-├── evidence/
 ├── firmware/
-├── modules/
 ├── README.md
-├── reference/
-├── source/
-└── SOURCES.json
+└── source/
 ```
 
 | 功能 | 可用性 | 问题描述 |

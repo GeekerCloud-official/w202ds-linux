@@ -1,0 +1,220 @@
+// W202DS Server hardware layout; split from the validated imported tree.
+/ {
+	soc {
+		ap-ahb {
+			i2c@2260000 {
+				pidpx1217_redriver@52 {
+					phandle = <0x25f>;
+					reg = <0x52>;
+					compatible = "pi2dpx1217 redriver";
+				};
+			};
+			i2c@22a0000 {
+				btn38003a_redriver@30 {
+					phandle = <0x25e>;
+					reg = <0x30>;
+					compatible = "sprd,ptn38003a redriver";
+				};
+			};
+		};
+		ipa-apb {
+			dpu1@31880000 {
+				compatible = "sprd,qogirn6pro-dpu1";
+				reg = <0x00 0x31880000 0x00 0x3000>;
+				reset-syscon = <0x5a 0x04 0x01>;
+				force-shutdown-syscon = <0x04 0x3e4 0x2000000>;
+				interrupts = <0x00 0x78 0x04>;
+				status = "okay";
+				iommus = <0x5b>;
+				sprd,initial-stop-state;
+				power-domains = <0x59>;
+				clock-names = "clk_src_128m", "clk_src_192m", "clk_src_256m", "clk_pixelpll", "clk_src_307m2", "clk_src_384m", "clk_src_512m", "clk_dpu_core", "clk_dpu_dpi", "clk_ipa_apb_dispc1_eb";
+				clocks = <0x0b 0x09 0x0b 0x0b 0x0b 0x0c 0x46 0x0c 0x0b 0x0d 0x0b 0x0e 0x0b 0x0f 0x5c 0x05 0x5c 0x06 0x5d 0x00>;
+				phandle = <0x173>;
+				port {
+					phandle = <0x131>;
+					endpoint {
+						remote-endpoint = <0x5e>;
+						phandle = <0x62>;
+					};
+				};
+			};
+			iommu@31880000 {
+				compatible = "unisoc,iommuvaul6p-dispc1";
+				reg = <0x00 0x31880000 0x00 0x80 0x00 0x31880800 0x00 0x80>;
+				iova-base = <0x30000000>;
+				iova-size = <0x10000000>;
+				reg_name = "mmu_reg";
+				status = "okay";
+				#iommu-cells = <0x00>;
+				phandle = <0x5b>;
+			};
+			dptx@31890000 {
+				compatible = "sprd,dptx";
+				reg = <0x00 0x31890000 0x00 0x70000>;
+				sprd,syscon-aon-apb = <0x02>;
+				sprd,syscon-usb31-dp-phy = <0x5f>;
+				sprd,syscon-ipa-dispc1-glb-apb = <0x5a>;
+				sprd,syscon-ipa-apb = <0x60>;
+				sprd,syscon-force-shutdown = <0x04>;
+				status = "okay";
+				interrupts = <0x00 0x7b 0x04>;
+				sprd,soc = "qogirn6pro1";
+				power-domains = <0x59>;
+				clock-names = "clk_ipa_apb_dpu1_eb", "clk_ipa_apb_dptx_eb", "clk_ipa_apb_tca_eb", "clk_ipa_apb_usb31pll_eb";
+				clocks = <0x5d 0x00 0x5d 0x01 0x5d 0x03 0x5d 0x04>;
+				dp-gpios = <0x0c 0x3d 0x00 0x0c 0x78 0x00>;
+				extcon = <0x61>;
+				dp-usbphy = <0x24 0x24>;
+				#sound-dai-cells = <0x01>;
+				phandle = <0x114>;
+				ports {
+					#address-cells = <0x01>;
+					#size-cells = <0x00>;
+					port@1 {
+						reg = <0x01>;
+						endpoint {
+							remote-endpoint = <0x62>;
+							phandle = <0x5e>;
+						};
+					};
+				};
+			};
+			usb3@25100000 {
+				use_pdhub_c2c;
+				vbus-supply = <0x7a>;
+				extcon = <0x2c 0x2c>;
+				compatible = "sprd,qogirn6pro-dwc3";
+				reg = <0x00 0x25100000 0x00 0x100000>;
+				status = "okay";
+				#address-cells = <0x02>;
+				#size-cells = <0x02>;
+				ranges;
+				sprd,syscon-pmu-apb = <0x04>;
+				sprd,syscon-ipa-apb = <0x60>;
+				sprd,syscon-ipa-dispc1-glb-apb = <0x5a>;
+				clocks = <0x63 0x00 0x63 0x02 0x63 0x01 0x5c 0x02 0x0b 0x02 0x5d 0x00 0x5d 0x01 0x5d 0x03 0x5d 0x04 0x64>;
+				clock-names = "core_clk", "ref_clk", "susp_clk", "ipa_usb_ref", "ipa_usb_ref_source", "ipa_dpu1_clk", "ipa_dptx_clk", "ipa_tca_clk", "ipa_usb31pll_clk", "ipa_usb_ref_default";
+				usb-phy = <0x65 0x24>;
+				power-domains = <0x59>;
+				pme-wakeup-gpios = <0x03 0x2a 0x00>;
+				phandle = <0x174>;
+				dwc3@25100000 {
+					compatible = "snps,sprd-dwc3";
+					reg = <0x00 0x25100000 0x00 0x100000>;
+					interrupts = <0x00 0x8e 0x04>;
+					interrupt-names = "irq";
+					usb-phy = <0x65 0x24>;
+					usb-pam = <0x66>;
+					phy_type = "utmi";
+					usb-role-switch;
+					linux,sysdev_is_parent;
+					snps,usb2-gadget-lpm-disable;
+				};
+			};
+			pamu3@25210000 {
+				compatible = "sprd,qogirn6pro-pamu3";
+				clocks = <0x63 0x03>;
+				clock-names = "pamu3_clk";
+				power-domains = <0x59>;
+				reg = <0x00 0x25210000 0x00 0x10000 0x00 0x25100000 0x00 0x100000>;
+				reg-names = "pamu3_glb_regs", "dwc3_core_regs";
+				syscons = <0x60 0x00 0x02>;
+				syscon-names = "reset";
+				phandle = <0x66>;
+			};
+			ssphy@25310000 {
+				sprd,hsphy-host-eye-pattern = <0x67bd1c0>;
+				sprd,hsphy-device-eye-pattern = <0x67bd1c0>;
+				extcon = <0x2c>;
+				vdd-supply = <0x19a>;
+				compatible = "sprd,qogirn6pro-ssphy";
+				reg = <0x00 0x25310000 0x00 0x10000>;
+				reg-names = "phy_glb_regs";
+				#phy-cells = <0x00>;
+				power-domains = <0x59>;
+				sprd,syscon-pmu-apb = <0x04>;
+				sprd,syscon-aon-apb = <0x02>;
+				sprd,syscon-ana-g0l = <0x67>;
+				sprd,syscon-ipa-apb = <0x60>;
+				sprd,syscon-ipa-dispc1-glb-apb = <0x5a>;
+				sprd,syscon-ipa-usb31-dp = <0x5f>;
+				sprd,syscon-ipa-usb31-dptx = <0x68>;
+				sprd,vdd-voltage = <0x325aa0>;
+				status = "okay";
+				phandle = <0x24>;
+			};
+			dummyphy {
+				compatible = "sprd,usb-dummy-phy";
+				status = "okay";
+				phandle = <0x65>;
+			};
+		};
+		aon {
+			hsphy@300000 {
+				sprd,hsphy-host-eye-pattern = <0x67bd1c0>;
+				sprd,hsphy-device-eye-pattern = <0x67bd1c0>;
+				extcon = <0x2c>;
+				vdd-supply = <0x19a>;
+				compatible = "sprd,qogirn6pro-phy";
+				reg = <0x300000 0x10000>;
+				sprd,syscon-enable = <0x02>;
+				sprd,syscon-anag0 = <0x67>;
+				sprd,vdd-voltage = <0x2e8a10>;
+				io-channels = <0x75 0x1e 0x75 0x1f>;
+				io-channel-names = "dp", "dm";
+				status = "okay";
+				#phy-cells = <0x00>;
+				phandle = <0x82>;
+			};
+			usb@a00000 {
+				use_pdhub_c2c;
+				status = "okay";
+				vbus-supply = <0x7a>;
+				extcon = <0x2c 0x2c>;
+				compatible = "sprd,qogirn6pro-musb";
+				reg = <0xa00000 0x2000>;
+				interrupts = <0x00 0x08 0x04>;
+				interrupt-names = "mc";
+				clocks = <0x11 0x1a>;
+				clock-names = "core_clk";
+				usb31pllv_frc_on = <0x04 0xa58 0x01>;
+				usb-phy = <0x82>;
+				phy-names = "usb";
+				dr-mode = "peripheral";
+				multipoint = "true";
+				wakeup-source;
+				phandle = <0x1b4>;
+			};
+		};
+	};
+	extcon-gpio {
+		compatible = "linux,extcon-usb-gpio";
+		vbus-gpio = <0x73 0x00 0x00>;
+		phandle = <0x27>;
+	};
+	virtual_typec {
+		compatible = "sprd,virtual-typec";
+		extcon = <0x27>;
+		status = "okay";
+		phandle = <0x227>;
+	};
+	__symbols__ {
+		pidpx1217 = "/soc/ap-ahb/i2c@2260000/pidpx1217_redriver@52";
+		btn38003a = "/soc/ap-ahb/i2c@22a0000/btn38003a_redriver@30";
+		dpu1 = "/soc/ipa-apb/dpu1@31880000";
+		dpu1_port = "/soc/ipa-apb/dpu1@31880000/port";
+		dpu1_out = "/soc/ipa-apb/dpu1@31880000/port/endpoint";
+		iommu_dispc1 = "/soc/ipa-apb/iommu@31880000";
+		dptx = "/soc/ipa-apb/dptx@31890000";
+		dptx_in = "/soc/ipa-apb/dptx@31890000/ports/port@1/endpoint";
+		usb3 = "/soc/ipa-apb/usb3@25100000";
+		pamu3 = "/soc/ipa-apb/pamu3@25210000";
+		ssphy = "/soc/ipa-apb/ssphy@25310000";
+		dummyphy = "/soc/ipa-apb/dummyphy";
+		hsphy = "/soc/aon/hsphy@300000";
+		usb = "/soc/aon/usb@a00000";
+		extcon_gpio = "/extcon-gpio";
+		virtual_typec = "/virtual_typec";
+	};
+};

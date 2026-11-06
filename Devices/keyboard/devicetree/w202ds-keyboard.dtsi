@@ -1,0 +1,34 @@
+// W202DS Server hardware layout; split from the validated imported tree.
+/ {
+	gpio-keys {
+		pinctrl-0 = <0x239>;
+		pinctrl-names = "gpio_7";
+		compatible = "gpio-keys";
+		key-power {
+			wakeup-source;
+			debounce-interval = <0x02>;
+			gpios = <0x73 0x01 0x01>;
+			linux,code = <0x74>;
+			label = "Power Key";
+		};
+		key-volumeup {
+			wakeup-source;
+			debounce-interval = <0x02>;
+			gpios = <0x73 0x04 0x00>;
+			linux,code = <0x73>;
+			label = "Volume Up Key";
+		};
+		key-volumedown {
+			wakeup-source;
+			debounce-interval = <0x02>;
+			gpios = <0x0c 0x07 0x01>;
+			linux,code = <0x72>;
+			label = "Volume Down Key";
+		};
+	};
+	zsk_keyboard {
+		compatible = "zte,zsk_keyboard";
+		zte,keyboard_id = <0x0c 0x3c 0x01>;
+		zte,keyboard_en = <0x0c 0x3e 0x00>;
+	};
+};

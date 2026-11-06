@@ -1,0 +1,51 @@
+// W202DS Server hardware layout; split from the validated imported tree.
+/ {
+	soc {
+		ap-apb {
+			spi@70000 {
+				zte-ts@0 {
+					compatible = "chipone-tddi", "himax,hxcommon", "focaltech,fts";
+					reg = <0x00>;
+					spi-max-frequency = <0x927c00>;
+					chipone,irq-gpio = <0x03 0x10 0x2008>;
+					chipone,rst-gpio = <0x0c 0x0e 0x00>;
+					chipone,x-res = <0x4af>;
+					chipone,y-res = <0x77f>;
+					focaltech,reset-gpio = <0x0c 0x0e 0x00>;
+					focaltech,irq-gpio = <0x03 0x10 0x2008>;
+					focaltech,display-coords = <0x00 0x00 0x4af 0x77f>;
+					focaltech,max-touch-number = <0x0a>;
+					himax,panel-coords = <0x00 0x4af 0x00 0x77f>;
+					himax,display-coords = <0x00 0x4af 0x00 0x77f>;
+					himax,irq-gpio = <0x03 0x10 0x2008>;
+					himax,rst-gpio = <0x0c 0x0e 0x00>;
+					report_type = <0x01>;
+				};
+			};
+		};
+	};
+	zte_tp {
+		compatible = "zte_tp";
+		zte,tp_algo;
+		zte,tp_long_press;
+		zte,tp_long_press_timer = <0x320>;
+		zte,tp_long_press_left_v = <0x06>;
+		zte,tp_long_press_right_v = <0x06>;
+		zte,tp_long_press_left_h = <0x06>;
+		zte,tp_long_press_right_h = <0x06>;
+		zte,tp_edge_click_suppression_pixel = <0x01>;
+		zte,ghost_check_config;
+		zte,ghost_check_single_time = <0x19>;
+		zte,ghost_check_multi_time = <0x14>;
+		zte,ghost_check_single_count = <0x05>;
+		zte,ghost_check_multi_count = <0x08>;
+		zte,ghost_check_start_time = <0x23>;
+		zte,ghost_check_ignore_edge_area = <0x29>;
+		zte,ghost_check_ignore_corner_x = <0x79>;
+		zte,ghost_check_ignore_corner_y = <0x79>;
+		phandle = <0x22e>;
+	};
+	__symbols__ {
+		zte_tp = "/zte_tp";
+	};
+};

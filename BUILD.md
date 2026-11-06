@@ -1,6 +1,6 @@
 # 构建
 
-完整内核和模块在 CM2 构建。需要 GNU make、Python 3.11+、AArch64 GCC/binutils、flex、bison、bc、OpenSSL/ELF 开发包、dtc、kmod。以下从仓库根运行，输出全部放 `output/`。
+完整内核和模块在本地构建。需要 GNU make、Python 3.11+、AArch64 GCC/binutils、flex、bison、bc、OpenSSL/ELF 开发包、dtc、kmod。以下从仓库根运行，输出全部放 `output/`。
 
 ```sh
 export LOCALVERSION=

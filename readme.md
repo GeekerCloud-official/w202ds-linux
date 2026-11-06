@@ -28,7 +28,10 @@ W202DS Linux 6.18.35 内核、板级设备树及硬件模块源码。
 包含 DRM、GPU、VPU、WCN/Wi-Fi、基带、PMIC、充电、霍尔、键盘、Sensor Hub 和历史 Linux 触控实现。
 各项实际完成度见 [设备清单](Devices/README.md)，构建见 [BUILD.md](BUILD.md)。
 
-主区包含源码、对应硬件固件、基带配套用户态源码和服务模板。旧 BSP 独有的原厂参考、历史模块/运行包与完整 PanVK Git 仓库已归入对应设备；这些参考包不等于开源实现或最新可安装模块。设备 NV、账号密钥和完整系统 rootfs 不纳入公共源码。
+各硬件目前发布 `devicetree/`、`README.md`、`source/`、`firmware/` 和 `build.mk`。
+`device.json`、`reference/`、模块编译产物、`userspace/` 和 `SOURCES*.json` 保留在本地。
+GPU 源码目前只发布已在 W202DS 上验证的 `Devices/gpu/source/panfrost/`。
+设备 NV、账号密钥和完整系统 rootfs 不纳入公共源码。
 Linux 树内通用 EFI 支持属于内核，正常保留。快充、Vulkan、蓝牙、KDE 等未验收能力不列为已完成。
 
 已进行板级源码分离：实现归 `Devices/`，内核保留功能位置接入；硬件 DTSI 也随设备维护。

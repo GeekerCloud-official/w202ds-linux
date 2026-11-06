@@ -2,3 +2,22 @@
 /provenance/
 __pycache__/
 *.pyc
+device.json
+/Devices/reference/
+/Devices/*/reference/
+/Devices/*/modules/
+/Devices/*/userspace/
+SOURCES*.json
+
+# Publish only the selected contents of each hardware directory.
+/Devices/*/*
+!/Devices/*/README.md
+!/Devices/*/build.mk
+!/Devices/*/devicetree/
+!/Devices/*/firmware/
+!/Devices/*/source/
+
+# Publish the GPU implementation already verified on W202DS.
+/Devices/gpu/source/*
+!/Devices/gpu/source/panfrost/
+!/Devices/gpu/source/README.md

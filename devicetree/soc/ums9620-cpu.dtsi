@@ -1,0 +1,255 @@
+// W202DS Server hardware layout; split from the validated imported tree.
+/ {
+	soc {
+		aon {
+			pmu-apb-prot {
+				compatible = "sprd,apb-prot";
+				sprd,apb-syscon = <0x04>;
+				interrupts = <0x00 0xff 0x04>;
+				sprd,lock_magic = <0x6896>;
+				sprd,lock_but_write_int;
+				sprd,record_last;
+				phandle = <0x176>;
+			};
+			timer@40000 {
+				compatible = "sprd,qogirn6pro-timer", "sprd,sc9860-timer";
+				reg = <0x40000 0x20>;
+				interrupts = <0x00 0x2f 0x04>;
+				clocks = <0x64>;
+			};
+			timer@40020 {
+				compatible = "sprd,qogirn6pro-suspend-timer", "sprd,sc9860-suspend-timer";
+				reg = <0x40020 0x20>;
+				clocks = <0x64>;
+			};
+			timer@50000 {
+				compatible = "sprd,sysfrt-timer";
+				reg = <0x50000 0x10>;
+				phandle = <0x17b>;
+			};
+			timer@1c0000 {
+				compatible = "sprd,syst-timer";
+				reg = <0x1c0000 0x10>;
+				phandle = <0x17c>;
+			};
+			apcpu-dvfs@950000 {
+				compatible = "sprd,cpufreq-v2";
+				phandle = <0x1b6>;
+			};
+		};
+	};
+	cpus {
+		#address-cells = <0x02>;
+		#size-cells = <0x00>;
+		cpu-map {
+			cluster0 {
+				core0 {
+					cpu = <0xde>;
+				};
+				core1 {
+					cpu = <0xe0>;
+				};
+				core2 {
+					cpu = <0xe2>;
+				};
+				core3 {
+					cpu = <0xe4>;
+				};
+			};
+			cluster1 {
+				core0 {
+					cpu = <0xe6>;
+				};
+				core1 {
+					cpu = <0xe8>;
+				};
+				core2 {
+					cpu = <0xea>;
+				};
+			};
+			cluster2 {
+				core0 {
+					cpu = <0xec>;
+				};
+			};
+		};
+		cpu@0 {
+			device_type = "cpu";
+			compatible = "arm,cortex-a55", "arm,armv8";
+			reg = <0x00 0x00>;
+			enable-method = "psci";
+			cpu-idle-states = <0xfc 0xfd>;
+			capacity-dmips-mhz = <0x1a1>;
+			dynamic-power-coefficient = <0x9b>;
+			cpufreq-data-v1 = <0xfe>;
+			#cooling-cells = <0x02>;
+			sugov_slack_timer;
+			phandle = <0xde>;
+		};
+		cpu@100 {
+			device_type = "cpu";
+			compatible = "arm,cortex-a55", "arm,armv8";
+			reg = <0x00 0x100>;
+			enable-method = "psci";
+			cpu-idle-states = <0xfc 0xfd>;
+			capacity-dmips-mhz = <0x1a1>;
+			dynamic-power-coefficient = <0x9b>;
+			cpufreq-data-v1 = <0xfe>;
+			phandle = <0xe0>;
+		};
+		cpu@200 {
+			device_type = "cpu";
+			compatible = "arm,cortex-a55", "arm,armv8";
+			reg = <0x00 0x200>;
+			enable-method = "psci";
+			cpu-idle-states = <0xfc 0xfd>;
+			capacity-dmips-mhz = <0x1a1>;
+			dynamic-power-coefficient = <0x9b>;
+			cpufreq-data-v1 = <0xfe>;
+			phandle = <0xe2>;
+		};
+		cpu@300 {
+			device_type = "cpu";
+			compatible = "arm,cortex-a55", "arm,armv8";
+			reg = <0x00 0x300>;
+			enable-method = "psci";
+			cpu-idle-states = <0xfc 0xfd>;
+			capacity-dmips-mhz = <0x1a1>;
+			dynamic-power-coefficient = <0x9b>;
+			cpufreq-data-v1 = <0xfe>;
+			phandle = <0xe4>;
+		};
+		cpu@400 {
+			device_type = "cpu";
+			compatible = "arm,cortex-a76", "arm,armv8";
+			reg = <0x00 0x400>;
+			enable-method = "psci";
+			cpu-idle-states = <0xff 0xfd>;
+			capacity-dmips-mhz = <0x3fe>;
+			dynamic-power-coefficient = <0x2d1>;
+			cpufreq-data-v1 = <0x100>;
+			#cooling-cells = <0x02>;
+			phandle = <0xe6>;
+		};
+		cpu@500 {
+			device_type = "cpu";
+			compatible = "arm,cortex-a76", "arm,armv8";
+			reg = <0x00 0x500>;
+			enable-method = "psci";
+			cpu-idle-states = <0xff 0xfd>;
+			capacity-dmips-mhz = <0x3fe>;
+			dynamic-power-coefficient = <0x2d1>;
+			cpufreq-data-v1 = <0x100>;
+			phandle = <0xe8>;
+		};
+		cpu@600 {
+			device_type = "cpu";
+			compatible = "arm,cortex-a76", "arm,armv8";
+			reg = <0x00 0x600>;
+			enable-method = "psci";
+			cpu-idle-states = <0xff 0xfd>;
+			capacity-dmips-mhz = <0x3fe>;
+			dynamic-power-coefficient = <0x2d1>;
+			cpufreq-data-v1 = <0x100>;
+			phandle = <0xea>;
+		};
+		cpu@700 {
+			device_type = "cpu";
+			compatible = "arm,cortex-a76", "arm,armv8";
+			reg = <0x00 0x700>;
+			enable-method = "psci";
+			cpu-idle-states = <0x101 0xfd>;
+			capacity-dmips-mhz = <0x400>;
+			dynamic-power-coefficient = <0x380>;
+			cpufreq-data-v1 = <0x102>;
+			#cooling-cells = <0x02>;
+			phandle = <0xec>;
+		};
+	};
+	psci {
+		compatible = "arm,psci-0.2";
+		method = "smc";
+	};
+	idle-states {
+		entry-method = "arm,psci";
+		core-sleep-lit {
+			compatible = "arm,idle-state";
+			entry-latency-us = <0x3e8>;
+			exit-latency-us = <0x1f4>;
+			min-residency-us = <0x9c4>;
+			local-timer-stop;
+			arm,psci-suspend-param = <0x10000>;
+			phandle = <0xfc>;
+		};
+		core-sleep-mid {
+			compatible = "arm,idle-state";
+			entry-latency-us = <0xfa0>;
+			exit-latency-us = <0xfa0>;
+			min-residency-us = <0x2710>;
+			local-timer-stop;
+			arm,psci-suspend-param = <0x10000>;
+			phandle = <0xff>;
+		};
+		core-sleep-big {
+			compatible = "arm,idle-state";
+			entry-latency-us = <0xfa0>;
+			exit-latency-us = <0xfa0>;
+			min-residency-us = <0x2710>;
+			local-timer-stop;
+			arm,psci-suspend-param = <0x10000>;
+			phandle = <0x101>;
+		};
+		cluster-pd {
+			compatible = "arm,idle-state";
+			entry-latency-us = <0x2710>;
+			exit-latency-us = <0x2710>;
+			min-residency-us = <0x61a8>;
+			local-timer-stop;
+			arm,psci-suspend-param = <0x1010000>;
+			phandle = <0xfd>;
+		};
+	};
+	interrupt-controller@12000000 {
+		compatible = "arm,gic-v3";
+		#interrupt-cells = <0x03>;
+		#address-cells = <0x02>;
+		#size-cells = <0x02>;
+		ranges;
+		redistributor-stride = <0x00 0x20000>;
+		#redistributor-regions = <0x01>;
+		interrupt-controller;
+		reg = <0x00 0x12000000 0x00 0x20000 0x00 0x12040000 0x00 0x100000>;
+		interrupts = <0x01 0x09 0x04>;
+		phandle = <0x01>;
+	};
+	timer {
+		compatible = "arm,armv8-timer";
+		interrupts = <0x01 0x0d 0x04 0x01 0x0e 0x04 0x01 0x0b 0x04 0x01 0x0a 0x04>;
+		arm,no-tick-in-suspend;
+	};
+	pmu {
+		compatible = "arm,armv8-pmuv3";
+		interrupts = <0x00 0xb1 0x04 0x00 0xb2 0x04 0x00 0xb3 0x04 0x00 0xb4 0x04 0x00 0xb5 0x04 0x00 0xb6 0x04 0x00 0xb7 0x04 0x00 0xb8 0x04>;
+	};
+	cooling-devices {
+	};
+	__symbols__ {
+		pmu_apb_prot = "/soc/aon/pmu-apb-prot";
+		aon_sysfrt = "/soc/aon/timer@50000";
+		aon_systimer = "/soc/aon/timer@1c0000";
+		apcpu_dvfs = "/soc/aon/apcpu-dvfs@950000";
+		CPU0 = "/cpus/cpu@0";
+		CPU1 = "/cpus/cpu@100";
+		CPU2 = "/cpus/cpu@200";
+		CPU3 = "/cpus/cpu@300";
+		CPU4 = "/cpus/cpu@400";
+		CPU5 = "/cpus/cpu@500";
+		CPU6 = "/cpus/cpu@600";
+		CPU7 = "/cpus/cpu@700";
+		LIT_CORE_PD = "/idle-states/core-sleep-lit";
+		MID_CORE_PD = "/idle-states/core-sleep-mid";
+		BIG_CORE_PD = "/idle-states/core-sleep-big";
+		CLUSTER_PD = "/idle-states/cluster-pd";
+		gic = "/interrupt-controller@12000000";
+	};
+};

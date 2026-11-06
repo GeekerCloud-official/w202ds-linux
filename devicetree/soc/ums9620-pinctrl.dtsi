@@ -1,0 +1,278 @@
+// W202DS Server hardware layout; split from the validated imported tree.
+/ {
+	soc {
+		aon {
+			pinctrl@2e0000 {
+				pinctrl-9 = <0x248>;
+				pinctrl-8 = <0x247>;
+				pinctrl-7 = <0x246>;
+				pinctrl-6 = <0x245>;
+				pinctrl-5 = <0x244>;
+				pinctrl-4 = <0x243>;
+				pinctrl-3 = <0x239>;
+				pinctrl-2 = <0x242>;
+				pinctrl-1 = <0x241>;
+				pinctrl-0 = <0x240>;
+				pinctrl-names = "gpio_4", "gpio_5", "gpio_6", "gpio_7", "gpio_8", "gpio_22", "gpio_24", "gpio_25", "gpio_26", "gpio_124";
+				compatible = "sprd,qogirn6pro-pinctrl";
+				reg = <0x2e0000 0x10000>;
+				phandle = <0x134>;
+				keyout1 {
+					phandle = <0x248>;
+					function = "func4";
+					pins = "QOGIRN6PRO_KEYOUT1";
+				};
+				emmc_d7 {
+					phandle = <0x247>;
+					function = "func4";
+					pins = "QOGIRN6PRO_EMMC_D7";
+				};
+				emmc_d6 {
+					phandle = <0x246>;
+					function = "func4";
+					pins = "QOGIRN6PRO_EMMC_D6";
+				};
+				emmc_cmd {
+					phandle = <0x245>;
+					function = "func4";
+					pins = "QOGIRN6PRO_EMMC_CMD";
+				};
+				sd0_clk {
+					phandle = <0x244>;
+					function = "func4";
+					pins = "QOGIRN6PRO_SD0_CLK";
+				};
+				keyin1 {
+					phandle = <0x243>;
+					function = "func4";
+					pins = "QOGIRN6PRO_KEYIN1";
+				};
+				keyin0 {
+					phandle = <0x239>;
+					function = "func4";
+					pins = "QOGIRN6PRO_KEYIN0";
+				};
+				simrst1 {
+					phandle = <0x242>;
+					function = "func4";
+					pins = "QOGIRN6PRO_SIMRST1";
+				};
+				simda1 {
+					phandle = <0x241>;
+					function = "func4";
+					pins = "QOGIRN6PRO_SIMDA1";
+				};
+				simclk1 {
+					phandle = <0x240>;
+					function = "func4";
+					pins = "QOGIRN6PRO_SIMCLK1";
+				};
+				vbc-iis3-0 {
+					pins = "QOGIRN6PRO_IIS_INF0_SYS_SEL";
+					sprd,control = <0x0b>;
+					phandle = <0x9b>;
+				};
+				vbc-iism0-0 {
+					pins = "QOGIRN6PRO_IIS_INF0_SYS_SEL";
+					sprd,control = <0x0d>;
+					phandle = <0x9c>;
+				};
+				vbc-iis-to-pad {
+					pins = "QOGIRN6PRO_VBC_IIS_INF_SYS_SEL";
+					sprd,control = <0x00>;
+					phandle = <0x9d>;
+				};
+				vbc-iis-to-aon-usb {
+					pins = "QOGIRN6PRO_VBC_IIS_INF_SYS_SEL";
+					sprd,control = <0x01>;
+					phandle = <0x9e>;
+				};
+				vbc-iism0-1 {
+					pins = "QOGIRN6PRO_IIS_INF1_SYS_SEL";
+					sprd,control = <0x0d>;
+					phandle = <0x9f>;
+				};
+				vbc-iism0-3 {
+					pins = "QOGIRN6PRO_IIS_INF3_SYS_SEL";
+					sprd,control = <0x0d>;
+					phandle = <0xa0>;
+				};
+				vbc-iis0-3 {
+					pins = "QOGIRN6PRO_IIS_INF3_SYS_SEL";
+					sprd,control = <0x08>;
+					phandle = <0xa1>;
+				};
+				vbc-iis1-3 {
+					pins = "QOGIRN6PRO_IIS_INF3_SYS_SEL";
+					sprd,control = <0x09>;
+					phandle = <0xa2>;
+				};
+				vbc-iis2-3 {
+					pins = "QOGIRN6PRO_IIS_INF3_SYS_SEL";
+					sprd,control = <0x0a>;
+					phandle = <0xa3>;
+				};
+				vbc-iis3-3 {
+					pins = "QOGIRN6PRO_IIS_INF3_SYS_SEL";
+					sprd,control = <0x0b>;
+					phandle = <0xa4>;
+				};
+				ap-iis0-3 {
+					pins = "QOGIRN6PRO_IIS_INF3_SYS_SEL";
+					sprd,control = <0x00>;
+					phandle = <0xa5>;
+				};
+				audcp-tdm3-4 {
+					pins = "QOGIRN6PRO_IIS_INF4_SYS_SEL";
+					sprd,control = <0x07>;
+					phandle = <0xa6>;
+				};
+				audcp-tdm4-4 {
+					pins = "QOGIRN6PRO_IIS_INF4_SYS_SEL";
+					sprd,control = <0x10>;
+					phandle = <0xa7>;
+				};
+				ap-iis0-5 {
+					pins = "QOGIRN6PRO_IIS_INF5_SYS_SEL";
+					sprd,control = <0x00>;
+					phandle = <0xa8>;
+				};
+				ap-iis1-5 {
+					pins = "QOGIRN6PRO_IIS_INF5_SYS_SEL";
+					sprd,control = <0x01>;
+					phandle = <0xa9>;
+				};
+				ap-iis2-5 {
+					pins = "QOGIRN6PRO_IIS_INF5_SYS_SEL";
+					sprd,control = <0x02>;
+					phandle = <0xaa>;
+				};
+				aon-iis0-5 {
+					pins = "QOGIRN6PRO_IIS_INF5_SYS_SEL";
+					sprd,control = <0x03>;
+					phandle = <0xab>;
+				};
+				audcp-iis0-5 {
+					pins = "QOGIRN6PRO_IIS_INF5_SYS_SEL";
+					sprd,control = <0x04>;
+					phandle = <0xac>;
+				};
+				audcp-iis1-5 {
+					pins = "QOGIRN6PRO_IIS_INF5_SYS_SEL";
+					sprd,control = <0x05>;
+					phandle = <0xad>;
+				};
+				audcp-iis2-5 {
+					pins = "QOGIRN6PRO_IIS_INF5_SYS_SEL";
+					sprd,control = <0x06>;
+					phandle = <0xae>;
+				};
+				audcp-tdm3-5 {
+					pins = "QOGIRN6PRO_IIS_INF5_SYS_SEL";
+					sprd,control = <0x07>;
+					phandle = <0xaf>;
+				};
+				vbc-iis0-5 {
+					pins = "QOGIRN6PRO_IIS_INF5_SYS_SEL";
+					sprd,control = <0x08>;
+					phandle = <0xb0>;
+				};
+				vbc-iis1-5 {
+					pins = "QOGIRN6PRO_IIS_INF5_SYS_SEL";
+					sprd,control = <0x09>;
+					phandle = <0xb1>;
+				};
+				vbc-iis2-5 {
+					pins = "QOGIRN6PRO_IIS_INF5_SYS_SEL";
+					sprd,control = <0x0a>;
+					phandle = <0xb2>;
+				};
+				vbc-iis3-5 {
+					pins = "QOGIRN6PRO_IIS_INF5_SYS_SEL";
+					sprd,control = <0x0b>;
+					phandle = <0xb3>;
+				};
+				vbc-iis4-5 {
+					pins = "QOGIRN6PRO_IIS_INF5_SYS_SEL";
+					sprd,control = <0x0c>;
+					phandle = <0xb4>;
+				};
+				vbc-mst-iis0-5 {
+					pins = "QOGIRN6PRO_IIS_INF5_SYS_SEL";
+					sprd,control = <0x0d>;
+					phandle = <0xb5>;
+				};
+				vbc-mst-iis1-5 {
+					pins = "QOGIRN6PRO_IIS_INF5_SYS_SEL";
+					sprd,control = <0x0e>;
+					phandle = <0xb6>;
+				};
+				vbc-mst-iis2-5 {
+					pins = "QOGIRN6PRO_IIS_INF5_SYS_SEL";
+					sprd,control = <0x0f>;
+					phandle = <0xb7>;
+				};
+				audcp-tdm4-5 {
+					pins = "QOGIRN6PRO_IIS_INF5_SYS_SEL";
+					sprd,control = <0x10>;
+					phandle = <0xb8>;
+				};
+				vad-din-sel-add0 {
+					pins = "QOGIRN6PRO_VAD_DIN_SEL";
+					sprd,control = <0x00>;
+					phandle = <0xb9>;
+				};
+				vad-din-sel-add1 {
+					pins = "QOGIRN6PRO_VAD_DIN_SEL";
+					sprd,control = <0x01>;
+					phandle = <0xba>;
+				};
+			};
+		};
+	};
+	__symbols__ {
+		gpio_124 = "/soc/aon/pinctrl@2e0000/keyout1";
+		gpio_26 = "/soc/aon/pinctrl@2e0000/emmc_d7";
+		gpio_25 = "/soc/aon/pinctrl@2e0000/emmc_d6";
+		gpio_24 = "/soc/aon/pinctrl@2e0000/emmc_cmd";
+		gpio_22 = "/soc/aon/pinctrl@2e0000/sd0_clk";
+		gpio_8 = "/soc/aon/pinctrl@2e0000/keyin1";
+		gpio_7 = "/soc/aon/pinctrl@2e0000/keyin0";
+		gpio_6 = "/soc/aon/pinctrl@2e0000/simrst1";
+		gpio_5 = "/soc/aon/pinctrl@2e0000/simda1";
+		gpio_4 = "/soc/aon/pinctrl@2e0000/simclk1";
+		pin_controller = "/soc/aon/pinctrl@2e0000";
+		vbc_iis3_0 = "/soc/aon/pinctrl@2e0000/vbc-iis3-0";
+		vbc_iism0_0 = "/soc/aon/pinctrl@2e0000/vbc-iism0-0";
+		vbc_iis_to_pad = "/soc/aon/pinctrl@2e0000/vbc-iis-to-pad";
+		vbc_iis_to_aon_usb = "/soc/aon/pinctrl@2e0000/vbc-iis-to-aon-usb";
+		vbc_iism0_1 = "/soc/aon/pinctrl@2e0000/vbc-iism0-1";
+		vbc_iism0_3 = "/soc/aon/pinctrl@2e0000/vbc-iism0-3";
+		vbc_iis0_3 = "/soc/aon/pinctrl@2e0000/vbc-iis0-3";
+		vbc_iis1_3 = "/soc/aon/pinctrl@2e0000/vbc-iis1-3";
+		vbc_iis2_3 = "/soc/aon/pinctrl@2e0000/vbc-iis2-3";
+		vbc_iis3_3 = "/soc/aon/pinctrl@2e0000/vbc-iis3-3";
+		ap_iis0_3 = "/soc/aon/pinctrl@2e0000/ap-iis0-3";
+		audcp_tdm3_4 = "/soc/aon/pinctrl@2e0000/audcp-tdm3-4";
+		audcp_tdm4_4 = "/soc/aon/pinctrl@2e0000/audcp-tdm4-4";
+		ap_iis0_5 = "/soc/aon/pinctrl@2e0000/ap-iis0-5";
+		ap_iis1_5 = "/soc/aon/pinctrl@2e0000/ap-iis1-5";
+		ap_iis2_5 = "/soc/aon/pinctrl@2e0000/ap-iis2-5";
+		aon_iis0_5 = "/soc/aon/pinctrl@2e0000/aon-iis0-5";
+		audcp_iis0_5 = "/soc/aon/pinctrl@2e0000/audcp-iis0-5";
+		audcp_iis1_5 = "/soc/aon/pinctrl@2e0000/audcp-iis1-5";
+		audcp_iis2_5 = "/soc/aon/pinctrl@2e0000/audcp-iis2-5";
+		audcp_tdm3_5 = "/soc/aon/pinctrl@2e0000/audcp-tdm3-5";
+		vbc_iis0_5 = "/soc/aon/pinctrl@2e0000/vbc-iis0-5";
+		vbc_iis1_5 = "/soc/aon/pinctrl@2e0000/vbc-iis1-5";
+		vbc_iis2_5 = "/soc/aon/pinctrl@2e0000/vbc-iis2-5";
+		vbc_iis3_5 = "/soc/aon/pinctrl@2e0000/vbc-iis3-5";
+		vbc_iis4_5 = "/soc/aon/pinctrl@2e0000/vbc-iis4-5";
+		vbc_mst_iis0_5 = "/soc/aon/pinctrl@2e0000/vbc-mst-iis0-5";
+		vbc_mst_iis1_5 = "/soc/aon/pinctrl@2e0000/vbc-mst-iis1-5";
+		vbc_mst_iis2_5 = "/soc/aon/pinctrl@2e0000/vbc-mst-iis2-5";
+		audcp_tdm4_5 = "/soc/aon/pinctrl@2e0000/audcp-tdm4-5";
+		vad_din_sel_add0 = "/soc/aon/pinctrl@2e0000/vad-din-sel-add0";
+		vad_din_sel_add1 = "/soc/aon/pinctrl@2e0000/vad-din-sel-add1";
+	};
+};

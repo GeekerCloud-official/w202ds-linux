@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "status": "Himax_firmware_guoxian.bin 为本目录实体文件；源码中的 firmware 头文件仅为声明和配置",
+  "files": [
+    {
+      "path": "firmware/Himax_firmware_guoxian.bin",
+      "bytes": 261120,
+      "sha256": "bdcd327d48628dd703b1d0a8ea778ef7f7aacd7beb227efdb78ea788928f0156",
+      "storage": "regular",
+      "source": "REIMUKS/buildoutput/inputs/w202ds/m23-runtime-r2-20261027/payload/mainline-m20-root/lib/firmware/Himax_firmware_guoxian.bin",
+      "source_path_base": "workspace",
+      "format": "vendor-firmware"
+    }
+  ],
+  "redistribution": "Original vendor binaries have no newly established redistribution license; preserve provenance.",
+  "placement": "Known firmware is stored as regular files beneath this device firmware directory; shared chip firmware has one owner.",
+  "imported_from": "w202ds-research/bsp/Devices/touchscreen/firmware"
+}

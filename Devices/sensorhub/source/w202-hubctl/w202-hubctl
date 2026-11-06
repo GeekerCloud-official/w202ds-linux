@@ -1,0 +1,177 @@
+#!/usr/bin/perl
+# SPDX-License-Identifier: GPL-2.0-only
+# Bounded diagnostic client for the published SPRD shub protocol.
+use strict;
+use warnings;
+
+my $mode = shift(@ARGV) // 'info';
+my $usage = "usage: w202-hubctl info|selftest|sample [--period WIRE_VALUE] [--host-normal]\n";
+die $usage if $mode ne 'info' && $mode ne 'sample' && $mode ne 'selftest';
+my $period = 200000000;
+my $host_normal = 0;
+while (@ARGV) {
+    die $usage unless $mode eq 'sample';
+    my $option = shift(@ARGV);
+    if ($option eq '--host-normal') { $host_normal = 1; }
+    elsif ($option eq '--period') {
+        $period = shift(@ARGV) // '';
+        die $usage unless $period =~ /^[1-9][0-9]*$/ && $period <= 2000000000;
+    } else { die $usage; }
+}
+my @files;
+my @buffers = ('', '');
+my %enabled;
+my %counts;
+
+sub checksum {
+    my ($data) = @_;
+    $data .= "\0" if length($data) % 2;
+    my $sum = 0;
+    $sum += $_ for unpack('n*', $data);
+    $sum = ($sum & 65535) + ($sum >> 16);
+    $sum = ($sum & 65535) + ($sum >> 16);
+    return (~$sum) & 65535;
+}
+
+sub encode_frame {
+    my ($handle, $subtype, $payload) = @_;
+    $payload = "\xff" unless defined($payload);
+    die "oversized hub payload\n" if length($payload) > 2036;
+    my $header = "\x7e" x 4 . pack('CCn', $handle, $subtype, length($payload));
+    return $header . pack('n', checksum($header)) . $payload
+        . (length($payload) ? pack('n', checksum($payload)) : '');
+}
+
+sub send_command {
+    my ($handle, $subtype, $payload) = @_;
+    my $frame = encode_frame($handle, $subtype, $payload);
+    my $written = syswrite($files[0], $frame);
+    die "hub command write failed: $!\n" unless defined($written) && $written == length($frame);
+    printf "TX handle=%d subtype=%d hex=%s\n", $handle, $subtype, unpack('H*', $frame);
+}
+
+sub dispatch {
+    my ($ring, $handle, $subtype, $payload) = @_;
+    printf "FRAME ring=%d handle=%d subtype=%d bytes=%d hex=%s\n", $ring, $handle, $subtype, length($payload), unpack('H*', $payload);
+    if ($subtype == 0xcd && length($payload) == 4) {
+        printf "VERSION value=%u\n", unpack('L<', $payload);
+    } elsif ($subtype == 9 && length($payload) == 76) {
+        my ($name, $vendor, $version, $sensor) = unpack('a20a20l<l<', $payload);
+        $name =~ s/\0.*//s; $vendor =~ s/\0.*//s;
+        printf "SENSOR handle=%d name=%s vendor=%s version=%d\n", $sensor, $name, $vendor, $version;
+    } elsif ($subtype == 0xcb && length($payload) == 2) {
+        printf "LIGHT_RAW value=%u\n", unpack('S<', $payload);
+    } elsif ($subtype == 4 && length($payload) && length($payload) % 34 == 0) {
+        for (my $position = 0; $position < length($payload); $position += 34) {
+            my ($sensor, @values) = unpack('S<f<6Q<', substr($payload, $position, 34));
+            my $timestamp = pop @values;
+            $counts{$sensor}++;
+            printf "DATA handle=%d values=%s hub_timestamp=%s\n", $sensor, join(',', @values), $timestamp;
+        }
+    }
+}
+
+sub parse {
+    my ($ring, $bytes, $callback) = @_;
+    $callback //= \&dispatch;
+    $buffers[$ring] .= $bytes;
+    while (length($buffers[$ring]) >= 10) {
+        my $start = index($buffers[$ring], "\x7e" x 4);
+        if ($start < 0) { $buffers[$ring] = substr($buffers[$ring], -3); return; }
+        substr($buffers[$ring], 0, $start, '') if $start;
+        return if length($buffers[$ring]) < 10;
+        my ($handle, $subtype, $length, $header_crc) = unpack('CCnn', substr($buffers[$ring], 4, 6));
+        if ($length > 2036 || checksum(substr($buffers[$ring], 0, 8)) != $header_crc) {
+            substr($buffers[$ring], 0, 1, '');
+            next;
+        }
+        my $frame_length = 10 + ($length ? $length + 2 : 0);
+        return if length($buffers[$ring]) < $frame_length;
+        my $frame = substr($buffers[$ring], 0, $frame_length, '');
+        my $payload = substr($frame, 10, $length);
+        die "hub payload checksum mismatch\n" if $length && checksum($payload) != unpack('n', substr($frame, -2));
+        $callback->($ring, $handle, $subtype, $payload);
+    }
+}
+
+sub receive {
+    my ($seconds) = @_;
+    my $deadline = time + $seconds;
+    while (time < $deadline) {
+        my $read_set = '';
+        vec($read_set, fileno($_), 1) = 1 for @files;
+        my $ready = select(my $selected = $read_set, undef, undef, 0.25);
+        next if !defined($ready) && 0+$! == 4;
+        die "hub select failed: $!\n" unless defined($ready);
+        for my $ring (0, 1) {
+            next unless vec($selected, fileno($files[$ring]), 1);
+            my $bytes = '';
+            my $read = sysread($files[$ring], $bytes, 4096);
+            if (defined($read) && $read > 0) { parse($ring, $bytes); }
+            elsif (!defined($read) && 0+$! != 11 && 0+$! != 4) { die "hub read failed: $!\n"; }
+            elsif (defined($read) && !$read) { die "hub ring $ring closed\n"; }
+        }
+    }
+}
+
+END {
+    # Never unload SIPC or reset CH; only undo sensors enabled by this client.
+    my $exit_status = $?;
+    for my $handle (sort {$a <=> $b} keys %enabled) {
+        eval { send_command($handle, 1, undef); };
+        if ($@) { warn "sensor $handle disable failed: $@"; $exit_status ||= 1; }
+        else { printf "DISABLE_SENT handle=%d\n", $handle; }
+    }
+    $? = $exit_status;
+}
+
+if ($mode eq 'selftest') {
+    die "version vector\n" unless unpack('H*', encode_frame(255, 0xcd, undef)) eq '7e7e7e7effcd00010334ff00ff';
+    die "info vector\n" unless unpack('H*', encode_frame(255, 9, undef)) eq '7e7e7e7eff09000103f8ff00ff';
+    my $version = pack('H*', '7e7e7e7effcd00040331edff3401ddfe');
+    my @seen;
+    my $capture = sub { push @seen, [@_]; };
+    parse(0, "noise\x7e\x7e", $capture);
+    parse(0, substr($version, $_, 1), $capture) for 0 .. length($version)-1;
+    die "fragmented version\n" unless @seen == 1 && unpack('L<', $seen[0][3]) == 20250605;
+    my $event = pack('S<f<6Q<', 1, 1.25, -2.5, 9.8, 0, 0, 0, 123456789);
+    my $data = encode_frame(14, 4, $event);
+    parse(0, substr($data, 0, 12), $capture);
+    parse(1, $version . encode_frame(14, 0xd1, ''), $capture);
+    parse(0, substr($data, 12) . $data, $capture);
+    die "two rings / multiple frames\n" unless @seen == 5 && $seen[1][0] == 1 && $seen[2][3] eq '' && $seen[3][3] eq $event && $seen[4][3] eq $event;
+    my $bad_header = $version;
+    substr($bad_header, 8, 1) = "\0";
+    parse(0, $bad_header . $version, $capture);
+    die "header resynchronization\n" unless @seen == 6;
+    my $bad_data = $version;
+    substr($bad_data, -1, 1) = "\0";
+    eval { parse(0, $bad_data, $capture); };
+    die "payload checksum accepted\n" unless $@ =~ /checksum mismatch/ && @seen == 6;
+    eval { encode_frame(1, 4, 'x' x 2037); };
+    die "payload limit accepted\n" unless $@ =~ /oversized/;
+    print "SELFTEST PASS: wire vectors, fragmented frames, independent rings, multiple frames, empty payload, bad checksums, payload limit\n";
+    exit 0;
+}
+
+$SIG{INT} = $SIG{TERM} = sub { die "interrupted; disabling test sensors\n"; };
+$| = 1;
+for my $ring (0, 1) {
+    sysopen(my $file, "/dev/spipe_ch$ring", 2050) or die "open ring $ring: $!\n";
+    flock($file, 6) or die "ring $ring is in use\n";
+    push @files, $file;
+}
+
+if ($mode eq 'info') {
+    for my $subtype (0xcd, 9, 0xcb) { send_command(255, $subtype, undef); receive(2); }
+} else {
+    send_command(255, 0xc5, "\x02") if $host_normal;
+    receive(1) if $host_normal;
+    for my $handle (1, 2, 4, 5) {
+        send_command($handle, 2, pack('l<q<', $period, 0));
+        $enabled{$handle} = 1;
+        send_command($handle, 0, undef);
+    }
+    receive(10);
+    for my $handle (sort {$a <=> $b} keys %counts) { printf "COUNT handle=%d samples=%d\n", $handle, $counts{$handle}; }
+}

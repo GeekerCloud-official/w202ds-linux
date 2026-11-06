@@ -1,0 +1,15 @@
+{
+  "origin": "Latest Server board DT, decompiled with dtc; not the stock reference DTS",
+  "input_dtb_sha256": "8f26b4639ef6173aa8a833e5cdc1ceef3c85ac84cb75271929af0465c851e41c",
+  "decompiled_dts_sha256": "c35189382b79c2ce2e079e441b6350034ea57cbb7c8523b779625e7635583cc9",
+  "removed_runtime_properties": [
+    "serial-number",
+    "linux,initrd-end",
+    "linux,initrd-start",
+    "bootargs_ext",
+    "bootargs"
+  ],
+  "exported_dts_sha256": "e6d9d6b701d00ed1d498df34794ce28497f606a6349fb8f6ceb92b96b997ff5f",
+  "validation": "Recompiled on CM2; source roundtrip and hardware-property equivalence checked separately.",
+  "subsequent_layout": "Shared SoC fragments under soc/; hardware DTSI under ../Devices/<hardware>/devicetree/."
+}

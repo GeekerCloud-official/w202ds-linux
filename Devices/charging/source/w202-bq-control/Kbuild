@@ -1,0 +1,1 @@
+obj-m += w202_bq_control.o

@@ -1,0 +1,24 @@
+{
+  "id": 1,
+  "ok": true,
+  "result": {
+    "metadata": {
+      "asyncID": "rex-1793012248699-69",
+      "command": "/usr/bin/python3 -u /tmp/w202-resource-relay-19003.py",
+      "cwd": "/home/yes",
+      "description": "Tmp Running",
+      "detached": true,
+      "pid": 11865,
+      "startedAt": 1793012248701,
+      "state": "running",
+      "timeout": 3600000,
+      "totalOutput": 85
+    },
+    "output": {
+      "info": "",
+      "message": "rex-1793012248699-69 detached",
+      "text": "2026-10-26T10:57:28.740318+00:00 READY pid=11865 0.0.0.0:19003 -> 192.168.77.2:9\n002"
+    }
+  },
+  "executor": "wsl-ubuntu-24.04"
+}

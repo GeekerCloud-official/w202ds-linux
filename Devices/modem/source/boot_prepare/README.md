@@ -60,5 +60,5 @@ AVB ABI 对照 `VbootVerifyInfo`、`FUNCTYPE_VBOOT_VERIFY_IMG`、`tee_common_cal
 加入SHA256SUMS；先验证AVB实时结果和采样结果均为0，再准备CP RAM/PHY，随后执行原厂loader。
 已有响应的CP被直接沿用，不重复切电/复位。运行中不卸载这些模块。
 
-新模块见 ../../modules/6.18.35-w202ds-m23-wifi/uefi-boot-20261105/README.md；
+匹配模块通过本地构建交付，编译产物不随源码上传；
 详细证据见项目 archive/linux/uefi-modem-sram-20261105/README.md。

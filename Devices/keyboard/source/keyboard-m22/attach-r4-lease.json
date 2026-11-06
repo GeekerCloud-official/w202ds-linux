@@ -1,0 +1,24 @@
+{
+  "id": 1,
+  "ok": true,
+  "result": {
+    "metadata": {
+      "asyncID": "rex-1793014322849-56",
+      "command": "/run/m22-keyboard/keyboard-attach /dev/ttyS2",
+      "cwd": "/",
+      "description": "Tmp Running",
+      "detached": true,
+      "pid": 8752,
+      "startedAt": 1793014322850,
+      "state": "running",
+      "timeout": 3600000,
+      "totalOutput": 55
+    },
+    "output": {
+      "info": "",
+      "message": "rex-1793014322849-56 detached",
+      "text": "W202_ZSK_ATTACHED tty=/dev/ttyS2 baud=115200 ldisc=29"
+    }
+  },
+  "executor": "w202ds-linux"
+}

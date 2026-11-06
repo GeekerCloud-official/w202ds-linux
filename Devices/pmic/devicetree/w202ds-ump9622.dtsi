@@ -1,0 +1,44 @@
+// W202DS Server hardware layout; split from the validated imported tree.
+/ {
+	soc {
+		aon {
+			spi@400000 {
+				pmic@2 {
+					compatible = "sprd,ump9622";
+					pmic-type-num = <0x02>;
+					reg = <0x02>;
+					spi-max-frequency = <0x18cba80>;
+					#address-cells = <0x01>;
+					#size-cells = <0x00>;
+					phandle = <0x1ad>;
+					syscon@2000 {
+						compatible = "sprd,ump9622-syscon";
+						reg = <0x2000>;
+					};
+					tsensor@20f8 {
+						compatible = "sprd,ump9622-tsensor";
+						#thermal-sensor-cells = <0x01>;
+						reg = <0x20f8>;
+						#address-cells = <0x01>;
+						#size-cells = <0x00>;
+						phandle = <0x123>;
+						osc-tsensor@0 {
+							reg = <0x00>;
+							phandle = <0x1ae>;
+						};
+						tout-tsensor@1 {
+							reg = <0x01>;
+							phandle = <0x1af>;
+						};
+					};
+				};
+			};
+		};
+	};
+	__symbols__ {
+		ump9622_pmic = "/soc/aon/spi@400000/pmic@2";
+		pmic_tsensor = "/soc/aon/spi@400000/pmic@2/tsensor@20f8";
+		osc_tsensor = "/soc/aon/spi@400000/pmic@2/tsensor@20f8/osc-tsensor@0";
+		tout_tsensor = "/soc/aon/spi@400000/pmic@2/tsensor@20f8/tout-tsensor@1";
+	};
+};

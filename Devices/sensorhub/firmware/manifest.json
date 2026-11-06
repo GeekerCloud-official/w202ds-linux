@@ -1,0 +1,44 @@
+{
+  "schema": 1,
+  "status": "CH原厂A/B实体固件归位；Server固件20250605查询及IMU/磁力计/光线事件已验，归档B文件不代表实际使用B固件",
+  "files": [
+    {
+      "path": "firmware/stock-partitions/ch_sys_a.img",
+      "bytes": 16777216,
+      "sha256": "ecf4ade2e5024f1b9f707fa609ab7312052ae3a2191763d9b5342f39856e3a71",
+      "storage": "regular",
+      "source": "w202ds-research/firmware/full/ch_sys_a.img",
+      "source_path_base": "workspace",
+      "format": "raw-stock-partition",
+      "slot": "a",
+      "role": "CH 协处理器/Sensor Hub 原厂容器，保留头部和填充"
+    },
+    {
+      "path": "firmware/stock-partitions/ch_sys_b.img",
+      "bytes": 16777216,
+      "sha256": "4a870bd48bef32f4b30d6d5ce833478dcc457ac4125492924b2af2eb67c1e1bd",
+      "storage": "regular",
+      "source": "w202ds-research/firmware/full/ch_sys_b.img",
+      "source_path_base": "workspace",
+      "format": "raw-stock-partition",
+      "slot": "b",
+      "role": "CH 协处理器/Sensor Hub 原厂容器，保留头部和填充"
+    }
+  ],
+  "redistribution": "Original vendor binaries have no newly established redistribution license; preserve provenance.",
+  "shared_with": [
+    "imu",
+    "magnetometer",
+    "light"
+  ],
+  "evidence": [
+    "bsp/Devices/modem/userspace/server-runtime-20261103-v5/private-inputs.json",
+    "archive/linux/server-modem-runtime-20261102-v2/firmware-private-copy.log",
+    "archive/linux/server-audio-sensors-bt-led-20261103-v1/probe-hub-info-r1.log"
+  ],
+  "placement": "Known firmware is stored as regular files beneath this device firmware directory; shared chip firmware has one owner.",
+  "shared_with_scope": "components within the same sensorhub device, not separate Devices directories",
+  "imported_from": "w202ds-research/bsp/Devices/sensorhub/firmware",
+  "original_loader_reference": "w202ds-research/bsp/Devices/modem/userspace/server-runtime-20261103-v5",
+  "evidence_path_base": "w202ds-research"
+}

@@ -1,0 +1,14 @@
+[Unit]
+Description=W202DS Hall lid input for Debian Server
+After=systemd-logind.service
+ConditionKernelVersion=6.18.35-w202ds-m23-wifi
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecCondition=/usr/bin/grep -Fxq W202_ROOT_PROFILE=server/normal /usr/lib/w202ds/root-id
+ExecStart=/sbin/modprobe w202_hall
+ExecStop=/sbin/modprobe -r w202_hall
+
+[Install]
+WantedBy=multi-user.target

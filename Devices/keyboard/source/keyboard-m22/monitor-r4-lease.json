@@ -1,0 +1,24 @@
+{
+  "id": 1,
+  "ok": true,
+  "result": {
+    "metadata": {
+      "asyncID": "rex-1793014394229-59",
+      "command": "sh -c timeout 600 cat /dev/input/event2 >/run/m22-keyboard/key-events-r4.raw & keymon=$!; timeout 600 cat /dev/input/event3 >/run/m22-keyboard/pad-events-r4.raw & padmon=$!; printf \"MONITORS key=%s pad=%s\\n\" \"$keymon\" \"$padmon\"; wait \"$keymon\"; wait \"$padmon\"",
+      "cwd": "/",
+      "description": "Tmp Running",
+      "detached": true,
+      "pid": 8847,
+      "startedAt": 1793014394231,
+      "state": "running",
+      "timeout": 660000,
+      "totalOutput": 28
+    },
+    "output": {
+      "info": "",
+      "message": "rex-1793014394229-59 detached",
+      "text": "MONITORS key=8850 pad=8851"
+    }
+  },
+  "executor": "w202ds-linux"
+}

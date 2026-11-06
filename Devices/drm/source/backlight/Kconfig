@@ -1,0 +1,6 @@
+config W202DS_BACKLIGHT
+	tristate "W202DS deferred PWM backlight"
+	depends on ARCH_SPRD && BACKLIGHT_CLASS_DEVICE && PWM_SPRD
+	help
+	  Preserve inherited PWM until /dev/w202blctl is explicitly attached.
+	  Keep built-in when userspace expects this interface before modules load.

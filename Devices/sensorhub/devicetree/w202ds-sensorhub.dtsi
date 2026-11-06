@@ -1,0 +1,7 @@
+// W202DS Server hardware layout; split from the validated imported tree.
+/ {
+	sprd-sensorhub {
+		compatible = "sprd,qogirn6pro-sensorhub", "sprd,sensor-hub";
+		sipc_sensorhub_id = <0x09>;
+	};
+};

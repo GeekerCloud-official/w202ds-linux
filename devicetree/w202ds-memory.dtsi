@@ -1,0 +1,118 @@
+// W202DS Server hardware layout; split from the validated imported tree.
+/ {
+	memory@80000000 {
+		reg = <0x00 0x80000000 0x01 0x7ffff000>;
+		device_type = "memory";
+	};
+	chosen {
+		stdout-path = "serial1:115200n8";
+		phandle = <0x1f7>;
+	};
+	reserved-memory {
+		#address-cells = <0x02>;
+		#size-cells = <0x02>;
+		ranges;
+		phandle = <0x1fc>;
+		logobuffer@b0000000 {
+			phandle = <0x23f>;
+			reg = <0x00 0xb0000000 0x00 0x9e4000>;
+		};
+		ddrbist-mem@80000000 {
+			reg = <0x00 0x80000000 0x00 0x1000>;
+			phandle = <0x1fd>;
+		};
+		sysdumpinfo-mem@80001000 {
+			reg = <0x00 0x80001000 0x00 0x1000>;
+			phandle = <0x1fe>;
+		};
+		sipc-mem@87800000 {
+			reg = <0x00 0x87800000 0x00 0x800000>;
+			phandle = <0x1ff>;
+		};
+		cp-modem@88000000 {
+			reg = <0x00 0x88000000 0x00 0x1d000000>;
+			phandle = <0x200>;
+		};
+		ch_ddr@ae600000 {
+			reg = <0x00 0xae600000 0x00 0x300000>;
+			phandle = <0x202>;
+		};
+		audio-mem@af700000 {
+			reg = <0x00 0xaf700000 0x00 0x300000>;
+			phandle = <0xfa>;
+		};
+		audiodsp-mem@afa00000 {
+			reg = <0x00 0xafa00000 0x00 0x600000>;
+			phandle = <0xfb>;
+		};
+		sysdump-uboot@b5000000 {
+			reg = <0x00 0xb5000000 0x00 0x00>;
+			phandle = <0x203>;
+		};
+		uboot_log-mem@bbe80000 {
+			reg = <0x00 0xbbe80000 0x00 0x80000>;
+			phandle = <0x204>;
+		};
+		sml-mem@bd000000 {
+			reg = <0x00 0xbd000000 0x00 0x40000>;
+			phandle = <0x205>;
+		};
+		tos-mem@bd020000 {
+			reg = <0x00 0xbd060000 0x00 0x18a0000>;
+			phandle = <0x206>;
+		};
+		sh-mem@c3000000 {
+			reg = <0x00 0xc3000000 0x00 0x100000>;
+			phandle = <0x12f>;
+		};
+		cma_share@f00000000 {
+			compatible = "shared-dma-pool";
+			reg = <0x00 0xf0000000 0x00 0x3000000>;
+			reusable;
+			linux,cma-default;
+			phandle = <0x207>;
+		};
+		rebootescrow@fff70000 {
+			no-map;
+			reg = <0x00 0xfff70000 0x00 0x10000>;
+		};
+		ramoops@fff80000 {
+			compatible = "ramoops";
+			reg = <0x00 0xfff80000 0x00 0x40000>;
+			record-size = <0x8000>;
+			console-size = <0x8000>;
+			pmsg-size = <0x8000>;
+			phandle = <0x208>;
+		};
+	};
+	rebootescrow@0 {
+		compatible = "pmem-region";
+		reg = <0x00 0xfff70000 0x00 0x10000>;
+	};
+	ion {
+		compatible = "sprd,ion";
+		#address-cells = <0x01>;
+		#size-cells = <0x00>;
+		phandle = <0x226>;
+	};
+	__symbols__ {
+		logo_reserved = "/reserved-memory/logobuffer@b0000000";
+		chosen = "/chosen";
+		reserved_memory = "/reserved-memory";
+		ddrbist_reserved = "/reserved-memory/ddrbist-mem@80000000";
+		sysdump_reserved = "/reserved-memory/sysdumpinfo-mem@80001000";
+		smem_reserved = "/reserved-memory/sipc-mem@87800000";
+		cp_reserved = "/reserved-memory/cp-modem@88000000";
+		ch_ddr_reserved = "/reserved-memory/ch_ddr@ae600000";
+		audio_reserved = "/reserved-memory/audio-mem@af700000";
+		audiodsp_reserved = "/reserved-memory/audiodsp-mem@afa00000";
+		uboot_reserved = "/reserved-memory/sysdump-uboot@b5000000";
+		uboot_log_reserved = "/reserved-memory/uboot_log-mem@bbe80000";
+		sml_reserved = "/reserved-memory/sml-mem@bd000000";
+		tos_reserved = "/reserved-memory/tos-mem@bd020000";
+		tos_shm_reserved = "/reserved-memory/sh-mem@c3000000";
+		cma_reserved = "/reserved-memory/cma_share@f00000000";
+		pstore_reserved = "/reserved-memory/ramoops@fff80000";
+		ion = "/ion";
+	};
+};
