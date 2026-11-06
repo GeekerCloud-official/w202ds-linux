@@ -17,3 +17,6 @@ vpu/
 | 其他视频格式 | 待验证 | 当前结果只覆盖 H.264 / AVC。 |
 
 更新日期：2026-11-05
+
+`source/` 根目录直接放当前驱动、公共头文件和 Makefile；`source/tests/` 放内核诊断代码。
+电源、IOMMU、codec 三件模块的职责和构建入口见 [源码说明](source/README.md)。
