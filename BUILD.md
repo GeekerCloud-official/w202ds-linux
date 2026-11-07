@@ -23,6 +23,7 @@ dtc -I dts -O dtb -o output/devicetree/w202ds-server.dtb devicetree/w202ds-serve
 现有 Server 配置强制使用自身命令行，入口为 `rdinit=/w202diag`，需要另行提供匹配 initramfs/rootfs。
 这份配置和源码不是通用发行版安装器，也不包含任何引导固件。板级 DT 中继承的硬件/保留内存必须与启动环境一致。
 
+蓝牙需要 `config/fragments/bluetooth.config`（BT、`hci_uart` H4、RFCOMM、BNEP、HIDP）；在 `olddefconfig` 前以 `kernel/scripts/kconfig/merge_config.sh -m -O output/kernel output/kernel/.config config/fragments/bluetooth.config` 合入。
 使用现有 CM2 冻结构建目录进行单模块开发时，见 [独立模块构建说明](Devices/BUILD.md) 的 cfg80211 导出选项。
 构建检查与真机功能验收分别记录，不能由编译成功推断硬件完整可用。
 
