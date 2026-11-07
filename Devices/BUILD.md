@@ -13,7 +13,7 @@ make -C Devices KDIR="$PWD/output/kernel" OUT="$PWD/output/modules" all
 ```
 
 每个目标输出自己的模块、`Module.symvers`、`build.log` 和 `build.json`；提供者按实际符号依赖先构建。
-`all` 包含当前 Server 模块及已验证的 Linux 基带启动准备。诊断、GPU frequency、历史触控为显式目标。
+`all` 包含当前 Server 模块及已验证的 Linux 基带启动准备。诊断、历史触控为显式目标。
 目标能独立编译不代表它能独立运行；例如 SIPC、Trusty、WCN 共享硬件状态，不能据此随意热卸载。
 
 完整新内核先构建 `Image modules`，使用全局 `Module.symvers`，无需额外 provider。
