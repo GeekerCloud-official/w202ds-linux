@@ -8,6 +8,7 @@
 #include <linux/slab.h>
 #include <linux/sizes.h>
 #include "w202_vpu_buffers.h"
+#include "w202_vpu_ranges.h"
 
 struct w202_vpu_mapping {
 	struct list_head list;
@@ -51,7 +52,8 @@ void w202_vpu_buffers_destroy(struct w202_vpu_buffers *ctx)
 	put_device(ctx->dev);
 }
 
-int w202_vpu_buffers_map(struct w202_vpu_buffers *ctx, struct w202_vpu_iova *map)
+int w202_vpu_buffers_import(struct w202_vpu_buffers *ctx, struct dma_buf *buf,
+			    struct w202_vpu_iova *map)
 {
 	struct iommu_domain *domain = iommu_get_domain_for_dev(ctx->dev);
 	struct w202_vpu_mapping *m;
@@ -61,7 +63,7 @@ int w202_vpu_buffers_map(struct w202_vpu_buffers *ctx, struct w202_vpu_iova *map
 	unsigned int i;
 	int ret;
 
-	if (map->fd < 0 || map->need_cache_sync > 1)
+	if (!buf || IS_ERR(buf))
 		return -EINVAL;
 	if (!domain || !iommu_is_dma_domain(domain))
 		return -ENODEV;
@@ -73,12 +75,8 @@ int w202_vpu_buffers_map(struct w202_vpu_buffers *ctx, struct w202_vpu_iova *map
 		ret = -ENOSPC;
 		goto fail;
 	}
-	m->buf = dma_buf_get(map->fd);
-	if (IS_ERR(m->buf)) {
-		ret = PTR_ERR(m->buf);
-		m->buf = NULL;
-		goto fail;
-	}
+	get_dma_buf(buf);
+	m->buf = buf;
 	m->size = m->buf->size;
 	if (!m->size || m->size > SZ_256M || !IS_ALIGNED(m->size, PAGE_SIZE)) {
 		ret = -EINVAL;
@@ -128,6 +126,76 @@ int w202_vpu_buffers_map(struct w202_vpu_buffers *ctx, struct w202_vpu_iova *map
 fail:
 	mapping_destroy(m);
 	mutex_unlock(&ctx->lock);
+	return ret;
+}
+
+int w202_vpu_buffers_validate_native(struct w202_vpu_buffers *ctx,
+				     const struct w202_vpu_iova *input,
+				     const struct w202_vpu_iova *frame)
+{
+	struct w202_vpu_mapping *m;
+	struct w202_vpu_range *ranges = NULL;
+	unsigned int count = 0, at = 0, inputs = 0, outputs = 0, i;
+	int ret = -EINVAL;
+
+	mutex_lock(&ctx->lock);
+	if (ctx->count < 2 || ctx->count > 4 || input->iova_addr == frame->iova_addr)
+		goto out;
+	list_for_each_entry(m, &ctx->maps, list) {
+		if (!m->sgt->orig_nents || check_add_overflow(count, m->sgt->orig_nents, &count))
+			goto out;
+	}
+	ranges = kvmalloc_array(count, sizeof(*ranges), GFP_KERNEL);
+	if (!ranges) {
+		ret = -ENOMEM;
+		goto out;
+	}
+	list_for_each_entry(m, &ctx->maps, list) {
+		struct scatterlist *sg;
+		size_t total = 0;
+		unsigned int use = W202_VPU_RANGE_REFERENCE;
+
+		if (m->iova == input->iova_addr && m->size == input->size) {
+			use = W202_VPU_RANGE_INPUT;
+			inputs++;
+		} else if (m->iova == frame->iova_addr && m->size == frame->size) {
+			use = W202_VPU_RANGE_OUTPUT;
+			outputs++;
+		}
+		for_each_sgtable_sg(m->sgt, sg, i) {
+			if (!sg_page(sg) || !sg->length || sg->length > m->size - total)
+				goto out;
+			ranges[at].first = sg_phys(sg);
+			if (check_add_overflow(ranges[at].first, (__u64)sg->length - 1, &ranges[at].last))
+				goto out;
+			ranges[at].use = use;
+			at++;
+			total += sg->length;
+		}
+		if (total != m->size)
+			goto out;
+	}
+	if (inputs != 1 || outputs != 1 || at != count)
+		goto out;
+	ret = w202_vpu_ranges_validate(ranges, count);
+out:
+	kvfree(ranges);
+	mutex_unlock(&ctx->lock);
+	return ret;
+}
+
+int w202_vpu_buffers_map(struct w202_vpu_buffers *ctx, struct w202_vpu_iova *map)
+{
+	struct dma_buf *buf;
+	int ret;
+
+	if (map->fd < 0 || map->need_cache_sync > 1)
+		return -EINVAL;
+	buf = dma_buf_get(map->fd);
+	if (IS_ERR(buf))
+		return PTR_ERR(buf);
+	ret = w202_vpu_buffers_import(ctx, buf, map);
+	dma_buf_put(buf);
 	return ret;
 }
 

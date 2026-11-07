@@ -1,0 +1,8 @@
+--- a/src/codec_h264.c
++++ b/src/codec_h264.c
+@@ -1017,5 +1017 @@
+-	VAProfileH264High,
+-#if VA_CHECK_VERSION(1, 18, 0)
+-	VAProfileH264High10,
+-#endif
+ };

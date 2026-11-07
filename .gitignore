@@ -32,3 +32,9 @@ SOURCES*.json
 /Devices/gpu/source/*
 !/Devices/gpu/source/panfrost/
 !/Devices/gpu/source/README.md
+
+# Publish VPU userspace sources; keep runtime packages and external dependencies local.
+!/Devices/vpu/userspace/
+/Devices/vpu/userspace/*
+!/Devices/vpu/userspace/README.md
+!/Devices/vpu/userspace/source/
