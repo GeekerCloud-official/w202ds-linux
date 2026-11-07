@@ -11,15 +11,17 @@ extern int himax_common_init(void);
 extern void himax_common_exit(void);
 static int __init w202_himax_init(void)
 {
-    struct device_node *chosen = of_find_node_by_path("/chosen");
-    const char *args;
-    int ret;
-    if (!chosen) return -ENODEV;
-    ret = of_property_read_string(chosen, "bootargs", &args);
-    if (!ret && !strstr(args, "lcd_name=lcd_guoxian_hx83102j_huaxing_nopen_mipi_himax "))
-        ret = -ENODEV;
-    of_node_put(chosen);
-    return ret ? ret : himax_common_init();
+    struct device_node *panel;
+    bool enabled;
+
+    /* Native Linux identifies the controller through DT, not Android's
+     * optional lcd_name boot argument. SPI still performs the chip probe. */
+    panel = of_find_compatible_node(NULL, NULL, "himax,hxcommon");
+    if (!panel)
+        return -ENODEV;
+    enabled = of_device_is_available(panel);
+    of_node_put(panel);
+    return enabled ? himax_common_init() : -ENODEV;
 }
 static void __exit w202_himax_exit(void) { himax_common_exit(); }
 module_init(w202_himax_init);
