@@ -17,6 +17,13 @@ dtc -I dts -O dtb -o output/devicetree/w202ds-server.dtb devicetree/w202ds-serve
 输出为 `output/kernel/arch/arm64/boot/Image`、树内模块、`output/modules/<目标>/*.ko` 及逐目标 `build.json`、DTB。
 构建不安装、不加载模块、不刷写设备。完整 `modules` 步骤生成树内导出符号，不能以 `modules_prepare` 替代。
 
+功能所需、尚未并入 `config/server.config` 的内核选项按功能放在 `config/fragments/*.config`，格式与 `.config` 相同。
+用下面的命令替代上面的 `cp` 一步，合并后照常执行 `olddefconfig`，并确认片段中的符号在 `output/kernel/.config` 中生效：
+
+```sh
+kernel/scripts/kconfig/merge_config.sh -m -O output/kernel config/server.config config/fragments/*.config
+```
+
 `LOCALVERSION` 显式置空用于禁止 Git 提交自动附加 `+`；版本后缀仍取 `config/server.config`
 中的 `CONFIG_LOCALVERSION="-w202ds"`。对子模块源码构建时也保持此设置。
 
