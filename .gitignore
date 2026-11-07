@@ -28,3 +28,7 @@ SOURCES*.json
 /Devices/gpu/source/*
 !/Devices/gpu/source/panfrost/
 !/Devices/gpu/source/README.md
+
+# Publish WCN Bluetooth userspace sources; build output stays local.
+!/Devices/wcn/userspace/
+/Devices/wcn/userspace/output/

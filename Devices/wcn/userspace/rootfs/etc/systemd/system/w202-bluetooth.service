@@ -1,0 +1,15 @@
+[Unit]
+Description=W200DS Bluetooth controller (SC2355/Marlin3 H4 over PCIe)
+After=w202-wifi.service
+Requires=w202-wifi.service
+Before=bluetooth.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/sbin/w202-bluetooth-start
+ExecStopPost=-/usr/sbin/rfkill block bluetooth
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
