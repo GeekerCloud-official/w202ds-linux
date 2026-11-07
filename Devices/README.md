@@ -7,7 +7,7 @@
 | [屏幕](drm/README.md) | HX83102J；UMS9620 DPU / DSI / DSC | ✅ | 显示与登录可用；KDE 桌面、长时间运行及休眠恢复待验。 |
 | [图形处理器](gpu/README.md) | ARM Mali-G57 | 🟡 | 基础 3D / GLES 已验证；桌面、浏览器及 Vulkan 待验。 |
 | [视频编解码器](vpu/README.md) | UMS9620 集成 VPU | 🟡 | H.264 解码已验证；普通播放器、浏览器硬解及编码待完成。 |
-| [Wi-Fi / 蓝牙 / 卫星定位](wcn/README.md) | SC2355 / Marlin3 | 🟡 | Wi-Fi 联网与热点分别可用，模式二选一；蓝牙及定位待验。 |
+| [Wi-Fi / 蓝牙 / 卫星定位](wcn/README.md) | SC2355 / Marlin3 | 🟡 | Wi-Fi 联网与热点分别可用，模式二选一；蓝牙控制器已启用（BlueZ 可用），配对、传输、音频及定位待验。 |
 | [蜂窝基带](modem/README.md) | UMS9620 集成 Modem | 🟡 | SIM 识别、注册与蜂窝上网可用；通话、短信等待验；ModemManager 原生 5G 连接已测，持久服务接入待完成。 |
 | [电源管理与电池监测](pmic/README.md) | UMP9620；设备树另含 UMP9621 / UMP9622 | 🟡 | 电池电压、电流、温度等可读；电量百分比为估算，马达和呼吸灯待验。 |
 | [充电控制](charging/README.md) | 双路 UPM6910H（兼容 BQ2560x） | 🟡 | 停充保持与外接电源负载运行已测；完整充电切换、快充及电池隔离待验。 |
