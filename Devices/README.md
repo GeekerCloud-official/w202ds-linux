@@ -4,6 +4,7 @@
 
 | 硬件 | 芯片型号 | 日常可用性 | 描述 |
 | --- | --- | :---: | --- |
+| [处理器调频](cpu/README.md) | UMS9620（T760）：4×Cortex-A55 + 4×Cortex-A76 | ✅ | 三簇 schedutil 调频已验证；开机约 45 秒后启用，电压偏移不支持，温控限频待验。 |
 | [屏幕](drm/README.md) | HX83102J；UMS9620 DPU / DSI / DSC | ✅ | 显示与登录可用；KDE 桌面、长时间运行及休眠恢复待验。 |
 | [图形处理器](gpu/README.md) | ARM Mali-G57 | 🟡 | 基础 3D / GLES 已验证；桌面、浏览器及 Vulkan 待验。 |
 | [视频编解码器](vpu/README.md) | UMS9620 集成 VPU | 🟡 | H.264 解码已验证；普通播放器、浏览器硬解及编码待完成。 |
