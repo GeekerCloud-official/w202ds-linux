@@ -1,0 +1,10 @@
+# W200DS: w202-power-key handles the power key (short press screen off/on, long press power menu).
+# Idle suspend on battery after 30 min; on external power never (50-w202-no-ac-suspend).
+[org/gnome/settings-daemon/plugins/power]
+power-button-action='nothing'
+sleep-inactive-battery-timeout=1800
+
+# The power menu is the GNOME Shell extension w202-power-menu@w202ds. A user who changes the extension list keeps
+# their own value instead of this default; the extension then has to stay in it.
+[org/gnome/shell]
+enabled-extensions=['w202-power-menu@w202ds']
