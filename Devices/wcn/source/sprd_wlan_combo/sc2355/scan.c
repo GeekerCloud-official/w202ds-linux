@@ -296,6 +296,14 @@ int sc2355_scan(struct wiphy *wiphy, struct cfg80211_scan_request *request)
 	struct sprd_api_version_t *api = (&priv->sync_api)->api_array;
 	u8 fw_ver = 0;
 
+	/* This firmware uses AP scans for channel surveys and leaves the
+	 * serving channel. Reject background scans once cfg80211 has started
+	 * beaconing; keep the pre-start HT/ACS scan and station scans working.
+	 */
+	if (vif->mode == SPRD_MODE_AP &&
+	    vif->wdev.links[0].ap.beacon_interval)
+		return -EBUSY;
+
 	netdev_info(vif->ndev, "%s n_channels %u\n", __func__,
 		    request->n_channels);
 

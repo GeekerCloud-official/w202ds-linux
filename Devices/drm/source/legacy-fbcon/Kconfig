@@ -1,7 +1,0 @@
-config W202DS_LKFB_CONSOLE
-	bool "W202DS legacy deferred diagnostic framebuffer"
-	depends on ARCH_SPRD && FB
-	select FB_SYSMEM_HELPERS
-	help
-	  Optional legacy /dev/w202fbcon interface; not the normal DRM path.
-	  Does not attach the inherited framebuffer until an explicit ioctl.

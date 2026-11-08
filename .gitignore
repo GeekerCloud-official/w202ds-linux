@@ -17,6 +17,12 @@ SOURCES*.json
 !/Devices/*/firmware/
 !/Devices/*/source/
 
+# Reference snapshots and the retired diagnostic recovery project stay local.
+/Devices/**/vendor-reference/
+/Devices/*/source/*-vendor-reference/
+/Devices/*/source/mainline-current/
+/Devices/pmic/source/diagnostic-recovery/
+
 # Publish modem userspace sources and configuration; keep delivery packages local.
 !/Devices/modem/userspace/
 !/Devices/modem/userspace/SOURCES.json
@@ -24,7 +30,17 @@ SOURCES*.json
 /Devices/modem/userspace/server-runtime-20261103-v5/
 /Devices/modem/userspace/output/
 
+# WCN Bluetooth initializer, standard BlueZ service and local protocol tests.
+!/Devices/wcn/userspace/
+/Devices/wcn/userspace/output/
+
 # Publish the GPU implementation already verified on W202DS.
 /Devices/gpu/source/*
 !/Devices/gpu/source/panfrost/
 !/Devices/gpu/source/README.md
+
+# Publish VPU userspace sources; keep runtime packages and external dependencies local.
+!/Devices/vpu/userspace/
+/Devices/vpu/userspace/*
+!/Devices/vpu/userspace/README.md
+!/Devices/vpu/userspace/source/

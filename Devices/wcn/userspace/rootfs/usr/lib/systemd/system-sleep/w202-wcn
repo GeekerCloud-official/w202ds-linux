@@ -1,0 +1,22 @@
+#!/bin/sh
+# w202-wcn: the WCN chip (Wi-Fi and Bluetooth) is off through a system sleep and starts cold after it.
+# Wi-Fi started on firmware that had been through the sleep - the chip kept on by Bluetooth - can retain stale firmware state after resume. NetworkManager
+# closes Wi-Fi before the sleep (WoWLAN is off: sprd_wlan_combo.wowlan_default), so stopping Bluetooth here powers the
+# chip off; after the resume Bluetooth starts again (loading the firmware, or after Wi-Fi did) and NetworkManager
+# opens Wi-Fi. Bluetooth connections drop over a sleep and BlueZ makes them again.
+MARK=/run/w202-wcn-bt-stopped
+case "$1" in
+pre)
+    if systemctl -q is-active w202-bluetooth.service; then
+        touch $MARK
+        systemctl stop w202-bluetooth.service
+    fi
+    ;;
+post)
+    if [ -e $MARK ]; then
+        rm -f $MARK
+        systemctl --no-block start w202-bluetooth.service
+    fi
+    ;;
+esac
+exit 0

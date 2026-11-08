@@ -1,0 +1,2779 @@
+{
+  "date_utc": "2026-11-08",
+  "baseline_commit": "885d993b0a2f9deefceee7488484fa985ba001f2",
+  "kernel_commit": "815a26419264a57cb9a7a8f4f4bf2869fd70048a",
+  "kernel_release": "6.18.35-w202ds-m23-wifi",
+  "boot_id": "7482be0b-e56e-4ca5-8e5b-c84799457e6e",
+  "codec_version": "w202ds-vpu-codec-v10-v4l2-high-scaling",
+  "codec_sha256": "cdb64fd387bea7ecb49c5f504f4a070dc4503dcf53a0fc3cec8839f73d825734",
+  "bridge_commit": "4f60c51f7841dd74bb61c94a4ad31e630bbdab01",
+  "bridge_sha256": "502ca8f95a7251b69f3dc768032e8fdef22c5204c25bfd938771fc43e27ba058",
+  "bridge_patch_sha256": "68ca87eefd0c4acc2f200cc1c6af269ba510a1b40dd3f79b9c3191febbc3c260",
+  "request": {
+    "cases": 92,
+    "pixel_cases": 84,
+    "rejection_cases": 8,
+    "decoded_frames": 520,
+    "job_delta": 520,
+    "irq_delta": 520,
+    "before": {
+      "opens": "0",
+      "maps": "0",
+      "auto_released": "4154",
+      "copyout_rollbacks": "0",
+      "interrupts": "1332",
+      "resets": "2664",
+      "timeouts": "0",
+      "faults": "0",
+      "broken": "0",
+      "quarantined": "0",
+      "quarantined_maps": "0",
+      "powered": "0",
+      "live_regs": "0",
+      "clock": "256000000",
+      "pending": "00000000",
+      "last_irq": "0000104c",
+      "axi": "00000000",
+      "raw": "00000000",
+      "mmu": "00000000",
+      "native_started": "1332",
+      "native_inflight": "0",
+      "native_cancel_before_irq": "0",
+      "native_cancel_dma_active": "0"
+    },
+    "after": {
+      "opens": "0",
+      "maps": "0",
+      "auto_released": "5796",
+      "copyout_rollbacks": "0",
+      "interrupts": "1852",
+      "resets": "3704",
+      "timeouts": "0",
+      "faults": "0",
+      "broken": "0",
+      "quarantined": "0",
+      "quarantined_maps": "0",
+      "powered": "0",
+      "live_regs": "0",
+      "clock": "256000000",
+      "pending": "00000000",
+      "last_irq": "0000104c",
+      "axi": "00000000",
+      "raw": "00000000",
+      "mmu": "00000000",
+      "native_started": "1852",
+      "native_inflight": "0",
+      "native_cancel_before_irq": "0",
+      "native_cancel_dma_active": "0"
+    },
+    "tests": [
+      {
+        "name": "high-idr-c0-t0-jvt-mmap",
+        "fixture": "high-idr-c0-t0-jvt",
+        "mode": "mmap",
+        "env": {},
+        "exit": 0,
+        "bytes": 18432,
+        "sha256": "3c592eee6e01b3d35523d7f01e3f30add8f2463579775ec1d5633ae876c257fe",
+        "pixels_match": true,
+        "job_delta": 1,
+        "irq_delta": 1
+      },
+      {
+        "name": "high-idr-c0-t0-jvt-dmabuf",
+        "fixture": "high-idr-c0-t0-jvt",
+        "mode": "dmabuf",
+        "env": {},
+        "exit": 0,
+        "bytes": 18432,
+        "sha256": "3c592eee6e01b3d35523d7f01e3f30add8f2463579775ec1d5633ae876c257fe",
+        "pixels_match": true,
+        "job_delta": 1,
+        "irq_delta": 1
+      },
+      {
+        "name": "high-ip-c0-t0-jvt-mmap",
+        "fixture": "high-ip-c0-t0-jvt",
+        "mode": "mmap",
+        "env": {},
+        "exit": 0,
+        "bytes": 147456,
+        "sha256": "deb37baf91c2b2e7d50b818f11f9e0805aea0b5d4156ed212108905147f1c045",
+        "pixels_match": true,
+        "job_delta": 8,
+        "irq_delta": 8
+      },
+      {
+        "name": "high-ip-c0-t0-jvt-dmabuf",
+        "fixture": "high-ip-c0-t0-jvt",
+        "mode": "dmabuf",
+        "env": {},
+        "exit": 0,
+        "bytes": 147456,
+        "sha256": "deb37baf91c2b2e7d50b818f11f9e0805aea0b5d4156ed212108905147f1c045",
+        "pixels_match": true,
+        "job_delta": 8,
+        "irq_delta": 8
+      },
+      {
+        "name": "high-ipb-c0-t0-jvt-mmap",
+        "fixture": "high-ipb-c0-t0-jvt",
+        "mode": "mmap",
+        "env": {},
+        "exit": 0,
+        "bytes": 147456,
+        "sha256": "31344eb552214ee15336a8f90b1d7445a7f908d2b63867247e076a6e9446b88e",
+        "pixels_match": true,
+        "job_delta": 8,
+        "irq_delta": 8
+      },
+      {
+        "name": "high-ipb-c0-t0-jvt-dmabuf",
+        "fixture": "high-ipb-c0-t0-jvt",
+        "mode": "dmabuf",
+        "env": {},
+        "exit": 0,
+        "bytes": 147456,
+        "sha256": "31344eb552214ee15336a8f90b1d7445a7f908d2b63867247e076a6e9446b88e",
+        "pixels_match": true,
+        "job_delta": 8,
+        "irq_delta": 8
+      },
+      {
+        "name": "high-idr-c0-t0-asymmetric-mmap",
+        "fixture": "high-idr-c0-t0-asymmetric",
+        "mode": "mmap",
+        "env": {},
+        "exit": 0,
+        "bytes": 18432,
+        "sha256": "ee2e3a126ad7559f67ebe4235d41f994a59d1258963d78062a07cc5353e61f8c",
+        "pixels_match": true,
+        "job_delta": 1,
+        "irq_delta": 1
+      },
+      {
+        "name": "high-idr-c0-t0-asymmetric-dmabuf",
+        "fixture": "high-idr-c0-t0-asymmetric",
+        "mode": "dmabuf",
+        "env": {},
+        "exit": 0,
+        "bytes": 18432,
+        "sha256": "ee2e3a126ad7559f67ebe4235d41f994a59d1258963d78062a07cc5353e61f8c",
+        "pixels_match": true,
+        "job_delta": 1,
+        "irq_delta": 1
+      },
+      {
+        "name": "high-ip-c0-t0-asymmetric-mmap",
+        "fixture": "high-ip-c0-t0-asymmetric",
+        "mode": "mmap",
+        "env": {},
+        "exit": 0,
+        "bytes": 147456,
+        "sha256": "8a9b102aa8bb7f6697b98b288504f6f188b6071b4b696ea47fd6be4ff5cef6a0",
+        "pixels_match": true,
+        "job_delta": 8,
+        "irq_delta": 8
+      },
+      {
+        "name": "high-ip-c0-t0-asymmetric-dmabuf",
+        "fixture": "high-ip-c0-t0-asymmetric",
+        "mode": "dmabuf",
+        "env": {},
+        "exit": 0,
+        "bytes": 147456,
+        "sha256": "8a9b102aa8bb7f6697b98b288504f6f188b6071b4b696ea47fd6be4ff5cef6a0",
+        "pixels_match": true,
+        "job_delta": 8,
+        "irq_delta": 8
+      },
+      {
+        "name": "high-ipb-c0-t0-asymmetric-mmap",
+        "fixture": "high-ipb-c0-t0-asymmetric",
+        "mode": "mmap",
+        "env": {},
+        "exit": 0,
+        "bytes": 147456,
+        "sha256": "e377d5046164e5f7e375aadc8ddb3a405d86263191af486e607ceb3e7d202b80",
+        "pixels_match": true,
+        "job_delta": 8,
+        "irq_delta": 8
+      },
+      {
+        "name": "high-ipb-c0-t0-asymmetric-dmabuf",
+        "fixture": "high-ipb-c0-t0-asymmetric",
+        "mode": "dmabuf",
+        "env": {},
+        "exit": 0,
+        "bytes": 147456,
+        "sha256": "e377d5046164e5f7e375aadc8ddb3a405d86263191af486e607ceb3e7d202b80",
+        "pixels_match": true,
+        "job_delta": 8,
+        "irq_delta": 8
+      },
+      {
+        "name": "high-idr-c0-t1-jvt-mmap",
+        "fixture": "high-idr-c0-t1-jvt",
+        "mode": "mmap",
+        "env": {},
+        "exit": 0,
+        "bytes": 18432,
+        "sha256": "6f7d8921f4b18714cc04bbc536e89edc4e72b55edf0cd310114bc1767b03547b",
+        "pixels_match": true,
+        "job_delta": 1,
+        "irq_delta": 1
+      },
+      {
+        "name": "high-idr-c0-t1-jvt-dmabuf",
+        "fixture": "high-idr-c0-t1-jvt",
+        "mode": "dmabuf",
+        "env": {},
+        "exit": 0,
+        "bytes": 18432,
+        "sha256": "6f7d8921f4b18714cc04bbc536e89edc4e72b55edf0cd310114bc1767b03547b",
+        "pixels_match": true,
+        "job_delta": 1,
+        "irq_delta": 1
+      },
+      {
+        "name": "high-ip-c0-t1-jvt-mmap",
+        "fixture": "high-ip-c0-t1-jvt",
+        "mode": "mmap",
+        "env": {},
+        "exit": 0,
+        "bytes": 147456,
+        "sha256": "07e93317a6907fc3170b4eedfb02647b5716ea3407ea99d0dde57c5c2eb5d484",
+        "pixels_match": true,
+        "job_delta": 8,
+        "irq_delta": 8
+      },
+      {
+        "name": "high-ip-c0-t1-jvt-dmabuf",
+        "fixture": "high-ip-c0-t1-jvt",
+        "mode": "dmabuf",
+        "env": {},
+        "exit": 0,
+        "bytes": 147456,
+        "sha256": "07e93317a6907fc3170b4eedfb02647b5716ea3407ea99d0dde57c5c2eb5d484",
+        "pixels_match": true,
+        "job_delta": 8,
+        "irq_delta": 8
+      },
+      {
+        "name": "high-ipb-c0-t1-jvt-mmap",
+        "fixture": "high-ipb-c0-t1-jvt",
+        "mode": "mmap",
+        "env": {},
+        "exit": 0,
+        "bytes": 147456,
+        "sha256": "0d5448637c6283d0ca983d152e83e4efff459c585758e15b5b3717088f1f3c6a",
+        "pixels_match": true,
+        "job_delta": 8,
+        "irq_delta": 8
+      },
+      {
+        "name": "high-ipb-c0-t1-jvt-dmabuf",
+        "fixture": "high-ipb-c0-t1-jvt",
+        "mode": "dmabuf",
+        "env": {},
+        "exit": 0,
+        "bytes": 147456,
+        "sha256": "0d5448637c6283d0ca983d152e83e4efff459c585758e15b5b3717088f1f3c6a",
+        "pixels_match": true,
+        "job_delta": 8,
+        "irq_delta": 8
+      },
+      {
+        "name": "high-idr-c0-t1-asymmetric-mmap",
+        "fixture": "high-idr-c0-t1-asymmetric",
+        "mode": "mmap",
+        "env": {},
+        "exit": 0,
+        "bytes": 18432,
+        "sha256": "98575d14cac32e990b696562517eec1c3f95e2a324958f0834a894c3da4a3a85",
+        "pixels_match": true,
+        "job_delta": 1,
+        "irq_delta": 1
+      },
+      {
+        "name": "high-idr-c0-t1-asymmetric-dmabuf",
+        "fixture": "high-idr-c0-t1-asymmetric",
+        "mode": "dmabuf",
+        "env": {},
+        "exit": 0,
+        "bytes": 18432,
+        "sha256": "98575d14cac32e990b696562517eec1c3f95e2a324958f0834a894c3da4a3a85",
+        "pixels_match": true,
+        "job_delta": 1,
+        "irq_delta": 1
+      },
+      {
+        "name": "high-ip-c0-t1-asymmetric-mmap",
+        "fixture": "high-ip-c0-t1-asymmetric",
+        "mode": "mmap",
+        "env": {},
+        "exit": 0,
+        "bytes": 147456,
+        "sha256": "087efde15520a143d237a71d47816f4ca221a241752876b04ae1bcab0f2e2c8e",
+        "pixels_match": true,
+        "job_delta": 8,
+        "irq_delta": 8
+      },
+      {
+        "name": "high-ip-c0-t1-asymmetric-dmabuf",
+        "fixture": "high-ip-c0-t1-asymmetric",
+        "mode": "dmabuf",
+        "env": {},
+        "exit": 0,
+        "bytes": 147456,
+        "sha256": "087efde15520a143d237a71d47816f4ca221a241752876b04ae1bcab0f2e2c8e",
+        "pixels_match": true,
+        "job_delta": 8,
+        "irq_delta": 8
+      },
+      {
+        "name": "high-ipb-c0-t1-asymmetric-mmap",
+        "fixture": "high-ipb-c0-t1-asymmetric",
+        "mode": "mmap",
+        "env": {},
+        "exit": 0,
+        "bytes": 147456,
+        "sha256": "4d4696634a691c22ce7d417d122ab5d8d9fdc7b8fe30d86a01201cbbb33419b8",
+        "pixels_match": true,
+        "job_delta": 8,
+        "irq_delta": 8
+      },
+      {
+        "name": "high-ipb-c0-t1-asymmetric-dmabuf",
+        "fixture": "high-ipb-c0-t1-asymmetric",
+        "mode": "dmabuf",
+        "env": {},
+        "exit": 0,
+        "bytes": 147456,
+        "sha256": "4d4696634a691c22ce7d417d122ab5d8d9fdc7b8fe30d86a01201cbbb33419b8",
+        "pixels_match": true,
+        "job_delta": 8,
+        "irq_delta": 8
+      },
+      {
+        "name": "high-idr-c1-t0-jvt-mmap",
+        "fixture": "high-idr-c1-t0-jvt",
+        "mode": "mmap",
+        "env": {},
+        "exit": 0,
+        "bytes": 18432,
+        "sha256": "3c592eee6e01b3d35523d7f01e3f30add8f2463579775ec1d5633ae876c257fe",
+        "pixels_match": true,
+        "job_delta": 1,
+        "irq_delta": 1
+      },
+      {
+        "name": "high-idr-c1-t0-jvt-dmabuf",
+        "fixture": "high-idr-c1-t0-jvt",
+        "mode": "dmabuf",
+        "env": {},
+        "exit": 0,
+        "bytes": 18432,
+        "sha256": "3c592eee6e01b3d35523d7f01e3f30add8f2463579775ec1d5633ae876c257fe",
+        "pixels_match": true,
+        "job_delta": 1,
+        "irq_delta": 1
+      },
+      {
+        "name": "high-ip-c1-t0-jvt-mmap",
+        "fixture": "high-ip-c1-t0-jvt",
+        "mode": "mmap",
+        "env": {},
+        "exit": 0,
+        "bytes": 147456,
+        "sha256": "deb37baf91c2b2e7d50b818f11f9e0805aea0b5d4156ed212108905147f1c045",
+        "pixels_match": true,
+        "job_delta": 8,
+        "irq_delta": 8
+      },
+      {
+        "name": "high-ip-c1-t0-jvt-dmabuf",
+        "fixture": "high-ip-c1-t0-jvt",
+        "mode": "dmabuf",
+        "env": {},
+        "exit": 0,
+        "bytes": 147456,
+        "sha256": "deb37baf91c2b2e7d50b818f11f9e0805aea0b5d4156ed212108905147f1c045",
+        "pixels_match": true,
+        "job_delta": 8,
+        "irq_delta": 8
+      },
+      {
+        "name": "high-ipb-c1-t0-jvt-mmap",
+        "fixture": "high-ipb-c1-t0-jvt",
+        "mode": "mmap",
+        "env": {},
+        "exit": 0,
+        "bytes": 147456,
+        "sha256": "31344eb552214ee15336a8f90b1d7445a7f908d2b63867247e076a6e9446b88e",
+        "pixels_match": true,
+        "job_delta": 8,
+        "irq_delta": 8
+      },
+      {
+        "name": "high-ipb-c1-t0-jvt-dmabuf",
+        "fixture": "high-ipb-c1-t0-jvt",
+        "mode": "dmabuf",
+        "env": {},
+        "exit": 0,
+        "bytes": 147456,
+        "sha256": "31344eb552214ee15336a8f90b1d7445a7f908d2b63867247e076a6e9446b88e",
+        "pixels_match": true,
+        "job_delta": 8,
+        "irq_delta": 8
+      },
+      {
+        "name": "high-idr-c1-t0-asymmetric-mmap",
+        "fixture": "high-idr-c1-t0-asymmetric",
+        "mode": "mmap",
+        "env": {},
+        "exit": 0,
+        "bytes": 18432,
+        "sha256": "ee2e3a126ad7559f67ebe4235d41f994a59d1258963d78062a07cc5353e61f8c",
+        "pixels_match": true,
+        "job_delta": 1,
+        "irq_delta": 1
+      },
+      {
+        "name": "high-idr-c1-t0-asymmetric-dmabuf",
+        "fixture": "high-idr-c1-t0-asymmetric",
+        "mode": "dmabuf",
+        "env": {},
+        "exit": 0,
+        "bytes": 18432,
+        "sha256": "ee2e3a126ad7559f67ebe4235d41f994a59d1258963d78062a07cc5353e61f8c",
+        "pixels_match": true,
+        "job_delta": 1,
+        "irq_delta": 1
+      },
+      {
+        "name": "high-ip-c1-t0-asymmetric-mmap",
+        "fixture": "high-ip-c1-t0-asymmetric",
+        "mode": "mmap",
+        "env": {},
+        "exit": 0,
+        "bytes": 147456,
+        "sha256": "8a9b102aa8bb7f6697b98b288504f6f188b6071b4b696ea47fd6be4ff5cef6a0",
+        "pixels_match": true,
+        "job_delta": 8,
+        "irq_delta": 8
+      },
+      {
+        "name": "high-ip-c1-t0-asymmetric-dmabuf",
+        "fixture": "high-ip-c1-t0-asymmetric",
+        "mode": "dmabuf",
+        "env": {},
+        "exit": 0,
+        "bytes": 147456,
+        "sha256": "8a9b102aa8bb7f6697b98b288504f6f188b6071b4b696ea47fd6be4ff5cef6a0",
+        "pixels_match": true,
+        "job_delta": 8,
+        "irq_delta": 8
+      },
+      {
+        "name": "high-ipb-c1-t0-asymmetric-mmap",
+        "fixture": "high-ipb-c1-t0-asymmetric",
+        "mode": "mmap",
+        "env": {},
+        "exit": 0,
+        "bytes": 147456,
+        "sha256": "e377d5046164e5f7e375aadc8ddb3a405d86263191af486e607ceb3e7d202b80",
+        "pixels_match": true,
+        "job_delta": 8,
+        "irq_delta": 8
+      },
+      {
+        "name": "high-ipb-c1-t0-asymmetric-dmabuf",
+        "fixture": "high-ipb-c1-t0-asymmetric",
+        "mode": "dmabuf",
+        "env": {},
+        "exit": 0,
+        "bytes": 147456,
+        "sha256": "e377d5046164e5f7e375aadc8ddb3a405d86263191af486e607ceb3e7d202b80",
+        "pixels_match": true,
+        "job_delta": 8,
+        "irq_delta": 8
+      },
+      {
+        "name": "high-idr-c1-t1-jvt-mmap",
+        "fixture": "high-idr-c1-t1-jvt",
+        "mode": "mmap",
+        "env": {},
+        "exit": 0,
+        "bytes": 18432,
+        "sha256": "6f7d8921f4b18714cc04bbc536e89edc4e72b55edf0cd310114bc1767b03547b",
+        "pixels_match": true,
+        "job_delta": 1,
+        "irq_delta": 1
+      },
+      {
+        "name": "high-idr-c1-t1-jvt-dmabuf",
+        "fixture": "high-idr-c1-t1-jvt",
+        "mode": "dmabuf",
+        "env": {},
+        "exit": 0,
+        "bytes": 18432,
+        "sha256": "6f7d8921f4b18714cc04bbc536e89edc4e72b55edf0cd310114bc1767b03547b",
+        "pixels_match": true,
+        "job_delta": 1,
+        "irq_delta": 1
+      },
+      {
+        "name": "high-ip-c1-t1-jvt-mmap",
+        "fixture": "high-ip-c1-t1-jvt",
+        "mode": "mmap",
+        "env": {},
+        "exit": 0,
+        "bytes": 147456,
+        "sha256": "1591977245234c61bc31dedd11eca4898f6a958644c4a118b13f29f92a4ec81d",
+        "pixels_match": true,
+        "job_delta": 8,
+        "irq_delta": 8
+      },
+      {
+        "name": "high-ip-c1-t1-jvt-dmabuf",
+        "fixture": "high-ip-c1-t1-jvt",
+        "mode": "dmabuf",
+        "env": {},
+        "exit": 0,
+        "bytes": 147456,
+        "sha256": "1591977245234c61bc31dedd11eca4898f6a958644c4a118b13f29f92a4ec81d",
+        "pixels_match": true,
+        "job_delta": 8,
+        "irq_delta": 8
+      },
+      {
+        "name": "high-ipb-c1-t1-jvt-mmap",
+        "fixture": "high-ipb-c1-t1-jvt",
+        "mode": "mmap",
+        "env": {},
+        "exit": 0,
+        "bytes": 147456,
+        "sha256": "39765dda39e402eeb7dae98747b4dd71d6f65367e25de808fb6f404cfd48660d",
+        "pixels_match": true,
+        "job_delta": 8,
+        "irq_delta": 8
+      },
+      {
+        "name": "high-ipb-c1-t1-jvt-dmabuf",
+        "fixture": "high-ipb-c1-t1-jvt",
+        "mode": "dmabuf",
+        "env": {},
+        "exit": 0,
+        "bytes": 147456,
+        "sha256": "39765dda39e402eeb7dae98747b4dd71d6f65367e25de808fb6f404cfd48660d",
+        "pixels_match": true,
+        "job_delta": 8,
+        "irq_delta": 8
+      },
+      {
+        "name": "high-idr-c1-t1-asymmetric-mmap",
+        "fixture": "high-idr-c1-t1-asymmetric",
+        "mode": "mmap",
+        "env": {},
+        "exit": 0,
+        "bytes": 18432,
+        "sha256": "98575d14cac32e990b696562517eec1c3f95e2a324958f0834a894c3da4a3a85",
+        "pixels_match": true,
+        "job_delta": 1,
+        "irq_delta": 1
+      },
+      {
+        "name": "high-idr-c1-t1-asymmetric-dmabuf",
+        "fixture": "high-idr-c1-t1-asymmetric",
+        "mode": "dmabuf",
+        "env": {},
+        "exit": 0,
+        "bytes": 18432,
+        "sha256": "98575d14cac32e990b696562517eec1c3f95e2a324958f0834a894c3da4a3a85",
+        "pixels_match": true,
+        "job_delta": 1,
+        "irq_delta": 1
+      },
+      {
+        "name": "high-ip-c1-t1-asymmetric-mmap",
+        "fixture": "high-ip-c1-t1-asymmetric",
+        "mode": "mmap",
+        "env": {},
+        "exit": 0,
+        "bytes": 147456,
+        "sha256": "76d5b0ae6e9474ba99ec9e903796ae966e10e394efa41e80fc753fefb848c054",
+        "pixels_match": true,
+        "job_delta": 8,
+        "irq_delta": 8
+      },
+      {
+        "name": "high-ip-c1-t1-asymmetric-dmabuf",
+        "fixture": "high-ip-c1-t1-asymmetric",
+        "mode": "dmabuf",
+        "env": {},
+        "exit": 0,
+        "bytes": 147456,
+        "sha256": "76d5b0ae6e9474ba99ec9e903796ae966e10e394efa41e80fc753fefb848c054",
+        "pixels_match": true,
+        "job_delta": 8,
+        "irq_delta": 8
+      },
+      {
+        "name": "high-ipb-c1-t1-asymmetric-mmap",
+        "fixture": "high-ipb-c1-t1-asymmetric",
+        "mode": "mmap",
+        "env": {},
+        "exit": 0,
+        "bytes": 147456,
+        "sha256": "3e5875354b7ad8303239b9ebdc3d908a0e8688672b012cd092fb24ce62f2c1ca",
+        "pixels_match": true,
+        "job_delta": 8,
+        "irq_delta": 8
+      },
+      {
+        "name": "high-ipb-c1-t1-asymmetric-dmabuf",
+        "fixture": "high-ipb-c1-t1-asymmetric",
+        "mode": "dmabuf",
+        "env": {},
+        "exit": 0,
+        "bytes": 147456,
+        "sha256": "3e5875354b7ad8303239b9ebdc3d908a0e8688672b012cd092fb24ce62f2c1ca",
+        "pixels_match": true,
+        "job_delta": 8,
+        "irq_delta": 8
+      },
+      {
+        "name": "baseline-idr-mmap",
+        "fixture": "baseline-idr",
+        "mode": "mmap",
+        "env": {},
+        "exit": 0,
+        "bytes": 6144,
+        "sha256": "66a23ea6cd9b7c6a1220fae49e5a7e58227728749c750af29c5974c0d6ad2ae4",
+        "pixels_match": true,
+        "job_delta": 1,
+        "irq_delta": 1
+      },
+      {
+        "name": "baseline-idr-dmabuf",
+        "fixture": "baseline-idr",
+        "mode": "dmabuf",
+        "env": {},
+        "exit": 0,
+        "bytes": 6144,
+        "sha256": "66a23ea6cd9b7c6a1220fae49e5a7e58227728749c750af29c5974c0d6ad2ae4",
+        "pixels_match": true,
+        "job_delta": 1,
+        "irq_delta": 1
+      },
+      {
+        "name": "baseline-ip-mmap",
+        "fixture": "baseline-ip",
+        "mode": "mmap",
+        "env": {},
+        "exit": 0,
+        "bytes": 49152,
+        "sha256": "e8a7af233734a35fa4a2df7aba39cf45dfcdca21907340bf711ac2028824a457",
+        "pixels_match": true,
+        "job_delta": 8,
+        "irq_delta": 8
+      },
+      {
+        "name": "baseline-ip-dmabuf",
+        "fixture": "baseline-ip",
+        "mode": "dmabuf",
+        "env": {},
+        "exit": 0,
+        "bytes": 49152,
+        "sha256": "e8a7af233734a35fa4a2df7aba39cf45dfcdca21907340bf711ac2028824a457",
+        "pixels_match": true,
+        "job_delta": 8,
+        "irq_delta": 8
+      },
+      {
+        "name": "main-idr-mmap",
+        "fixture": "main-idr",
+        "mode": "mmap",
+        "env": {},
+        "exit": 0,
+        "bytes": 6144,
+        "sha256": "66a23ea6cd9b7c6a1220fae49e5a7e58227728749c750af29c5974c0d6ad2ae4",
+        "pixels_match": true,
+        "job_delta": 1,
+        "irq_delta": 1
+      },
+      {
+        "name": "main-idr-dmabuf",
+        "fixture": "main-idr",
+        "mode": "dmabuf",
+        "env": {},
+        "exit": 0,
+        "bytes": 6144,
+        "sha256": "66a23ea6cd9b7c6a1220fae49e5a7e58227728749c750af29c5974c0d6ad2ae4",
+        "pixels_match": true,
+        "job_delta": 1,
+        "irq_delta": 1
+      },
+      {
+        "name": "main-ip-mmap",
+        "fixture": "main-ip",
+        "mode": "mmap",
+        "env": {},
+        "exit": 0,
+        "bytes": 49152,
+        "sha256": "e8a7af233734a35fa4a2df7aba39cf45dfcdca21907340bf711ac2028824a457",
+        "pixels_match": true,
+        "job_delta": 8,
+        "irq_delta": 8
+      },
+      {
+        "name": "main-ip-dmabuf",
+        "fixture": "main-ip",
+        "mode": "dmabuf",
+        "env": {},
+        "exit": 0,
+        "bytes": 49152,
+        "sha256": "e8a7af233734a35fa4a2df7aba39cf45dfcdca21907340bf711ac2028824a457",
+        "pixels_match": true,
+        "job_delta": 8,
+        "irq_delta": 8
+      },
+      {
+        "name": "main-ipb-mmap",
+        "fixture": "main-ipb",
+        "mode": "mmap",
+        "env": {},
+        "exit": 0,
+        "bytes": 49152,
+        "sha256": "83f46c5db49ce29288b0c1c66cdfd06bfc0e4e295e5257a12f51bfa415ce4121",
+        "pixels_match": true,
+        "job_delta": 8,
+        "irq_delta": 8
+      },
+      {
+        "name": "main-ipb-dmabuf",
+        "fixture": "main-ipb",
+        "mode": "dmabuf",
+        "env": {},
+        "exit": 0,
+        "bytes": 49152,
+        "sha256": "83f46c5db49ce29288b0c1c66cdfd06bfc0e4e295e5257a12f51bfa415ce4121",
+        "pixels_match": true,
+        "job_delta": 8,
+        "irq_delta": 8
+      },
+      {
+        "name": "high-ipb-crop-mmap",
+        "fixture": "high-ipb-crop",
+        "mode": "mmap",
+        "env": {},
+        "exit": 0,
+        "bytes": 142128,
+        "sha256": "e5c91678b35c176f49af7f870d7bf78e2e4669fa4d556eadd453a76fda7c4c43",
+        "pixels_match": true,
+        "job_delta": 8,
+        "irq_delta": 8
+      },
+      {
+        "name": "high-ipb-crop-dmabuf",
+        "fixture": "high-ipb-crop",
+        "mode": "dmabuf",
+        "env": {},
+        "exit": 0,
+        "bytes": 142128,
+        "sha256": "e5c91678b35c176f49af7f870d7bf78e2e4669fa4d556eadd453a76fda7c4c43",
+        "pixels_match": true,
+        "job_delta": 8,
+        "irq_delta": 8
+      },
+      {
+        "name": "high-ipb-1080p-mmap",
+        "fixture": "high-ipb-1080p",
+        "mode": "mmap",
+        "env": {},
+        "exit": 0,
+        "bytes": 24883200,
+        "sha256": "e69a3bdab71a5fc3cbebfa21ac56f0218e8640d7d4c1c46981fceb786c32062d",
+        "pixels_match": true,
+        "job_delta": 8,
+        "irq_delta": 8
+      },
+      {
+        "name": "high-ipb-1080p-dmabuf",
+        "fixture": "high-ipb-1080p",
+        "mode": "dmabuf",
+        "env": {},
+        "exit": 0,
+        "bytes": 24883200,
+        "sha256": "e69a3bdab71a5fc3cbebfa21ac56f0218e8640d7d4c1c46981fceb786c32062d",
+        "pixels_match": true,
+        "job_delta": 8,
+        "irq_delta": 8
+      },
+      {
+        "name": "scaling-sps-default-mmap",
+        "fixture": "scaling-sps-default",
+        "mode": "mmap",
+        "env": {},
+        "exit": 0,
+        "bytes": 147456,
+        "sha256": "8c31a3fb355eaba17e721c2933c02ddf4f0cfd08c90cd42d16e7be020cce2732",
+        "pixels_match": true,
+        "job_delta": 8,
+        "irq_delta": 8
+      },
+      {
+        "name": "scaling-sps-default-dmabuf",
+        "fixture": "scaling-sps-default",
+        "mode": "dmabuf",
+        "env": {},
+        "exit": 0,
+        "bytes": 147456,
+        "sha256": "8c31a3fb355eaba17e721c2933c02ddf4f0cfd08c90cd42d16e7be020cce2732",
+        "pixels_match": true,
+        "job_delta": 8,
+        "irq_delta": 8
+      },
+      {
+        "name": "scaling-sps-custom-mmap",
+        "fixture": "scaling-sps-custom",
+        "mode": "mmap",
+        "env": {},
+        "exit": 0,
+        "bytes": 147456,
+        "sha256": "fa52de4f257f512a2234012a09dd7f83139d2245250f4608dff46ff414bb8a62",
+        "pixels_match": true,
+        "job_delta": 8,
+        "irq_delta": 8
+      },
+      {
+        "name": "scaling-sps-custom-dmabuf",
+        "fixture": "scaling-sps-custom",
+        "mode": "dmabuf",
+        "env": {},
+        "exit": 0,
+        "bytes": 147456,
+        "sha256": "fa52de4f257f512a2234012a09dd7f83139d2245250f4608dff46ff414bb8a62",
+        "pixels_match": true,
+        "job_delta": 8,
+        "irq_delta": 8
+      },
+      {
+        "name": "scaling-sps-repeat-mmap",
+        "fixture": "scaling-sps-repeat",
+        "mode": "mmap",
+        "env": {},
+        "exit": 0,
+        "bytes": 147456,
+        "sha256": "d221ff242467bb29f6babf3a18045dfde2e6fc1c2a3b9f1e72218a5efc4bb263",
+        "pixels_match": true,
+        "job_delta": 8,
+        "irq_delta": 8
+      },
+      {
+        "name": "scaling-sps-repeat-dmabuf",
+        "fixture": "scaling-sps-repeat",
+        "mode": "dmabuf",
+        "env": {},
+        "exit": 0,
+        "bytes": 147456,
+        "sha256": "d221ff242467bb29f6babf3a18045dfde2e6fc1c2a3b9f1e72218a5efc4bb263",
+        "pixels_match": true,
+        "job_delta": 8,
+        "irq_delta": 8
+      },
+      {
+        "name": "scaling-sps-constant-mmap",
+        "fixture": "scaling-sps-constant",
+        "mode": "mmap",
+        "env": {},
+        "exit": 0,
+        "bytes": 147456,
+        "sha256": "d221ff242467bb29f6babf3a18045dfde2e6fc1c2a3b9f1e72218a5efc4bb263",
+        "pixels_match": true,
+        "job_delta": 8,
+        "irq_delta": 8
+      },
+      {
+        "name": "scaling-sps-constant-dmabuf",
+        "fixture": "scaling-sps-constant",
+        "mode": "dmabuf",
+        "env": {},
+        "exit": 0,
+        "bytes": 147456,
+        "sha256": "d221ff242467bb29f6babf3a18045dfde2e6fc1c2a3b9f1e72218a5efc4bb263",
+        "pixels_match": true,
+        "job_delta": 8,
+        "irq_delta": 8
+      },
+      {
+        "name": "scaling-pps-inherit-mmap",
+        "fixture": "scaling-pps-inherit",
+        "mode": "mmap",
+        "env": {},
+        "exit": 0,
+        "bytes": 147456,
+        "sha256": "3f7c4e28162c5be9bf19aaca60ecdbb44a40076d5d684f7d0fb953a91eadd29c",
+        "pixels_match": true,
+        "job_delta": 8,
+        "irq_delta": 8
+      },
+      {
+        "name": "scaling-pps-inherit-dmabuf",
+        "fixture": "scaling-pps-inherit",
+        "mode": "dmabuf",
+        "env": {},
+        "exit": 0,
+        "bytes": 147456,
+        "sha256": "3f7c4e28162c5be9bf19aaca60ecdbb44a40076d5d684f7d0fb953a91eadd29c",
+        "pixels_match": true,
+        "job_delta": 8,
+        "irq_delta": 8
+      },
+      {
+        "name": "scaling-pps-default-mmap",
+        "fixture": "scaling-pps-default",
+        "mode": "mmap",
+        "env": {},
+        "exit": 0,
+        "bytes": 147456,
+        "sha256": "8c31a3fb355eaba17e721c2933c02ddf4f0cfd08c90cd42d16e7be020cce2732",
+        "pixels_match": true,
+        "job_delta": 8,
+        "irq_delta": 8
+      },
+      {
+        "name": "scaling-pps-default-dmabuf",
+        "fixture": "scaling-pps-default",
+        "mode": "dmabuf",
+        "env": {},
+        "exit": 0,
+        "bytes": 147456,
+        "sha256": "8c31a3fb355eaba17e721c2933c02ddf4f0cfd08c90cd42d16e7be020cce2732",
+        "pixels_match": true,
+        "job_delta": 8,
+        "irq_delta": 8
+      },
+      {
+        "name": "matrix-missing-mmap",
+        "fixture": "high-idr-c1-t1-asymmetric",
+        "mode": "mmap",
+        "env": {
+          "W202_BAD_MATRIX": "missing"
+        },
+        "exit": 0,
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "pixels_match": true,
+        "job_delta": 0,
+        "irq_delta": 0
+      },
+      {
+        "name": "matrix-zero4-mmap",
+        "fixture": "high-idr-c1-t1-asymmetric",
+        "mode": "mmap",
+        "env": {
+          "W202_BAD_MATRIX": "zero4"
+        },
+        "exit": 0,
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "pixels_match": true,
+        "job_delta": 0,
+        "irq_delta": 0
+      },
+      {
+        "name": "matrix-zero8-mmap",
+        "fixture": "high-idr-c1-t1-asymmetric",
+        "mode": "mmap",
+        "env": {
+          "W202_BAD_MATRIX": "zero8"
+        },
+        "exit": 0,
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "pixels_match": true,
+        "job_delta": 0,
+        "irq_delta": 0
+      },
+      {
+        "name": "matrix-unused8-mmap",
+        "fixture": "high-idr-c1-t1-asymmetric",
+        "mode": "mmap",
+        "env": {
+          "W202_BAD_MATRIX": "unused8"
+        },
+        "exit": 0,
+        "bytes": 36864,
+        "sha256": "1bd5cff168aa14d9d2314b9e7e5489f5313b8e9bf43a82e10a9972e39d302d7f",
+        "pixels_match": true,
+        "job_delta": 2,
+        "irq_delta": 2
+      },
+      {
+        "name": "high10-rejected-mmap",
+        "fixture": "high-idr-c1-t1-asymmetric",
+        "mode": "mmap",
+        "env": {
+          "W202_INVALID_PROFILE": "1"
+        },
+        "exit": 0,
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "pixels_match": true,
+        "job_delta": 0,
+        "irq_delta": 0
+      },
+      {
+        "name": "high-capture-reuse-mmap",
+        "fixture": "high-ipb-c1-t1-asymmetric",
+        "mode": "mmap",
+        "env": {
+          "W202_CAPTURE_REUSE": "1"
+        },
+        "exit": 0,
+        "bytes": 147456,
+        "sha256": "3e5875354b7ad8303239b9ebdc3d908a0e8688672b012cd092fb24ce62f2c1ca",
+        "pixels_match": true,
+        "job_delta": 8,
+        "irq_delta": 8
+      },
+      {
+        "name": "high-export-reuse-mmap",
+        "fixture": "high-ipb-c1-t1-asymmetric",
+        "mode": "mmap",
+        "env": {
+          "W202_CAPTURE_REUSE": "1",
+          "W202_EARLY_EXPORT": "1"
+        },
+        "exit": 0,
+        "bytes": 147456,
+        "sha256": "3e5875354b7ad8303239b9ebdc3d908a0e8688672b012cd092fb24ce62f2c1ca",
+        "pixels_match": true,
+        "job_delta": 8,
+        "irq_delta": 8
+      },
+      {
+        "name": "high-poc-origin-mmap",
+        "fixture": "high-ipb-c1-t1-asymmetric",
+        "mode": "mmap",
+        "env": {
+          "W202_CAPTURE_REUSE": "1",
+          "W202_POC_OFFSET": "-65536"
+        },
+        "exit": 0,
+        "bytes": 147456,
+        "sha256": "3e5875354b7ad8303239b9ebdc3d908a0e8688672b012cd092fb24ce62f2c1ca",
+        "pixels_match": true,
+        "job_delta": 8,
+        "irq_delta": 8
+      },
+      {
+        "name": "main-flat-matrix-mmap",
+        "fixture": "main-ipb",
+        "mode": "mmap",
+        "env": {
+          "W202_FLAT_MATRIX": "1"
+        },
+        "exit": 0,
+        "bytes": 49152,
+        "sha256": "83f46c5db49ce29288b0c1c66cdfd06bfc0e4e295e5257a12f51bfa415ce4121",
+        "pixels_match": true,
+        "job_delta": 8,
+        "irq_delta": 8
+      },
+      {
+        "name": "matrix-missing-dmabuf",
+        "fixture": "high-idr-c1-t1-asymmetric",
+        "mode": "dmabuf",
+        "env": {
+          "W202_BAD_MATRIX": "missing"
+        },
+        "exit": 0,
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "pixels_match": true,
+        "job_delta": 0,
+        "irq_delta": 0
+      },
+      {
+        "name": "matrix-zero4-dmabuf",
+        "fixture": "high-idr-c1-t1-asymmetric",
+        "mode": "dmabuf",
+        "env": {
+          "W202_BAD_MATRIX": "zero4"
+        },
+        "exit": 0,
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "pixels_match": true,
+        "job_delta": 0,
+        "irq_delta": 0
+      },
+      {
+        "name": "matrix-zero8-dmabuf",
+        "fixture": "high-idr-c1-t1-asymmetric",
+        "mode": "dmabuf",
+        "env": {
+          "W202_BAD_MATRIX": "zero8"
+        },
+        "exit": 0,
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "pixels_match": true,
+        "job_delta": 0,
+        "irq_delta": 0
+      },
+      {
+        "name": "matrix-unused8-dmabuf",
+        "fixture": "high-idr-c1-t1-asymmetric",
+        "mode": "dmabuf",
+        "env": {
+          "W202_BAD_MATRIX": "unused8"
+        },
+        "exit": 0,
+        "bytes": 36864,
+        "sha256": "1bd5cff168aa14d9d2314b9e7e5489f5313b8e9bf43a82e10a9972e39d302d7f",
+        "pixels_match": true,
+        "job_delta": 2,
+        "irq_delta": 2
+      },
+      {
+        "name": "high10-rejected-dmabuf",
+        "fixture": "high-idr-c1-t1-asymmetric",
+        "mode": "dmabuf",
+        "env": {
+          "W202_INVALID_PROFILE": "1"
+        },
+        "exit": 0,
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "pixels_match": true,
+        "job_delta": 0,
+        "irq_delta": 0
+      },
+      {
+        "name": "high-capture-reuse-dmabuf",
+        "fixture": "high-ipb-c1-t1-asymmetric",
+        "mode": "dmabuf",
+        "env": {
+          "W202_CAPTURE_REUSE": "1"
+        },
+        "exit": 0,
+        "bytes": 147456,
+        "sha256": "3e5875354b7ad8303239b9ebdc3d908a0e8688672b012cd092fb24ce62f2c1ca",
+        "pixels_match": true,
+        "job_delta": 8,
+        "irq_delta": 8
+      },
+      {
+        "name": "high-export-reuse-dmabuf",
+        "fixture": "high-ipb-c1-t1-asymmetric",
+        "mode": "dmabuf",
+        "env": {
+          "W202_CAPTURE_REUSE": "1",
+          "W202_EARLY_EXPORT": "1"
+        },
+        "exit": 0,
+        "bytes": 147456,
+        "sha256": "3e5875354b7ad8303239b9ebdc3d908a0e8688672b012cd092fb24ce62f2c1ca",
+        "pixels_match": true,
+        "job_delta": 8,
+        "irq_delta": 8
+      },
+      {
+        "name": "high-poc-origin-dmabuf",
+        "fixture": "high-ipb-c1-t1-asymmetric",
+        "mode": "dmabuf",
+        "env": {
+          "W202_CAPTURE_REUSE": "1",
+          "W202_POC_OFFSET": "-65536"
+        },
+        "exit": 0,
+        "bytes": 147456,
+        "sha256": "3e5875354b7ad8303239b9ebdc3d908a0e8688672b012cd092fb24ce62f2c1ca",
+        "pixels_match": true,
+        "job_delta": 8,
+        "irq_delta": 8
+      },
+      {
+        "name": "main-flat-matrix-dmabuf",
+        "fixture": "main-ipb",
+        "mode": "dmabuf",
+        "env": {
+          "W202_FLAT_MATRIX": "1"
+        },
+        "exit": 0,
+        "bytes": 49152,
+        "sha256": "83f46c5db49ce29288b0c1c66cdfd06bfc0e4e295e5257a12f51bfa415ce4121",
+        "pixels_match": true,
+        "job_delta": 8,
+        "irq_delta": 8
+      }
+    ]
+  },
+  "ffmpeg_vaapi": {
+    "cases": 9,
+    "frames": 65,
+    "before": {
+      "opens": "0",
+      "maps": "0",
+      "auto_released": "5796",
+      "copyout_rollbacks": "0",
+      "interrupts": "1852",
+      "resets": "3704",
+      "timeouts": "0",
+      "faults": "0",
+      "broken": "0",
+      "quarantined": "0",
+      "quarantined_maps": "0",
+      "powered": "0",
+      "live_regs": "0",
+      "clock": "256000000",
+      "pending": "00000000",
+      "last_irq": "0000104c",
+      "axi": "00000000",
+      "raw": "00000000",
+      "mmu": "00000000",
+      "native_started": "1852",
+      "native_inflight": "0",
+      "native_cancel_before_irq": "0",
+      "native_cancel_dma_active": "0"
+    },
+    "after": {
+      "opens": "0",
+      "maps": "0",
+      "auto_released": "6006",
+      "copyout_rollbacks": "0",
+      "interrupts": "1917",
+      "resets": "3834",
+      "timeouts": "0",
+      "faults": "0",
+      "broken": "0",
+      "quarantined": "0",
+      "quarantined_maps": "0",
+      "powered": "0",
+      "live_regs": "0",
+      "clock": "256000000",
+      "pending": "00000000",
+      "last_irq": "0000104c",
+      "axi": "00000000",
+      "raw": "00000000",
+      "mmu": "00000000",
+      "native_started": "1917",
+      "native_inflight": "0",
+      "native_cancel_before_irq": "0",
+      "native_cancel_dma_active": "0"
+    },
+    "tests": [
+      {
+        "name": "baseline-ip",
+        "exit": 0,
+        "frames": 8,
+        "pixels_match": true,
+        "bytes": 49152,
+        "sha256": "e8a7af233734a35fa4a2df7aba39cf45dfcdca21907340bf711ac2028824a457",
+        "expected_sha256": "e8a7af233734a35fa4a2df7aba39cf45dfcdca21907340bf711ac2028824a457",
+        "jobs": 8,
+        "irq": 8
+      },
+      {
+        "name": "main-ipb",
+        "exit": 0,
+        "frames": 8,
+        "pixels_match": true,
+        "bytes": 49152,
+        "sha256": "83f46c5db49ce29288b0c1c66cdfd06bfc0e4e295e5257a12f51bfa415ce4121",
+        "expected_sha256": "83f46c5db49ce29288b0c1c66cdfd06bfc0e4e295e5257a12f51bfa415ce4121",
+        "jobs": 8,
+        "irq": 8
+      },
+      {
+        "name": "high-idr-flat8",
+        "exit": 0,
+        "frames": 1,
+        "pixels_match": true,
+        "bytes": 18432,
+        "sha256": "df199747c581b2edc119a85a5e054c1a2465520e83381a76a8323069deb19990",
+        "expected_sha256": "df199747c581b2edc119a85a5e054c1a2465520e83381a76a8323069deb19990",
+        "jobs": 1,
+        "irq": 1
+      },
+      {
+        "name": "high-ip-c1-t1-jvt",
+        "exit": 0,
+        "frames": 8,
+        "pixels_match": true,
+        "bytes": 147456,
+        "sha256": "1591977245234c61bc31dedd11eca4898f6a958644c4a118b13f29f92a4ec81d",
+        "expected_sha256": "1591977245234c61bc31dedd11eca4898f6a958644c4a118b13f29f92a4ec81d",
+        "jobs": 8,
+        "irq": 8
+      },
+      {
+        "name": "high-ipb-c0-t1-asymmetric",
+        "exit": 0,
+        "frames": 8,
+        "pixels_match": true,
+        "bytes": 147456,
+        "sha256": "4d4696634a691c22ce7d417d122ab5d8d9fdc7b8fe30d86a01201cbbb33419b8",
+        "expected_sha256": "4d4696634a691c22ce7d417d122ab5d8d9fdc7b8fe30d86a01201cbbb33419b8",
+        "jobs": 8,
+        "irq": 8
+      },
+      {
+        "name": "high-ipb-c1-t0-asymmetric",
+        "exit": 0,
+        "frames": 8,
+        "pixels_match": true,
+        "bytes": 147456,
+        "sha256": "e377d5046164e5f7e375aadc8ddb3a405d86263191af486e607ceb3e7d202b80",
+        "expected_sha256": "e377d5046164e5f7e375aadc8ddb3a405d86263191af486e607ceb3e7d202b80",
+        "jobs": 8,
+        "irq": 8
+      },
+      {
+        "name": "high-ipb-c1-t1-asymmetric",
+        "exit": 0,
+        "frames": 8,
+        "pixels_match": true,
+        "bytes": 147456,
+        "sha256": "3e5875354b7ad8303239b9ebdc3d908a0e8688672b012cd092fb24ce62f2c1ca",
+        "expected_sha256": "3e5875354b7ad8303239b9ebdc3d908a0e8688672b012cd092fb24ce62f2c1ca",
+        "jobs": 8,
+        "irq": 8
+      },
+      {
+        "name": "high-ipb-crop",
+        "exit": 0,
+        "frames": 8,
+        "pixels_match": true,
+        "bytes": 142128,
+        "sha256": "e5c91678b35c176f49af7f870d7bf78e2e4669fa4d556eadd453a76fda7c4c43",
+        "expected_sha256": "e5c91678b35c176f49af7f870d7bf78e2e4669fa4d556eadd453a76fda7c4c43",
+        "jobs": 8,
+        "irq": 8
+      },
+      {
+        "name": "high-ipb-1080p",
+        "exit": 0,
+        "frames": 8,
+        "pixels_match": true,
+        "bytes": 24883200,
+        "sha256": "e69a3bdab71a5fc3cbebfa21ac56f0218e8640d7d4c1c46981fceb786c32062d",
+        "expected_sha256": "e69a3bdab71a5fc3cbebfa21ac56f0218e8640d7d4c1c46981fceb786c32062d",
+        "jobs": 8,
+        "irq": 8
+      }
+    ]
+  },
+  "software_oracle": [
+    {
+      "fixture": "baseline-idr",
+      "scalar_matches_default_ffmpeg": true,
+      "scalar_sha256": "66a23ea6cd9b7c6a1220fae49e5a7e58227728749c750af29c5974c0d6ad2ae4",
+      "frames": 1
+    },
+    {
+      "fixture": "baseline-ip",
+      "scalar_matches_default_ffmpeg": true,
+      "scalar_sha256": "e8a7af233734a35fa4a2df7aba39cf45dfcdca21907340bf711ac2028824a457",
+      "frames": 8
+    },
+    {
+      "fixture": "high-idr-c0-t0-asymmetric",
+      "scalar_matches_default_ffmpeg": true,
+      "scalar_sha256": "ee2e3a126ad7559f67ebe4235d41f994a59d1258963d78062a07cc5353e61f8c",
+      "frames": 1
+    },
+    {
+      "fixture": "high-idr-c0-t0-jvt",
+      "scalar_matches_default_ffmpeg": true,
+      "scalar_sha256": "3c592eee6e01b3d35523d7f01e3f30add8f2463579775ec1d5633ae876c257fe",
+      "frames": 1
+    },
+    {
+      "fixture": "high-idr-c0-t1-asymmetric",
+      "scalar_matches_default_ffmpeg": true,
+      "scalar_sha256": "98575d14cac32e990b696562517eec1c3f95e2a324958f0834a894c3da4a3a85",
+      "frames": 1
+    },
+    {
+      "fixture": "high-idr-c0-t1-jvt",
+      "scalar_matches_default_ffmpeg": true,
+      "scalar_sha256": "6f7d8921f4b18714cc04bbc536e89edc4e72b55edf0cd310114bc1767b03547b",
+      "frames": 1
+    },
+    {
+      "fixture": "high-idr-c1-t0-asymmetric",
+      "scalar_matches_default_ffmpeg": true,
+      "scalar_sha256": "ee2e3a126ad7559f67ebe4235d41f994a59d1258963d78062a07cc5353e61f8c",
+      "frames": 1
+    },
+    {
+      "fixture": "high-idr-c1-t0-jvt",
+      "scalar_matches_default_ffmpeg": true,
+      "scalar_sha256": "3c592eee6e01b3d35523d7f01e3f30add8f2463579775ec1d5633ae876c257fe",
+      "frames": 1
+    },
+    {
+      "fixture": "high-idr-c1-t1-asymmetric",
+      "scalar_matches_default_ffmpeg": true,
+      "scalar_sha256": "98575d14cac32e990b696562517eec1c3f95e2a324958f0834a894c3da4a3a85",
+      "frames": 1
+    },
+    {
+      "fixture": "high-idr-c1-t1-jvt",
+      "scalar_matches_default_ffmpeg": true,
+      "scalar_sha256": "6f7d8921f4b18714cc04bbc536e89edc4e72b55edf0cd310114bc1767b03547b",
+      "frames": 1
+    },
+    {
+      "fixture": "high-idr-flat8",
+      "scalar_matches_default_ffmpeg": true,
+      "scalar_sha256": "df199747c581b2edc119a85a5e054c1a2465520e83381a76a8323069deb19990",
+      "frames": 1
+    },
+    {
+      "fixture": "high-ip-c0-t0-asymmetric",
+      "scalar_matches_default_ffmpeg": true,
+      "scalar_sha256": "8a9b102aa8bb7f6697b98b288504f6f188b6071b4b696ea47fd6be4ff5cef6a0",
+      "frames": 8
+    },
+    {
+      "fixture": "high-ip-c0-t0-jvt",
+      "scalar_matches_default_ffmpeg": true,
+      "scalar_sha256": "deb37baf91c2b2e7d50b818f11f9e0805aea0b5d4156ed212108905147f1c045",
+      "frames": 8
+    },
+    {
+      "fixture": "high-ip-c0-t1-asymmetric",
+      "scalar_matches_default_ffmpeg": true,
+      "scalar_sha256": "087efde15520a143d237a71d47816f4ca221a241752876b04ae1bcab0f2e2c8e",
+      "frames": 8
+    },
+    {
+      "fixture": "high-ip-c0-t1-jvt",
+      "scalar_matches_default_ffmpeg": true,
+      "scalar_sha256": "07e93317a6907fc3170b4eedfb02647b5716ea3407ea99d0dde57c5c2eb5d484",
+      "frames": 8
+    },
+    {
+      "fixture": "high-ip-c1-t0-asymmetric",
+      "scalar_matches_default_ffmpeg": true,
+      "scalar_sha256": "8a9b102aa8bb7f6697b98b288504f6f188b6071b4b696ea47fd6be4ff5cef6a0",
+      "frames": 8
+    },
+    {
+      "fixture": "high-ip-c1-t0-jvt",
+      "scalar_matches_default_ffmpeg": true,
+      "scalar_sha256": "deb37baf91c2b2e7d50b818f11f9e0805aea0b5d4156ed212108905147f1c045",
+      "frames": 8
+    },
+    {
+      "fixture": "high-ip-c1-t1-asymmetric",
+      "scalar_matches_default_ffmpeg": true,
+      "scalar_sha256": "76d5b0ae6e9474ba99ec9e903796ae966e10e394efa41e80fc753fefb848c054",
+      "frames": 8
+    },
+    {
+      "fixture": "high-ip-c1-t1-jvt",
+      "scalar_matches_default_ffmpeg": true,
+      "scalar_sha256": "1591977245234c61bc31dedd11eca4898f6a958644c4a118b13f29f92a4ec81d",
+      "frames": 8
+    },
+    {
+      "fixture": "high-ipb-1080p",
+      "scalar_matches_default_ffmpeg": true,
+      "scalar_sha256": "e69a3bdab71a5fc3cbebfa21ac56f0218e8640d7d4c1c46981fceb786c32062d",
+      "frames": 8
+    },
+    {
+      "fixture": "high-ipb-c0-t0-asymmetric",
+      "scalar_matches_default_ffmpeg": true,
+      "scalar_sha256": "e377d5046164e5f7e375aadc8ddb3a405d86263191af486e607ceb3e7d202b80",
+      "frames": 8
+    },
+    {
+      "fixture": "high-ipb-c0-t0-jvt",
+      "scalar_matches_default_ffmpeg": true,
+      "scalar_sha256": "31344eb552214ee15336a8f90b1d7445a7f908d2b63867247e076a6e9446b88e",
+      "frames": 8
+    },
+    {
+      "fixture": "high-ipb-c0-t1-asymmetric",
+      "scalar_matches_default_ffmpeg": true,
+      "scalar_sha256": "4d4696634a691c22ce7d417d122ab5d8d9fdc7b8fe30d86a01201cbbb33419b8",
+      "frames": 8
+    },
+    {
+      "fixture": "high-ipb-c0-t1-jvt",
+      "scalar_matches_default_ffmpeg": true,
+      "scalar_sha256": "0d5448637c6283d0ca983d152e83e4efff459c585758e15b5b3717088f1f3c6a",
+      "frames": 8
+    },
+    {
+      "fixture": "high-ipb-c1-t0-asymmetric",
+      "scalar_matches_default_ffmpeg": true,
+      "scalar_sha256": "e377d5046164e5f7e375aadc8ddb3a405d86263191af486e607ceb3e7d202b80",
+      "frames": 8
+    },
+    {
+      "fixture": "high-ipb-c1-t0-jvt",
+      "scalar_matches_default_ffmpeg": true,
+      "scalar_sha256": "31344eb552214ee15336a8f90b1d7445a7f908d2b63867247e076a6e9446b88e",
+      "frames": 8
+    },
+    {
+      "fixture": "high-ipb-c1-t1-asymmetric",
+      "scalar_matches_default_ffmpeg": true,
+      "scalar_sha256": "3e5875354b7ad8303239b9ebdc3d908a0e8688672b012cd092fb24ce62f2c1ca",
+      "frames": 8
+    },
+    {
+      "fixture": "high-ipb-c1-t1-jvt",
+      "scalar_matches_default_ffmpeg": true,
+      "scalar_sha256": "39765dda39e402eeb7dae98747b4dd71d6f65367e25de808fb6f404cfd48660d",
+      "frames": 8
+    },
+    {
+      "fixture": "high-ipb-crop",
+      "scalar_matches_default_ffmpeg": true,
+      "scalar_sha256": "e5c91678b35c176f49af7f870d7bf78e2e4669fa4d556eadd453a76fda7c4c43",
+      "frames": 8
+    },
+    {
+      "fixture": "main-idr",
+      "scalar_matches_default_ffmpeg": true,
+      "scalar_sha256": "66a23ea6cd9b7c6a1220fae49e5a7e58227728749c750af29c5974c0d6ad2ae4",
+      "frames": 1
+    },
+    {
+      "fixture": "main-ip",
+      "scalar_matches_default_ffmpeg": true,
+      "scalar_sha256": "e8a7af233734a35fa4a2df7aba39cf45dfcdca21907340bf711ac2028824a457",
+      "frames": 8
+    },
+    {
+      "fixture": "main-ipb",
+      "scalar_matches_default_ffmpeg": true,
+      "scalar_sha256": "83f46c5db49ce29288b0c1c66cdfd06bfc0e4e295e5257a12f51bfa415ce4121",
+      "frames": 8
+    },
+    {
+      "fixture": "scaling-encoded25",
+      "scalar_matches_default_ffmpeg": true,
+      "scalar_sha256": "d221ff242467bb29f6babf3a18045dfde2e6fc1c2a3b9f1e72218a5efc4bb263",
+      "frames": 8
+    },
+    {
+      "fixture": "scaling-pps-default",
+      "scalar_matches_default_ffmpeg": true,
+      "scalar_sha256": "8c31a3fb355eaba17e721c2933c02ddf4f0cfd08c90cd42d16e7be020cce2732",
+      "frames": 8
+    },
+    {
+      "fixture": "scaling-pps-inherit",
+      "scalar_matches_default_ffmpeg": true,
+      "scalar_sha256": "3f7c4e28162c5be9bf19aaca60ecdbb44a40076d5d684f7d0fb953a91eadd29c",
+      "frames": 8
+    },
+    {
+      "fixture": "scaling-sps-constant",
+      "scalar_matches_default_ffmpeg": true,
+      "scalar_sha256": "d221ff242467bb29f6babf3a18045dfde2e6fc1c2a3b9f1e72218a5efc4bb263",
+      "frames": 8
+    },
+    {
+      "fixture": "scaling-sps-custom",
+      "scalar_matches_default_ffmpeg": true,
+      "scalar_sha256": "fa52de4f257f512a2234012a09dd7f83139d2245250f4608dff46ff414bb8a62",
+      "frames": 8
+    },
+    {
+      "fixture": "scaling-sps-default",
+      "scalar_matches_default_ffmpeg": true,
+      "scalar_sha256": "8c31a3fb355eaba17e721c2933c02ddf4f0cfd08c90cd42d16e7be020cce2732",
+      "frames": 8
+    },
+    {
+      "fixture": "scaling-sps-repeat",
+      "scalar_matches_default_ffmpeg": true,
+      "scalar_sha256": "d221ff242467bb29f6babf3a18045dfde2e6fc1c2a3b9f1e72218a5efc4bb263",
+      "frames": 8
+    }
+  ],
+  "fixtures": {
+    "baseline-idr": {
+      "width": 64,
+      "height": 64,
+      "frames": 1,
+      "profile": "H264 baseline",
+      "sps_profile_idc": 66,
+      "bframes": 0,
+      "cabac": 0,
+      "transform8x8": 0,
+      "cqm": "flat",
+      "files": {
+        "reference.nv12": {
+          "bytes": 6144,
+          "sha256": "66a23ea6cd9b7c6a1220fae49e5a7e58227728749c750af29c5974c0d6ad2ae4"
+        },
+        "reference.nv21": {
+          "bytes": 6144,
+          "sha256": "7ccbf7726f72fa76648ba4e4de5595fe8f2dd614a90a48c45f9ce26a221ac3d6"
+        },
+        "reference.yuv420p": {
+          "bytes": 6144,
+          "sha256": "e2a1cff4ad4c209d6f685a4f84c70878703ded5b5402a02a2e945f458489ea65"
+        },
+        "baseline.h264": {
+          "bytes": 1609,
+          "sha256": "9c0a394146c12a87127e6fb9ae6ff9a4667300731a473659f4fcc0445d7a5ddd"
+        }
+      }
+    },
+    "baseline-ip": {
+      "width": 64,
+      "height": 64,
+      "frames": 8,
+      "profile": "H264 baseline",
+      "sps_profile_idc": 66,
+      "bframes": 0,
+      "cabac": 0,
+      "transform8x8": 0,
+      "cqm": "flat",
+      "files": {
+        "reference.nv12": {
+          "bytes": 49152,
+          "sha256": "e8a7af233734a35fa4a2df7aba39cf45dfcdca21907340bf711ac2028824a457"
+        },
+        "reference.nv21": {
+          "bytes": 49152,
+          "sha256": "44178d311d81b68d7eef256f7826163c4f9bf0a650d6bd067a2b44b0351206c2"
+        },
+        "reference.yuv420p": {
+          "bytes": 49152,
+          "sha256": "0cbe4c394c04d5aa016147d459ece8b9cff6debbf958ae6cee41f39927c7d80d"
+        },
+        "baseline.h264": {
+          "bytes": 7019,
+          "sha256": "5089cbdbd27c7488107005b8fbdbd5ddea9b89954603f9fa097de554ae7f3959"
+        }
+      }
+    },
+    "high-idr-c0-t0-asymmetric": {
+      "width": 128,
+      "height": 96,
+      "frames": 1,
+      "profile": "H264 high",
+      "sps_profile_idc": 100,
+      "bframes": 0,
+      "cabac": 0,
+      "transform8x8": 0,
+      "cqm": "asymmetric",
+      "files": {
+        "reference.nv12": {
+          "bytes": 18432,
+          "sha256": "ee2e3a126ad7559f67ebe4235d41f994a59d1258963d78062a07cc5353e61f8c"
+        },
+        "reference.nv21": {
+          "bytes": 18432,
+          "sha256": "5f4c25440e15a2a63edbc715324e682f2e6ecb42bf916ca42f4377247e6541de"
+        },
+        "reference.yuv420p": {
+          "bytes": 18432,
+          "sha256": "23b38c3c24c881ab1804984c2e45b3695e3a56bdf838326be6a7e261531a3358"
+        },
+        "baseline.h264": {
+          "bytes": 3718,
+          "sha256": "f5a2adfd251e18254194063cb63a44de7d4e6afb1f241dcf26c9e1cd6e9930bb"
+        }
+      }
+    },
+    "high-idr-c0-t0-jvt": {
+      "width": 128,
+      "height": 96,
+      "frames": 1,
+      "profile": "H264 high",
+      "sps_profile_idc": 100,
+      "bframes": 0,
+      "cabac": 0,
+      "transform8x8": 0,
+      "cqm": "jvt",
+      "files": {
+        "reference.nv12": {
+          "bytes": 18432,
+          "sha256": "3c592eee6e01b3d35523d7f01e3f30add8f2463579775ec1d5633ae876c257fe"
+        },
+        "reference.nv21": {
+          "bytes": 18432,
+          "sha256": "54ab419e9028579d24c3c46dedd2f7d7b10733021ccc66be9332eb99b55abaa1"
+        },
+        "reference.yuv420p": {
+          "bytes": 18432,
+          "sha256": "c92b3aa1fb5d38108f29c1bbb03ee88bd8b33083ddc18ca4a65c0859437f2034"
+        },
+        "baseline.h264": {
+          "bytes": 3770,
+          "sha256": "e171c794f05c753cb42000dcc51d9a0c55eef3ac76c207e90d741da42d795f6d"
+        }
+      }
+    },
+    "high-idr-c0-t1-asymmetric": {
+      "width": 128,
+      "height": 96,
+      "frames": 1,
+      "profile": "H264 high",
+      "sps_profile_idc": 100,
+      "bframes": 0,
+      "cabac": 0,
+      "transform8x8": 1,
+      "cqm": "asymmetric",
+      "files": {
+        "reference.nv12": {
+          "bytes": 18432,
+          "sha256": "98575d14cac32e990b696562517eec1c3f95e2a324958f0834a894c3da4a3a85"
+        },
+        "reference.nv21": {
+          "bytes": 18432,
+          "sha256": "bd2b3b29b8fb009701e0786918577f09128aff28765a34baa0867e067f5f3244"
+        },
+        "reference.yuv420p": {
+          "bytes": 18432,
+          "sha256": "ff2142452255ff761038da2b011e3c03314d18dcf2a55a756a5b3c47f7bde40d"
+        },
+        "baseline.h264": {
+          "bytes": 3761,
+          "sha256": "6945d702c5bd8bc06337021769b462c976735563c6f8ca8803ada163b9a66007"
+        }
+      }
+    },
+    "high-idr-c0-t1-jvt": {
+      "width": 128,
+      "height": 96,
+      "frames": 1,
+      "profile": "H264 high",
+      "sps_profile_idc": 100,
+      "bframes": 0,
+      "cabac": 0,
+      "transform8x8": 1,
+      "cqm": "jvt",
+      "files": {
+        "reference.nv12": {
+          "bytes": 18432,
+          "sha256": "6f7d8921f4b18714cc04bbc536e89edc4e72b55edf0cd310114bc1767b03547b"
+        },
+        "reference.nv21": {
+          "bytes": 18432,
+          "sha256": "c3ef662df52e9b9fafe6d5030e3d3e5516ed7961eb2b75a4485b411b7de29a24"
+        },
+        "reference.yuv420p": {
+          "bytes": 18432,
+          "sha256": "ee08b4767add1470e8ed67fec07a3e0bf0a3e1ebe434a9d1cabc3f95c0af520a"
+        },
+        "baseline.h264": {
+          "bytes": 3731,
+          "sha256": "61cdba472eccbf0ba09520d9e55d2b69bd705634840b6b4de9a2930e0ea014d8"
+        }
+      }
+    },
+    "high-idr-c1-t0-asymmetric": {
+      "width": 128,
+      "height": 96,
+      "frames": 1,
+      "profile": "H264 high",
+      "sps_profile_idc": 100,
+      "bframes": 0,
+      "cabac": 1,
+      "transform8x8": 0,
+      "cqm": "asymmetric",
+      "files": {
+        "reference.nv12": {
+          "bytes": 18432,
+          "sha256": "ee2e3a126ad7559f67ebe4235d41f994a59d1258963d78062a07cc5353e61f8c"
+        },
+        "reference.nv21": {
+          "bytes": 18432,
+          "sha256": "5f4c25440e15a2a63edbc715324e682f2e6ecb42bf916ca42f4377247e6541de"
+        },
+        "reference.yuv420p": {
+          "bytes": 18432,
+          "sha256": "23b38c3c24c881ab1804984c2e45b3695e3a56bdf838326be6a7e261531a3358"
+        },
+        "baseline.h264": {
+          "bytes": 2892,
+          "sha256": "534577cc45f6faa7858bd38dd029f277e4c1c3330a28701eebfdc82f8cab4990"
+        }
+      }
+    },
+    "high-idr-c1-t0-jvt": {
+      "width": 128,
+      "height": 96,
+      "frames": 1,
+      "profile": "H264 high",
+      "sps_profile_idc": 100,
+      "bframes": 0,
+      "cabac": 1,
+      "transform8x8": 0,
+      "cqm": "jvt",
+      "files": {
+        "reference.nv12": {
+          "bytes": 18432,
+          "sha256": "3c592eee6e01b3d35523d7f01e3f30add8f2463579775ec1d5633ae876c257fe"
+        },
+        "reference.nv21": {
+          "bytes": 18432,
+          "sha256": "54ab419e9028579d24c3c46dedd2f7d7b10733021ccc66be9332eb99b55abaa1"
+        },
+        "reference.yuv420p": {
+          "bytes": 18432,
+          "sha256": "c92b3aa1fb5d38108f29c1bbb03ee88bd8b33083ddc18ca4a65c0859437f2034"
+        },
+        "baseline.h264": {
+          "bytes": 2898,
+          "sha256": "5feb9c7221b19409ebf5ceb82a5d828cc1b8d5f598f2a7779eb7866a98ca3025"
+        }
+      }
+    },
+    "high-idr-c1-t1-asymmetric": {
+      "width": 128,
+      "height": 96,
+      "frames": 1,
+      "profile": "H264 high",
+      "sps_profile_idc": 100,
+      "bframes": 0,
+      "cabac": 1,
+      "transform8x8": 1,
+      "cqm": "asymmetric",
+      "files": {
+        "reference.nv12": {
+          "bytes": 18432,
+          "sha256": "98575d14cac32e990b696562517eec1c3f95e2a324958f0834a894c3da4a3a85"
+        },
+        "reference.nv21": {
+          "bytes": 18432,
+          "sha256": "bd2b3b29b8fb009701e0786918577f09128aff28765a34baa0867e067f5f3244"
+        },
+        "reference.yuv420p": {
+          "bytes": 18432,
+          "sha256": "ff2142452255ff761038da2b011e3c03314d18dcf2a55a756a5b3c47f7bde40d"
+        },
+        "baseline.h264": {
+          "bytes": 2937,
+          "sha256": "1439318bcb7673c9371ff16effea3a688fc93c26276a6c0e1bc54ae712f06189"
+        }
+      }
+    },
+    "high-idr-c1-t1-jvt": {
+      "width": 128,
+      "height": 96,
+      "frames": 1,
+      "profile": "H264 high",
+      "sps_profile_idc": 100,
+      "bframes": 0,
+      "cabac": 1,
+      "transform8x8": 1,
+      "cqm": "jvt",
+      "files": {
+        "reference.nv12": {
+          "bytes": 18432,
+          "sha256": "6f7d8921f4b18714cc04bbc536e89edc4e72b55edf0cd310114bc1767b03547b"
+        },
+        "reference.nv21": {
+          "bytes": 18432,
+          "sha256": "c3ef662df52e9b9fafe6d5030e3d3e5516ed7961eb2b75a4485b411b7de29a24"
+        },
+        "reference.yuv420p": {
+          "bytes": 18432,
+          "sha256": "ee08b4767add1470e8ed67fec07a3e0bf0a3e1ebe434a9d1cabc3f95c0af520a"
+        },
+        "baseline.h264": {
+          "bytes": 2796,
+          "sha256": "68d5c212cbf793acdbbbab16ac4d1ff1d0a89d3e1690446fec6cdfae4557b97f"
+        }
+      }
+    },
+    "high-idr-flat8": {
+      "width": 128,
+      "height": 96,
+      "frames": 1,
+      "profile": "H264 high",
+      "sps_profile_idc": 100,
+      "bframes": 0,
+      "cabac": 1,
+      "transform8x8": 1,
+      "cqm": "flat",
+      "files": {
+        "reference.nv12": {
+          "bytes": 18432,
+          "sha256": "df199747c581b2edc119a85a5e054c1a2465520e83381a76a8323069deb19990"
+        },
+        "reference.nv21": {
+          "bytes": 18432,
+          "sha256": "f6e7cea77648153092b6ae2e8df2f03c91b7bd620f5338b9bcdd41d8845dd459"
+        },
+        "reference.yuv420p": {
+          "bytes": 18432,
+          "sha256": "fc92730e05ae71839b6fba9339a450d1134a4154da9770278fcaca56e2a1011f"
+        },
+        "baseline.h264": {
+          "bytes": 2758,
+          "sha256": "6ef37c98c78fa948bd2411c36375c77e0536df1fef5156c6d8a420549c779a5d"
+        }
+      }
+    },
+    "high-ip-c0-t0-asymmetric": {
+      "width": 128,
+      "height": 96,
+      "frames": 8,
+      "profile": "H264 high",
+      "sps_profile_idc": 100,
+      "bframes": 0,
+      "cabac": 0,
+      "transform8x8": 0,
+      "cqm": "asymmetric",
+      "files": {
+        "reference.nv12": {
+          "bytes": 147456,
+          "sha256": "8a9b102aa8bb7f6697b98b288504f6f188b6071b4b696ea47fd6be4ff5cef6a0"
+        },
+        "reference.nv21": {
+          "bytes": 147456,
+          "sha256": "1d0e93d7c8b30e4a914ca8fedfdd1a74e3e9bd3a3460d17728c289140c0532e4"
+        },
+        "reference.yuv420p": {
+          "bytes": 147456,
+          "sha256": "09ed73c8d7db7ff1ca3c2cac650e6b7a8c4087fa2646961ad51cd0fcc28e48f8"
+        },
+        "baseline.h264": {
+          "bytes": 12816,
+          "sha256": "9a9c158baf8e59bcccb0624a202e0de7b8df2af16d1f115b33b6dd951695dfea"
+        }
+      }
+    },
+    "high-ip-c0-t0-jvt": {
+      "width": 128,
+      "height": 96,
+      "frames": 8,
+      "profile": "H264 high",
+      "sps_profile_idc": 100,
+      "bframes": 0,
+      "cabac": 0,
+      "transform8x8": 0,
+      "cqm": "jvt",
+      "files": {
+        "reference.nv12": {
+          "bytes": 147456,
+          "sha256": "deb37baf91c2b2e7d50b818f11f9e0805aea0b5d4156ed212108905147f1c045"
+        },
+        "reference.nv21": {
+          "bytes": 147456,
+          "sha256": "5133c229f0776696b966f59a8582a06ef392b25e6ed68cbe09b7a9e80b8dc3c0"
+        },
+        "reference.yuv420p": {
+          "bytes": 147456,
+          "sha256": "6a27965eb8e005763806606f9d455cf024031d80af43e13dadc514c0687c62f9"
+        },
+        "baseline.h264": {
+          "bytes": 14537,
+          "sha256": "c2b4a0d2c343248b6f9dc5db0fa9c210f6e478e897c76e30fb4ab4f90df483f1"
+        }
+      }
+    },
+    "high-ip-c0-t1-asymmetric": {
+      "width": 128,
+      "height": 96,
+      "frames": 8,
+      "profile": "H264 high",
+      "sps_profile_idc": 100,
+      "bframes": 0,
+      "cabac": 0,
+      "transform8x8": 1,
+      "cqm": "asymmetric",
+      "files": {
+        "reference.nv12": {
+          "bytes": 147456,
+          "sha256": "087efde15520a143d237a71d47816f4ca221a241752876b04ae1bcab0f2e2c8e"
+        },
+        "reference.nv21": {
+          "bytes": 147456,
+          "sha256": "9e4cdd28fb06451a997d66471023ea4558c2922bc548f65383fa6058d0be945d"
+        },
+        "reference.yuv420p": {
+          "bytes": 147456,
+          "sha256": "acf95975513675f9c2d6161059f750e759dcd355154485df87ea2e9886fec658"
+        },
+        "baseline.h264": {
+          "bytes": 12257,
+          "sha256": "ff835ecf643d29835482ba92d0371668a9c13f19763b3954496d893352d544e6"
+        }
+      }
+    },
+    "high-ip-c0-t1-jvt": {
+      "width": 128,
+      "height": 96,
+      "frames": 8,
+      "profile": "H264 high",
+      "sps_profile_idc": 100,
+      "bframes": 0,
+      "cabac": 0,
+      "transform8x8": 1,
+      "cqm": "jvt",
+      "files": {
+        "reference.nv12": {
+          "bytes": 147456,
+          "sha256": "07e93317a6907fc3170b4eedfb02647b5716ea3407ea99d0dde57c5c2eb5d484"
+        },
+        "reference.nv21": {
+          "bytes": 147456,
+          "sha256": "b42ff2b5b9625f10bdb7e2bf9a4e355d391a48565477b88c31f5d82d281299d5"
+        },
+        "reference.yuv420p": {
+          "bytes": 147456,
+          "sha256": "e1ba9cae17b363dcbcf93545e18a9bdf5b3f5fbc9dfc52fda14fa14d3813038e"
+        },
+        "baseline.h264": {
+          "bytes": 12973,
+          "sha256": "b5ecd45c0bd5f3dd0c595d0ef1fbb6d4cc580666345d83642f99598100ab08c9"
+        }
+      }
+    },
+    "high-ip-c1-t0-asymmetric": {
+      "width": 128,
+      "height": 96,
+      "frames": 8,
+      "profile": "H264 high",
+      "sps_profile_idc": 100,
+      "bframes": 0,
+      "cabac": 1,
+      "transform8x8": 0,
+      "cqm": "asymmetric",
+      "files": {
+        "reference.nv12": {
+          "bytes": 147456,
+          "sha256": "8a9b102aa8bb7f6697b98b288504f6f188b6071b4b696ea47fd6be4ff5cef6a0"
+        },
+        "reference.nv21": {
+          "bytes": 147456,
+          "sha256": "1d0e93d7c8b30e4a914ca8fedfdd1a74e3e9bd3a3460d17728c289140c0532e4"
+        },
+        "reference.yuv420p": {
+          "bytes": 147456,
+          "sha256": "09ed73c8d7db7ff1ca3c2cac650e6b7a8c4087fa2646961ad51cd0fcc28e48f8"
+        },
+        "baseline.h264": {
+          "bytes": 10718,
+          "sha256": "176580c94e6e31108d80645ca923f5f081f12c07b76f56025d53827caaf2dabf"
+        }
+      }
+    },
+    "high-ip-c1-t0-jvt": {
+      "width": 128,
+      "height": 96,
+      "frames": 8,
+      "profile": "H264 high",
+      "sps_profile_idc": 100,
+      "bframes": 0,
+      "cabac": 1,
+      "transform8x8": 0,
+      "cqm": "jvt",
+      "files": {
+        "reference.nv12": {
+          "bytes": 147456,
+          "sha256": "deb37baf91c2b2e7d50b818f11f9e0805aea0b5d4156ed212108905147f1c045"
+        },
+        "reference.nv21": {
+          "bytes": 147456,
+          "sha256": "5133c229f0776696b966f59a8582a06ef392b25e6ed68cbe09b7a9e80b8dc3c0"
+        },
+        "reference.yuv420p": {
+          "bytes": 147456,
+          "sha256": "6a27965eb8e005763806606f9d455cf024031d80af43e13dadc514c0687c62f9"
+        },
+        "baseline.h264": {
+          "bytes": 11664,
+          "sha256": "6720940915251d3168c32e854b85c385a413a471d7592d55aad4532afda5639e"
+        }
+      }
+    },
+    "high-ip-c1-t1-asymmetric": {
+      "width": 128,
+      "height": 96,
+      "frames": 8,
+      "profile": "H264 high",
+      "sps_profile_idc": 100,
+      "bframes": 0,
+      "cabac": 1,
+      "transform8x8": 1,
+      "cqm": "asymmetric",
+      "files": {
+        "reference.nv12": {
+          "bytes": 147456,
+          "sha256": "76d5b0ae6e9474ba99ec9e903796ae966e10e394efa41e80fc753fefb848c054"
+        },
+        "reference.nv21": {
+          "bytes": 147456,
+          "sha256": "1d8ebd405cf2795572bdf24acefe1049349f92f9550e50a756b146fb7fdb048b"
+        },
+        "reference.yuv420p": {
+          "bytes": 147456,
+          "sha256": "3d305265864197fd808b24ea99af45051feb7f3bfe8552835fb25175e33d156e"
+        },
+        "baseline.h264": {
+          "bytes": 10221,
+          "sha256": "4d0d307f4d92041653c592ab464097fc8a1c98603b3e3aa22534f73339ad00ac"
+        }
+      }
+    },
+    "high-ip-c1-t1-jvt": {
+      "width": 128,
+      "height": 96,
+      "frames": 8,
+      "profile": "H264 high",
+      "sps_profile_idc": 100,
+      "bframes": 0,
+      "cabac": 1,
+      "transform8x8": 1,
+      "cqm": "jvt",
+      "files": {
+        "reference.nv12": {
+          "bytes": 147456,
+          "sha256": "1591977245234c61bc31dedd11eca4898f6a958644c4a118b13f29f92a4ec81d"
+        },
+        "reference.nv21": {
+          "bytes": 147456,
+          "sha256": "db68c0359765185422965a11eb4b9f0cb49b0347588784b2a30663e737c4c619"
+        },
+        "reference.yuv420p": {
+          "bytes": 147456,
+          "sha256": "1199dcbab64179e78ddef41b61c32fe497a8bd3f9be401b592de562ad406e1f9"
+        },
+        "baseline.h264": {
+          "bytes": 10484,
+          "sha256": "7355c7d982f420f2ec4e8aa591697cf5e55470d02f7ebfe693f4cd621eb9ce2f"
+        }
+      }
+    },
+    "high-ipb-1080p": {
+      "width": 1920,
+      "height": 1080,
+      "frames": 8,
+      "profile": "H264 high",
+      "sps_profile_idc": 100,
+      "bframes": 2,
+      "cabac": 1,
+      "transform8x8": 1,
+      "cqm": "asymmetric",
+      "files": {
+        "reference.nv12": {
+          "bytes": 24883200,
+          "sha256": "e69a3bdab71a5fc3cbebfa21ac56f0218e8640d7d4c1c46981fceb786c32062d"
+        },
+        "reference.nv21": {
+          "bytes": 24883200,
+          "sha256": "ffd9e84da9cd3cd78729bed1383916f8b0785153df25d04aa45941fe1579f432"
+        },
+        "reference.yuv420p": {
+          "bytes": 24883200,
+          "sha256": "58e048ef88eb65aed1e1878726819006cbbf408d6a430e92646213fa7e549d7c"
+        },
+        "baseline.h264": {
+          "bytes": 1140806,
+          "sha256": "f359419110ba6a4c54269f90e2e510a555b75adc34727d157ce563f5403edc1c"
+        }
+      }
+    },
+    "high-ipb-c0-t0-asymmetric": {
+      "width": 128,
+      "height": 96,
+      "frames": 8,
+      "profile": "H264 high",
+      "sps_profile_idc": 100,
+      "bframes": 2,
+      "cabac": 0,
+      "transform8x8": 0,
+      "cqm": "asymmetric",
+      "files": {
+        "reference.nv12": {
+          "bytes": 147456,
+          "sha256": "e377d5046164e5f7e375aadc8ddb3a405d86263191af486e607ceb3e7d202b80"
+        },
+        "reference.nv21": {
+          "bytes": 147456,
+          "sha256": "856aebeec9b3355a92dd0b936eb28caaa199b245b1a0f0ff717293ea503f4412"
+        },
+        "reference.yuv420p": {
+          "bytes": 147456,
+          "sha256": "619db0cb2f10de20f98c42313ae793412f29af4211f7576732fa22ad03b24b9f"
+        },
+        "baseline.h264": {
+          "bytes": 10772,
+          "sha256": "9d339f7bbadb59c0f7c051b506c3424a1bdc855e59fb70813a0cd22cfdac0709"
+        }
+      }
+    },
+    "high-ipb-c0-t0-jvt": {
+      "width": 128,
+      "height": 96,
+      "frames": 8,
+      "profile": "H264 high",
+      "sps_profile_idc": 100,
+      "bframes": 2,
+      "cabac": 0,
+      "transform8x8": 0,
+      "cqm": "jvt",
+      "files": {
+        "reference.nv12": {
+          "bytes": 147456,
+          "sha256": "31344eb552214ee15336a8f90b1d7445a7f908d2b63867247e076a6e9446b88e"
+        },
+        "reference.nv21": {
+          "bytes": 147456,
+          "sha256": "7b16209d615eaafa9c4a57663434b8998f0adf13c5c5828537ee267cf897c552"
+        },
+        "reference.yuv420p": {
+          "bytes": 147456,
+          "sha256": "d9d5bc40552835d0e896359d60ccc4fa8dd32e42476182da9863a873be0313a3"
+        },
+        "baseline.h264": {
+          "bytes": 11925,
+          "sha256": "ba0800277b07b4e61b9ade7cb38132e25074807914030c7eccef48546722c50e"
+        }
+      }
+    },
+    "high-ipb-c0-t1-asymmetric": {
+      "width": 128,
+      "height": 96,
+      "frames": 8,
+      "profile": "H264 high",
+      "sps_profile_idc": 100,
+      "bframes": 2,
+      "cabac": 0,
+      "transform8x8": 1,
+      "cqm": "asymmetric",
+      "files": {
+        "reference.nv12": {
+          "bytes": 147456,
+          "sha256": "4d4696634a691c22ce7d417d122ab5d8d9fdc7b8fe30d86a01201cbbb33419b8"
+        },
+        "reference.nv21": {
+          "bytes": 147456,
+          "sha256": "20371ef7d8811ceb097a89605261a7b8f10b4301a77227e03d4a68add5d85038"
+        },
+        "reference.yuv420p": {
+          "bytes": 147456,
+          "sha256": "0b6346cdb3e3d797dbf11db6e9a5094d169ea99fec166f361fdc2616234443fd"
+        },
+        "baseline.h264": {
+          "bytes": 11636,
+          "sha256": "8c1f8680831393d01faea1fa9a5d90d366114b67d86b6fbdedb823b10f3447ec"
+        }
+      }
+    },
+    "high-ipb-c0-t1-jvt": {
+      "width": 128,
+      "height": 96,
+      "frames": 8,
+      "profile": "H264 high",
+      "sps_profile_idc": 100,
+      "bframes": 2,
+      "cabac": 0,
+      "transform8x8": 1,
+      "cqm": "jvt",
+      "files": {
+        "reference.nv12": {
+          "bytes": 147456,
+          "sha256": "0d5448637c6283d0ca983d152e83e4efff459c585758e15b5b3717088f1f3c6a"
+        },
+        "reference.nv21": {
+          "bytes": 147456,
+          "sha256": "f82aa2fbc803060cda305150414ed53282f73c850be971e418019676484eb12a"
+        },
+        "reference.yuv420p": {
+          "bytes": 147456,
+          "sha256": "2359a817a61a4de2743ed3e5543ccf602ab15f980fe1682b83b0f7883f888262"
+        },
+        "baseline.h264": {
+          "bytes": 12661,
+          "sha256": "9b852b1bf6607cac2889b6c8ae9a1b5b23c23e9cf453fd0e428395383376387a"
+        }
+      }
+    },
+    "high-ipb-c1-t0-asymmetric": {
+      "width": 128,
+      "height": 96,
+      "frames": 8,
+      "profile": "H264 high",
+      "sps_profile_idc": 100,
+      "bframes": 2,
+      "cabac": 1,
+      "transform8x8": 0,
+      "cqm": "asymmetric",
+      "files": {
+        "reference.nv12": {
+          "bytes": 147456,
+          "sha256": "e377d5046164e5f7e375aadc8ddb3a405d86263191af486e607ceb3e7d202b80"
+        },
+        "reference.nv21": {
+          "bytes": 147456,
+          "sha256": "856aebeec9b3355a92dd0b936eb28caaa199b245b1a0f0ff717293ea503f4412"
+        },
+        "reference.yuv420p": {
+          "bytes": 147456,
+          "sha256": "619db0cb2f10de20f98c42313ae793412f29af4211f7576732fa22ad03b24b9f"
+        },
+        "baseline.h264": {
+          "bytes": 8661,
+          "sha256": "109d7391ac42df3bf7bd4bfe7b3c02da56644a65c3543e685caf4429415404f1"
+        }
+      }
+    },
+    "high-ipb-c1-t0-jvt": {
+      "width": 128,
+      "height": 96,
+      "frames": 8,
+      "profile": "H264 high",
+      "sps_profile_idc": 100,
+      "bframes": 2,
+      "cabac": 1,
+      "transform8x8": 0,
+      "cqm": "jvt",
+      "files": {
+        "reference.nv12": {
+          "bytes": 147456,
+          "sha256": "31344eb552214ee15336a8f90b1d7445a7f908d2b63867247e076a6e9446b88e"
+        },
+        "reference.nv21": {
+          "bytes": 147456,
+          "sha256": "7b16209d615eaafa9c4a57663434b8998f0adf13c5c5828537ee267cf897c552"
+        },
+        "reference.yuv420p": {
+          "bytes": 147456,
+          "sha256": "d9d5bc40552835d0e896359d60ccc4fa8dd32e42476182da9863a873be0313a3"
+        },
+        "baseline.h264": {
+          "bytes": 9429,
+          "sha256": "2c4f7165af2d98ae98850d8076bb18bdcdf235cf3490f992e7f49dc780f64126"
+        }
+      }
+    },
+    "high-ipb-c1-t1-asymmetric": {
+      "width": 128,
+      "height": 96,
+      "frames": 8,
+      "profile": "H264 high",
+      "sps_profile_idc": 100,
+      "bframes": 2,
+      "cabac": 1,
+      "transform8x8": 1,
+      "cqm": "asymmetric",
+      "files": {
+        "reference.nv12": {
+          "bytes": 147456,
+          "sha256": "3e5875354b7ad8303239b9ebdc3d908a0e8688672b012cd092fb24ce62f2c1ca"
+        },
+        "reference.nv21": {
+          "bytes": 147456,
+          "sha256": "e6dec4d505d9f5d5eaad5391acd3ebf96e87eb3d6ab91420d3b9569cf6deedb6"
+        },
+        "reference.yuv420p": {
+          "bytes": 147456,
+          "sha256": "e60ef8db49d859f1bf0e74b96782b5bdb41ccd8da2a584fcb6279c8a7fca0862"
+        },
+        "baseline.h264": {
+          "bytes": 9414,
+          "sha256": "c3ef93618dd12e4375ac20d90df9a82d8ec881ea3a4584051dce8c763c441466"
+        }
+      }
+    },
+    "high-ipb-c1-t1-jvt": {
+      "width": 128,
+      "height": 96,
+      "frames": 8,
+      "profile": "H264 high",
+      "sps_profile_idc": 100,
+      "bframes": 2,
+      "cabac": 1,
+      "transform8x8": 1,
+      "cqm": "jvt",
+      "files": {
+        "reference.nv12": {
+          "bytes": 147456,
+          "sha256": "39765dda39e402eeb7dae98747b4dd71d6f65367e25de808fb6f404cfd48660d"
+        },
+        "reference.nv21": {
+          "bytes": 147456,
+          "sha256": "5d81b8067d76b81d9e9b5524185e79769f2b65e7f0d5d8df53b33d3fb707a549"
+        },
+        "reference.yuv420p": {
+          "bytes": 147456,
+          "sha256": "62db71f2fab3aeb7514dfa59724c4a7a1888a44ce12bd6bdbd5047b4f5237529"
+        },
+        "baseline.h264": {
+          "bytes": 10123,
+          "sha256": "043b53618ee30dcbb5d4f129c027f116f8d1fdd07ced7781970605784ef39a0d"
+        }
+      }
+    },
+    "high-ipb-crop": {
+      "width": 126,
+      "height": 94,
+      "frames": 8,
+      "profile": "H264 high",
+      "sps_profile_idc": 100,
+      "bframes": 2,
+      "cabac": 1,
+      "transform8x8": 1,
+      "cqm": "asymmetric",
+      "files": {
+        "reference.nv12": {
+          "bytes": 142128,
+          "sha256": "e5c91678b35c176f49af7f870d7bf78e2e4669fa4d556eadd453a76fda7c4c43"
+        },
+        "reference.nv21": {
+          "bytes": 142128,
+          "sha256": "5144a4a8981d998ceaf63974e671591cc34bbc23185e05483d84649ecf1aed4e"
+        },
+        "reference.yuv420p": {
+          "bytes": 142128,
+          "sha256": "bbea600bb4765cb68ed8a69ee4a832b08f1586784e6f1f20210f512863d0870a"
+        },
+        "baseline.h264": {
+          "bytes": 10569,
+          "sha256": "ea1c0883bdc42dbe51f60ba668881d4a5cfb53e80fb67e1281db38d81163d14e"
+        }
+      }
+    },
+    "main-idr": {
+      "width": 64,
+      "height": 64,
+      "frames": 1,
+      "profile": "H264 main",
+      "sps_profile_idc": 77,
+      "bframes": 0,
+      "cabac": 1,
+      "transform8x8": 0,
+      "cqm": "flat",
+      "files": {
+        "reference.nv12": {
+          "bytes": 6144,
+          "sha256": "66a23ea6cd9b7c6a1220fae49e5a7e58227728749c750af29c5974c0d6ad2ae4"
+        },
+        "reference.nv21": {
+          "bytes": 6144,
+          "sha256": "7ccbf7726f72fa76648ba4e4de5595fe8f2dd614a90a48c45f9ce26a221ac3d6"
+        },
+        "reference.yuv420p": {
+          "bytes": 6144,
+          "sha256": "e2a1cff4ad4c209d6f685a4f84c70878703ded5b5402a02a2e945f458489ea65"
+        },
+        "baseline.h264": {
+          "bytes": 1332,
+          "sha256": "e5e3172df76cc940e1ff27c95d0567dcd49391f1899068da7257a26b7a5f48a4"
+        }
+      }
+    },
+    "main-ip": {
+      "width": 64,
+      "height": 64,
+      "frames": 8,
+      "profile": "H264 main",
+      "sps_profile_idc": 77,
+      "bframes": 0,
+      "cabac": 1,
+      "transform8x8": 0,
+      "cqm": "flat",
+      "files": {
+        "reference.nv12": {
+          "bytes": 49152,
+          "sha256": "e8a7af233734a35fa4a2df7aba39cf45dfcdca21907340bf711ac2028824a457"
+        },
+        "reference.nv21": {
+          "bytes": 49152,
+          "sha256": "44178d311d81b68d7eef256f7826163c4f9bf0a650d6bd067a2b44b0351206c2"
+        },
+        "reference.yuv420p": {
+          "bytes": 49152,
+          "sha256": "0cbe4c394c04d5aa016147d459ece8b9cff6debbf958ae6cee41f39927c7d80d"
+        },
+        "baseline.h264": {
+          "bytes": 6254,
+          "sha256": "c423128fd4f583a25189317cea0bcd80f4c6d75477b92a46db3c5b0a89828f2c"
+        }
+      }
+    },
+    "main-ipb": {
+      "width": 64,
+      "height": 64,
+      "frames": 8,
+      "profile": "H264 main",
+      "sps_profile_idc": 77,
+      "bframes": 2,
+      "cabac": 1,
+      "transform8x8": 0,
+      "cqm": "flat",
+      "files": {
+        "reference.nv12": {
+          "bytes": 49152,
+          "sha256": "83f46c5db49ce29288b0c1c66cdfd06bfc0e4e295e5257a12f51bfa415ce4121"
+        },
+        "reference.nv21": {
+          "bytes": 49152,
+          "sha256": "badfe5b3485c5721bf36fc16bcbb115feaa1da954603b230e8017f1759cc7897"
+        },
+        "reference.yuv420p": {
+          "bytes": 49152,
+          "sha256": "15ad60d3c49de38c8768a0a5699635b72c970448abda8b1fe10c5720a2e81e38"
+        },
+        "baseline.h264": {
+          "bytes": 4389,
+          "sha256": "c0569d7c127673a2f98cb802e383486ab6db6a9ff54d6afa563461dd6582012f"
+        }
+      }
+    },
+    "scaling-encoded25": {
+      "width": 128,
+      "height": 96,
+      "frames": 8,
+      "profile": "H264 high",
+      "sps_profile_idc": 100,
+      "bframes": 2,
+      "cabac": 1,
+      "transform8x8": 1,
+      "cqm": "asymmetric",
+      "files": {
+        "reference.nv12": {
+          "bytes": 147456,
+          "sha256": "d221ff242467bb29f6babf3a18045dfde2e6fc1c2a3b9f1e72218a5efc4bb263"
+        },
+        "reference.nv21": {
+          "bytes": 147456,
+          "sha256": "c9bf8ce6e6ad2b8d5c68d252470d418b3d496399de010df4c8163b9910cbf9b7"
+        },
+        "reference.yuv420p": {
+          "bytes": 147456,
+          "sha256": "bfc99f41ba200d928557f6409c706311d11aa4afc0c8efc512ddded37f302a80"
+        },
+        "baseline.h264": {
+          "bytes": 8434,
+          "sha256": "b7495705993bbfa0b6c0bd0af8e852a697ab785e63a213a8d03f420a1bb15a0c"
+        }
+      }
+    },
+    "scaling-pps-default": {
+      "width": 128,
+      "height": 96,
+      "frames": 8,
+      "profile": "H264 high",
+      "sps_profile_idc": 100,
+      "bframes": 2,
+      "cabac": 1,
+      "transform8x8": 1,
+      "cqm": "asymmetric",
+      "files": {
+        "baseline.h264": {
+          "sha256": "c78d1a92206db8c25db3223f02ab921e5603c509b15dfb367ee144ae0699d281",
+          "bytes": 9455
+        },
+        "reference.nv12": {
+          "sha256": "8c31a3fb355eaba17e721c2933c02ddf4f0cfd08c90cd42d16e7be020cce2732",
+          "bytes": 147456
+        }
+      },
+      "scaling_rewrite": {
+        "sps": "custom",
+        "pps": "use-default"
+      }
+    },
+    "scaling-pps-inherit": {
+      "width": 128,
+      "height": 96,
+      "frames": 8,
+      "profile": "H264 high",
+      "sps_profile_idc": 100,
+      "bframes": 2,
+      "cabac": 1,
+      "transform8x8": 1,
+      "cqm": "asymmetric",
+      "files": {
+        "baseline.h264": {
+          "sha256": "42030a070398a9e6715f683cfdd573c0bcf3ab26ba4d1de525d723c3909376cb",
+          "bytes": 9446
+        },
+        "reference.nv12": {
+          "sha256": "3f7c4e28162c5be9bf19aaca60ecdbb44a40076d5d684f7d0fb953a91eadd29c",
+          "bytes": 147456
+        }
+      },
+      "scaling_rewrite": {
+        "sps": "custom",
+        "pps": "default"
+      }
+    },
+    "scaling-sps-constant": {
+      "width": 128,
+      "height": 96,
+      "frames": 8,
+      "profile": "H264 high",
+      "sps_profile_idc": 100,
+      "bframes": 2,
+      "cabac": 1,
+      "transform8x8": 1,
+      "cqm": "asymmetric",
+      "files": {
+        "baseline.h264": {
+          "sha256": "ca5e3de9c75a776d2aec33a39828eddcd8858474bed8f996f407b2c82914ed2e",
+          "bytes": 8463
+        },
+        "reference.nv12": {
+          "sha256": "d221ff242467bb29f6babf3a18045dfde2e6fc1c2a3b9f1e72218a5efc4bb263",
+          "bytes": 147456
+        }
+      },
+      "scaling_rewrite": {
+        "sps": "constant",
+        "pps": null
+      }
+    },
+    "scaling-sps-custom": {
+      "width": 128,
+      "height": 96,
+      "frames": 8,
+      "profile": "H264 high",
+      "sps_profile_idc": 100,
+      "bframes": 2,
+      "cabac": 1,
+      "transform8x8": 1,
+      "cqm": "asymmetric",
+      "files": {
+        "baseline.h264": {
+          "sha256": "403ffa9ca4e409b4de90f1e93288220ee2d28747b4c7df17da6973584138380b",
+          "bytes": 9445
+        },
+        "reference.nv12": {
+          "sha256": "fa52de4f257f512a2234012a09dd7f83139d2245250f4608dff46ff414bb8a62",
+          "bytes": 147456
+        }
+      },
+      "scaling_rewrite": {
+        "sps": "custom",
+        "pps": null
+      }
+    },
+    "scaling-sps-default": {
+      "width": 128,
+      "height": 96,
+      "frames": 8,
+      "profile": "H264 high",
+      "sps_profile_idc": 100,
+      "bframes": 2,
+      "cabac": 1,
+      "transform8x8": 1,
+      "cqm": "asymmetric",
+      "files": {
+        "baseline.h264": {
+          "sha256": "c6d5525f7fa1154e4436840e0a5d4dff1086fb7993f1887462c156864bd5cf2f",
+          "bytes": 9243
+        },
+        "reference.nv12": {
+          "sha256": "8c31a3fb355eaba17e721c2933c02ddf4f0cfd08c90cd42d16e7be020cce2732",
+          "bytes": 147456
+        }
+      },
+      "scaling_rewrite": {
+        "sps": "default",
+        "pps": null
+      }
+    },
+    "scaling-sps-repeat": {
+      "width": 128,
+      "height": 96,
+      "frames": 8,
+      "profile": "H264 high",
+      "sps_profile_idc": 100,
+      "bframes": 2,
+      "cabac": 1,
+      "transform8x8": 1,
+      "cqm": "asymmetric",
+      "files": {
+        "baseline.h264": {
+          "sha256": "d2afe3f4e10d9b96e6dee89c4ee707d45dd203a474a7d81537b703f57feece0b",
+          "bytes": 8447
+        },
+        "reference.nv12": {
+          "sha256": "d221ff242467bb29f6babf3a18045dfde2e6fc1c2a3b9f1e72218a5efc4bb263",
+          "bytes": 147456
+        }
+      },
+      "scaling_rewrite": {
+        "sps": "repeat",
+        "pps": null
+      }
+    }
+  },
+  "historical_attempts": [
+    {
+      "attempt": "results-smoke",
+      "outcome": "permission_denied",
+      "reason": "Fresh module video nodes required explicit privileged diagnostic execution; no decode was started."
+    },
+    {
+      "attempt": "results-suite",
+      "outcome": "fixture_parser_rejected_1080p",
+      "reason": "x264 sliced threads overrode slices=1; fixed threads=1:sliced-threads=0. Failed input retained."
+    },
+    {
+      "attempt": "initial-corpus",
+      "outcome": "insufficient_8x8_cqm_coverage",
+      "reason": "cqm8iy/cqm8py were ignored by x264. Replaced with cqm8i/cqm8p; warning-fatal generation and actual intra/inter 8x8 encoder statistics added. Final corpus regenerated and tests rerun."
+    },
+    {
+      "attempt": "results-scaling/results-scaling-r2/results-suite-final",
+      "outcome": "synthetic_stress_pixels_mismatch_preserved",
+      "reason": "Replacing matrices while retaining residuals encoded with different weights produced VPU/SIMD/scalar differences. Dense and nextScale=0 forms gave identical controls and hardware output; scalar and SIMD FFmpeg also disagreed. No conformance or universal scaling claim is based on those inputs. Final repeat tests re-encode using constant 25 then move identical matrices to SPS without changing pixels."
+    }
+  ],
+  "stress_software_comparison": [
+    {
+      "fixture": "inputs/fixtures-initial/scaling-sps-repeat",
+      "scalar_matches_default_ffmpeg": false,
+      "scalar_sha256": "18f0918a03ab3095fdbf9df4d8530966f23f1c56638d00310253584e61fb3c3d",
+      "default_sha256": "07476fc1c040d880b4c0a8dd69001a9b42cd93db49fe78e3bca0f8d93aacb26c",
+      "different_bytes": 40876
+    },
+    {
+      "fixture": "inputs/stress-fixtures/scaling-sps-repeat",
+      "scalar_matches_default_ffmpeg": false,
+      "scalar_sha256": "d63e4506b7c4b39932e3cd13f14ea4280552871293ed20e839e0e5a9b863d56e",
+      "default_sha256": "bca9404a32af86f320451608948a4514bb4ada05204b0e9ee097ae2917640b96",
+      "different_bytes": 43653
+    },
+    {
+      "fixture": "fixtures/scaling-sps-repeat",
+      "scalar_matches_default_ffmpeg": true,
+      "scalar_sha256": "d221ff242467bb29f6babf3a18045dfde2e6fc1c2a3b9f1e72218a5efc4bb263",
+      "default_sha256": "d221ff242467bb29f6babf3a18045dfde2e6fc1c2a3b9f1e72218a5efc4bb263",
+      "different_bytes": 0
+    }
+  ],
+  "limits": [
+    "progressive 8-bit 4:2:0 only",
+    "one slice per picture",
+    "one short-term active reference per L0/L1",
+    "B pictures must be non-reference spatial-direct",
+    "no weighted prediction, temporal direct, reference B, multi-slice, fields or 10-bit",
+    "V10 Chrome/Firefox/Bilibili High playback not tested",
+    "V9 active-DMA cancellation and SG alias suite not rerun on V10",
+    "third-party complete Meson suite not run",
+    "codec loaded temporarily; on-disk V2 unchanged; no push"
+  ],
+  "artifacts": "w202ds-projects/vpu-v4l2-high_20261108/evidence (records only; no build dependency)",
+  "bridge_patch_validation": {
+    "published_patch_sha256": "68ca87eefd0c4acc2f200cc1c6af269ba510a1b40dd3f79b9c3191febbc3c260",
+    "applies_to": "4f60c51f7841dd74bb61c94a4ad31e630bbdab01",
+    "patched_codec_h264_sha256": "b13345108a5fcbc5c666c22996cf7a879b385409b68572348718989b45097b56",
+    "identical_to_compiled_source": true
+  }
+}

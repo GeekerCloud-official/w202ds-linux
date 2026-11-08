@@ -70,11 +70,16 @@ endif
 if plugins_options['w202ds']
   plugins += {'plugin-w202ds': {
     'plugin': true,
+    'helper': {'sources': files('w202ds/mm-modem-helpers-w202ds.c'),
+               'include_directories': plugins_incs},
     'module': {'sources': files('w202ds/mm-plugin-w202ds.c',
                               'w202ds/mm-broadband-modem-w202ds.c',
                               'w202ds/mm-broadband-bearer-w202ds.c'),
                'include_directories': plugins_incs,
                'c_args': '-DMM_MODULE_NAME="w202ds"'},
+    'test': {'sources': files('w202ds/tests/test-sim-hot-swap.c'),
+             'include_directories': plugins_incs + [include_directories('w202ds')],
+             'dependencies': libmm_glib_dep},
   }}
   plugins_udev_rules += files('w202ds/77-mm-w202ds.rules')
 endif

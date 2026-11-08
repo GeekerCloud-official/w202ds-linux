@@ -15,8 +15,17 @@
 #include <linux/platform_device.h>
 #include <linux/io.h>
 #include <linux/mutex.h>
+#include <linux/nvmem-consumer.h>
+#include <linux/of.h>
+#include <linux/of_platform.h>
+#include <linux/pm_opp.h>
+#include <linux/pm_qos.h>
+#include <linux/string.h>
+#include <linux/thermal.h>
+#include <linux/workqueue.h>
 #include "w202_gpu_qos.h"
 #include "panfrost_ums9620.h"
+#include "panfrost_ums9620_thermal.h"
 
 /* A separate provider module owns the CCF callbacks. Registering these
  * clocks on Panfrost itself makes its two consumers pin their own module.
@@ -37,9 +46,25 @@ static struct platform_driver ums_provider_driver = {
 };
 
 struct ums_field { struct regmap *map; u32 reg, mask, old; };
+
+/* GPU DVFS indices 2..5 select 153.6, 384 and 512MHz (TGPLL) and GPLL/2.5;
+ * the stock index maps carry selector == index. Every index used here points
+ * at voltage slot 0, which holds the measured inherited supply: a frequency
+ * change never moves the voltage. 512MHz and GPLL/2.5 = 655.2MHz (GPLL at
+ * 1638MHz, the stock T760 maximum) are offered only on a T760 whose GPU bin
+ * the stock driver runs at those rates with no more than the inherited
+ * supply. T770/T790 rates (680, 780, 850MHz) are never used.
+ */
+#define UMS_IDX_LO 2
+#define UMS_IDX_HI 5
+#define UMS_MAP(i) (0x154 + 4 * (i))
+#define UMS_T760_GPLL 1638000000UL
+
 struct ums_gpu {
 	struct ums_field field[4];
-	struct ums_field dvfs[7];
+	struct ums_field top_dvfs, sw_dvfs, volt0, dvfs_9ac, dvfs_index;
+	struct ums_field map[UMS_IDX_HI + 1];
+	unsigned long rates[UMS_IDX_HI + 1];	/* by index; 0 = not offered */
 	struct clk_hw core_hw;
 	struct device *dev;
 	struct regmap *state_map, *aon;
@@ -57,15 +82,36 @@ struct ums_gpu {
 	int order[16];
 	bool supply_enabled, modified, core_saved;
 	bool dvfs_saved;
+	struct dev_pm_qos_request thermal_qos;
+	struct delayed_work thermal_work;
+	struct thermal_zone_device *tz;
+	bool hot;
+	bool sensor_fault;
 };
 
-/* Only 153.6MHz and 384MHz are allowed core clock settings.
- * No GPLL changes or speculative high OPPs. Voltage stays at the measured
- * inherited value through the hardware voltage table as well as regulator.
- */
 static unsigned int ums9620_freq_index = 3;
 module_param(ums9620_freq_index, uint, 0444);
 MODULE_PARM_DESC(ums9620_freq_index, "UMS9620 initial index: 2=153.6MHz, 3=384MHz; devfreq may change it");
+
+static int ums_rate_index(struct ums_gpu *g, unsigned long rate)
+{
+	int i;
+
+	for (i = UMS_IDX_LO; i <= UMS_IDX_HI; i++)
+		if (g->rates[i] && g->rates[i] == rate)
+			return i;
+	return -EINVAL;
+}
+
+static unsigned long ums_max_rate(struct ums_gpu *g)
+{
+	int i;
+
+	for (i = UMS_IDX_HI; i > UMS_IDX_LO; i--)
+		if (g->rates[i])
+			break;
+	return g->rates[i];
+}
 
 static int ums_field_get(struct device_node *np, const char *name,
 			 struct ums_field *f)
@@ -91,18 +137,21 @@ static int ums_power_off(struct ums_gpu *g)
  g->accessible = false;
  if (g->domain_live) {
   if (g->dvfs_saved) {
-   err = ums_field_set(&g->dvfs[5], g->dvfs[5].old);
+   err = ums_field_set(&g->dvfs_index, g->dvfs_index.old);
    if (err && !ret) ret = err;
    udelay(100);
-   err = ums_field_set(&g->dvfs[1], g->dvfs[1].old);
+   err = ums_field_set(&g->sw_dvfs, g->sw_dvfs.old);
    if (err && !ret) ret = err;
-   err = ums_field_set(&g->dvfs[0], g->dvfs[0].old);
+   err = ums_field_set(&g->top_dvfs, g->top_dvfs.old);
    if (err && !ret) ret = err;
-   for (i = 2; i < 7; i++) {
-    if (i == 5) continue;
-    err = ums_field_set(&g->dvfs[i], g->dvfs[i].old);
+   err = ums_field_set(&g->volt0, g->volt0.old);
+   if (err && !ret) ret = err;
+   for (i = UMS_IDX_LO; i <= UMS_IDX_HI; i++) {
+    err = ums_field_set(&g->map[i], g->map[i].old);
     if (err && !ret) ret = err;
    }
+   err = ums_field_set(&g->dvfs_9ac, g->dvfs_9ac.old);
+   if (err && !ret) ret = err;
   }
   if (g->core_saved) {
    err = ums_field_set(&g->field[3], g->field[3].old);
@@ -158,73 +207,74 @@ static int ums_frequency_init(struct ums_gpu *g, struct device *dev,
 			       struct device_node *np, int uv)
 {
 	struct regmap *map;
-	u32 value, index = g->rate == 153600000 ? 2 : 3;
-	int i, ret;
+	u32 value;
+	int i, ret, index = ums_rate_index(g, g->rate);
 
-	if (ums9620_freq_index != 2 && ums9620_freq_index != 3)
-		return -EINVAL;
-	/* Both OPPs are exposed even when the initial selector is 2. */
+	if (index < 0)
+		return index;
 	if (uv < 650000)
 		return -ERANGE;
 	if (uv % 3125)
 		return -ERANGE;
 	if (!g->dvfs_saved) {
-	ret = ums_field_get(np, "top_dvfs_cfg", &g->dvfs[0]);
+	ret = ums_field_get(np, "top_dvfs_cfg", &g->top_dvfs);
 	if (ret) return ret;
-	ret = ums_field_get(np, "gpu_sw_dvfs_ctrl", &g->dvfs[1]);
+	ret = ums_field_get(np, "gpu_sw_dvfs_ctrl", &g->sw_dvfs);
 	if (ret) return ret;
-	ret = ums_field_get(np, "dcdc_gpu_voltage0", &g->dvfs[2]);
+	ret = ums_field_get(np, "dcdc_gpu_voltage0", &g->volt0);
 	if (ret) return ret;
 	map = syscon_regmap_lookup_by_phandle(np, "sprd,gpu-dvfs-apb-syscon");
 	if (IS_ERR(map)) return PTR_ERR(map);
-	g->dvfs[3] = (struct ums_field){map, 0x160, 0x3c0};
-	g->dvfs[4] = (struct ums_field){map, 0x9ac, 3};
-	g->dvfs[5] = (struct ums_field){map, 0x794, 7};
-	g->dvfs[6] = (struct ums_field){map, 0x15c, 0x3c0};
-	for (i = 3; i < 7; i++) {
-		ret = regmap_read(map, g->dvfs[i].reg, &g->dvfs[i].old);
+	g->dvfs_9ac = (struct ums_field){map, 0x9ac, 3};
+	g->dvfs_index = (struct ums_field){map, 0x794, 7};
+	ret = regmap_read(map, g->dvfs_9ac.reg, &g->dvfs_9ac.old);
+	if (ret) return ret;
+	ret = regmap_read(map, g->dvfs_index.reg, &g->dvfs_index.old);
+	if (ret) return ret;
+	for (i = UMS_IDX_LO; i <= UMS_IDX_HI; i++) {
+		g->map[i] = (struct ums_field){map, UMS_MAP(i), 0x3c0};
+		ret = regmap_read(map, g->map[i].reg, &g->map[i].old);
 		if (ret) return ret;
 	}
 	/* Stock maps use selector 2=153.6 / 3=384 with no divider. */
-	if ((g->dvfs[3].old & 0x3f) != 3 ||
-	    (g->dvfs[6].old & 0x3f) != 2)
+	if ((g->map[3].old & 0x3f) != 3 ||
+	    (g->map[2].old & 0x3f) != 2)
 		return -EINVAL;
 	g->dvfs_saved = true;
 	}
-	map = g->dvfs[5].map;
+	map = g->dvfs_index.map;
 	/* A top-domain reset may restore hardware defaults; validate source
 	 * selectors again before making a frequency index usable. */
-	ret = regmap_read(map, 0x160, &value);
-	if (ret) return ret;
-	if ((value & 0x3f) != 3) return -EIO;
-	ret = regmap_read(map, 0x15c, &value);
-	if (ret) return ret;
-	if ((value & 0x3f) != 2) return -EIO;
-	/* Slot 0 holds precisely the existing supply voltage. Point the
-	 * chosen frequency at that slot, keeping voltage unchanged when
-	 * hardware DVFS takes control. The vendor uses 3.125mV selectors.
+	for (i = UMS_IDX_LO; i <= UMS_IDX_HI; i++) {
+		ret = regmap_read(map, UMS_MAP(i), &value);
+		if (ret) return ret;
+		if ((value & 0x3f) != i && g->rates[i]) return -EIO;
+	}
+	/* Slot 0 holds precisely the existing supply voltage. Point every
+	 * index used at that slot, keeping voltage unchanged when hardware
+	 * DVFS takes control. The vendor uses 3.125mV selectors.
 	 */
-	ret = ums_field_set(&g->dvfs[2], uv / 3125);
+	ret = ums_field_set(&g->volt0, uv / 3125);
 	if (ret) return ret;
-	ret = ums_field_set(&g->dvfs[3], 0);
+	for (i = UMS_IDX_LO; i <= UMS_IDX_HI; i++) {
+		ret = ums_field_set(&g->map[i], 0);
+		if (ret) return ret;
+	}
+	ret = ums_field_set(&g->dvfs_9ac, 1);
 	if (ret) return ret;
-	ret = ums_field_set(&g->dvfs[6], 0);
+	ret = ums_field_set(&g->top_dvfs, 0);
 	if (ret) return ret;
-	ret = ums_field_set(&g->dvfs[4], 1);
+	ret = ums_field_set(&g->sw_dvfs, 0);
 	if (ret) return ret;
-	ret = ums_field_set(&g->dvfs[0], 0);
-	if (ret) return ret;
-	ret = ums_field_set(&g->dvfs[1], 0);
-	if (ret) return ret;
-	ret = ums_field_set(&g->dvfs[5], index);
+	ret = ums_field_set(&g->dvfs_index, index);
 	if (ret) return ret;
 	usleep_range(1000, 1500);
-	ret = regmap_read(map, 0x794, &value);
+	ret = regmap_read(map, g->dvfs_index.reg, &value);
 	if (ret) return ret;
 	if ((value & 7) != index)
 		return -EIO;
-	dev_dbg(dev, "bounded GPU HW index=%u target=%uHz voltage-slot0=%duV; confirm with cycle counter\n",
-		index, index == 2 ? 153600000 : 384000000, uv);
+	dev_dbg(dev, "bounded GPU HW index=%d target=%luHz voltage-slot0=%duV\n",
+		index, g->rates[index], uv);
 	return 0;
 }
 
@@ -240,52 +290,60 @@ static unsigned long ums_core_recalc_rate(struct clk_hw *hw,
  mutex_lock(&g->lock);
  rate = g->rate;
  if (g->accessible) {
-  if (regmap_read(g->dvfs[5].map, 0x794, &index)) {
+  if (regmap_read(g->dvfs_index.map, g->dvfs_index.reg, &index)) {
    rate = 0;
    goto out;
   }
   index &= 7;
-  if ((index != 2 && index != 3) ||
-      regmap_read(g->dvfs[5].map, 0x154 + 4 * index, &map) ||
+  if (index < UMS_IDX_LO || index > UMS_IDX_HI || !g->rates[index] ||
+      regmap_read(g->dvfs_index.map, UMS_MAP(index), &map) ||
       (map & 0x3ff) != index) {
    rate = 0;
    goto out;
   }
-  rate = index == 2 ? 153600000 : 384000000;
+  rate = g->rates[index];
  }
 out:
  mutex_unlock(&g->lock);
  return rate;
 }
 
+/* Offered rates ascend with the index; take the fastest not above rate. */
 static long ums_core_round_rate(struct clk_hw *hw, unsigned long rate,
                                unsigned long *parent_rate)
 {
- return rate <= 268800000 ? 153600000 : 384000000;
+ struct ums_gpu *g = container_of(hw, struct ums_gpu, core_hw);
+ unsigned long best = g->rates[UMS_IDX_LO];
+ int i;
+
+ for (i = UMS_IDX_LO; i <= UMS_IDX_HI; i++)
+  if (g->rates[i] && g->rates[i] <= rate)
+   best = g->rates[i];
+ return best;
 }
 
 static int ums_core_set_rate(struct clk_hw *hw, unsigned long rate,
                             unsigned long parent_rate)
 {
  struct ums_gpu *g = container_of(hw, struct ums_gpu, core_hw);
- u32 index, value;
+ int index = ums_rate_index(g, rate);
+ u32 value;
  int ret = 0;
 
- if (rate != 153600000 && rate != 384000000)
-  return -EINVAL;
- index = rate == 153600000 ? 2 : 3;
+ if (index < 0)
+  return index;
  mutex_lock(&g->lock);
  if (g->accessible) {
-  ret = regmap_read(g->dvfs[5].map, 0x154 + 4 * index, &value);
+  ret = regmap_read(g->dvfs_index.map, UMS_MAP(index), &value);
   if (ret) goto out;
   if ((value & 0x3ff) != index) {
    ret = -EIO;
    goto out;
   }
-  ret = ums_field_set(&g->dvfs[5], index);
+  ret = ums_field_set(&g->dvfs_index, index);
   if (ret) goto out;
   usleep_range(1000, 1500);
-  ret = regmap_read(g->dvfs[5].map, 0x794, &value);
+  ret = regmap_read(g->dvfs_index.map, g->dvfs_index.reg, &value);
   if (ret) goto out;
   if ((value & 7) != index) {
    ret = -EIO;
@@ -337,8 +395,8 @@ static int ums_register_core_clock(struct ums_gpu *g,
  pfdev->clock = devm_clk_get(dev, "gpu-core");
  if (IS_ERR(pfdev->clock))
   return PTR_ERR(pfdev->clock);
- dev_info(dev, "core clock registered: %luHz, bounded 153.6/384MHz devfreq\n",
-          clk_get_rate(pfdev->clock));
+ dev_info(dev, "core clock registered: %luHz, devfreq %lu-%luHz\n",
+          clk_get_rate(pfdev->clock), g->rates[UMS_IDX_LO], ums_max_rate(g));
  return 0;
 }
 
@@ -481,15 +539,197 @@ static ssize_t w202_gpu_power_show(struct device *dev,
  if (!ret) ret = regmap_read(g->aon, 0, &gate);
  if (ret) len = ret;
  else len = sysfs_emit(buf,
-  "accessible=%u top=%08x interface=%u supply_owned=%u configured_hz=%lu suspends=%lu resumes=%lu\n",
+  "accessible=%u top=%08x interface=%u supply_owned=%u configured_hz=%lu max_hz=%lu thermal_cap=%u suspends=%lu resumes=%lu\n",
   g->accessible, top & g->state_mask, !!(gate & BIT(11)),
-  g->supply_enabled, g->rate, g->suspends, g->resumes);
+  g->supply_enabled, g->rate, ums_max_rate(g), READ_ONCE(g->hot),
+  g->suspends, g->resumes);
  mutex_unlock(&g->lock);
  return len;
 }
 static DEVICE_ATTR_RO(w202_gpu_power);
 static struct attribute *ums_attrs[] = { &dev_attr_w202_gpu_power.attr, NULL };
 static const struct attribute_group ums_group = { .attrs = ums_attrs };
+
+/* Stock T760 GPU voltage for 512MHz and 655.2MHz by efuse gpu_bin
+ * (1 FF, 2 TT, 3 SS; the vendor treats 0 as SS).
+ */
+static const int ums_t760_uv[4][2] = {
+	{ 700000, 750000 }, { 650000, 650000 },
+	{ 650000, 700000 }, { 700000, 750000 },
+};
+
+static int ums_t760_rates(struct ums_gpu *g)
+{
+	struct device_node *hwf = of_find_node_by_path("/hwfeature/auto");
+	const char *soc = NULL;
+	struct clk *gpll = NULL;
+	bool t760;
+	u32 bin = 0;
+	int i, ret;
+
+	if (hwf)
+		of_property_read_string(hwf, "efuse", &soc);
+	t760 = soc && !strcmp(soc, "T760");
+	of_node_put(hwf);
+	if (!t760) {
+		dev_info(g->dev, "GPU efuse type unknown: 153.6/384MHz only\n");
+		return 0;
+	}
+	ret = nvmem_cell_read_variable_le_u32(g->dev, "gpu_bin", &bin);
+	if (ret == -EPROBE_DEFER)
+		return ret;
+	if (ret || bin > 3) {
+		dev_warn(g->dev, "GPU bin unreadable (%d, %u): rated as SS\n", ret, bin);
+		bin = 0;
+	}
+	if (g->voltage_uv >= ums_t760_uv[bin][0] && (g->map[4].old & 0x3f) == 4)
+		g->rates[4] = 512000000;
+	if (g->rates[4] && g->voltage_uv >= ums_t760_uv[bin][1] &&
+	    (g->map[5].old & 0x3f) == 5) {
+		for (i = 0; i < g->n; i++)
+			if (!strcmp(__clk_get_name(g->clk[i]), "gpll"))
+				gpll = g->clk[i];
+		/* The GPU runs from TGPLL (index 2/3) here: GPLL is idle. */
+		ret = gpll ? clk_set_rate(gpll, UMS_T760_GPLL) : -ENOENT;
+		if (!ret && clk_get_rate(gpll) == UMS_T760_GPLL)
+			g->rates[5] = UMS_T760_GPLL / 5 * 2;
+		else
+			dev_warn(g->dev, "GPLL not at %luHz (%d): no 655.2MHz\n",
+				 UMS_T760_GPLL, ret);
+	}
+	dev_info(g->dev, "T760 GPU bin %u at %duV: up to %luHz\n",
+		 bin, g->voltage_uv, ums_max_rate(g));
+	return 0;
+}
+
+/* Nothing binds the GPU devfreq cooling device to a thermal zone in the
+ * vendor DT. Cap the GPU at 384MHz while gpu-thmzone is hot, like the stock
+ * power allocator starting at the 70C passive trip.
+ */
+static int ums9620_hot_mc = 75000;
+module_param(ums9620_hot_mc, int, 0644);
+MODULE_PARM_DESC(ums9620_hot_mc, "gpu-thmzone millicelsius at which the GPU is capped at 384MHz");
+static int ums9620_cool_mc = 65000;
+module_param(ums9620_cool_mc, int, 0644);
+MODULE_PARM_DESC(ums9620_cool_mc, "gpu-thmzone millicelsius at which the 384MHz cap is released");
+#define UMS_THERMAL_POLL_MS 1000
+
+static int ums_thermal_bind(struct ums_gpu *g)
+{
+	struct device_node *zone;
+	struct of_phandle_args args;
+	struct platform_device *supplier;
+	struct device_link *link;
+	int ret;
+
+	zone = of_find_node_by_path("/thermal-zones/gpu-thmzone");
+	if (!zone)
+		return -ENODEV;
+	ret = of_parse_phandle_with_args(zone, "thermal-sensors",
+					 "#thermal-sensor-cells", 0, &args);
+	of_node_put(zone);
+	if (ret)
+		return ret;
+	supplier = of_find_device_by_node(args.np);
+	of_node_put(args.np);
+	if (!supplier)
+		return -EPROBE_DEFER;
+	/* The thermal API returns a borrowed zone pointer. Keep its provider
+	 * bound until GPU devres has stopped this work, including during probe.
+	 * A link created after supplier unbind began cannot protect the zone.
+	 */
+	link = device_link_add(g->dev, &supplier->dev,
+			       DL_FLAG_AUTOREMOVE_CONSUMER);
+	put_device(&supplier->dev);
+	if (!link)
+		return -EINVAL;
+	if (READ_ONCE(link->status) != DL_STATE_CONSUMER_PROBE)
+		return -EPROBE_DEFER;
+	g->tz = thermal_zone_get_zone_by_name("gpu-thmzone");
+	if (IS_ERR(g->tz)) {
+		ret = PTR_ERR(g->tz);
+		return ret == -ENODEV ? -EPROBE_DEFER : ret;
+	}
+	return 0;
+}
+
+static void ums_thermal_poll(struct work_struct *work)
+{
+	struct ums_gpu *g = container_of(to_delayed_work(work), struct ums_gpu,
+					 thermal_work);
+	int temp = 0, ret;
+	bool capped;
+
+	ret = thermal_zone_get_temp(g->tz, &temp);
+	if (ret && !g->sensor_fault)
+		dev_warn(g->dev, "GPU temperature unavailable (%d): limiting to %luHz\n",
+			 ret, g->rates[3]);
+	else if (!ret && g->sensor_fault)
+		dev_info(g->dev, "GPU temperature recovered: %dmC\n", temp);
+	g->sensor_fault = !!ret;
+	capped = ums_thermal_cap_required(READ_ONCE(g->hot), ret, temp,
+					 READ_ONCE(ums9620_hot_mc),
+					 READ_ONCE(ums9620_cool_mc));
+	if (capped != READ_ONCE(g->hot)) {
+		ret = dev_pm_qos_update_request(&g->thermal_qos, capped ?
+			g->rates[3] / 1000 : PM_QOS_MAX_FREQUENCY_DEFAULT_VALUE);
+		if (ret < 0) {
+			dev_err_ratelimited(g->dev, "GPU thermal limit update failed: %d\n", ret);
+		} else {
+			WRITE_ONCE(g->hot, capped);
+			if (capped)
+				dev_info(g->dev, "GPU thermal cap: %luHz\n", g->rates[3]);
+			else
+				dev_info(g->dev, "GPU at %dmC: cap released\n", temp);
+		}
+	}
+	queue_delayed_work(system_freezable_power_efficient_wq, &g->thermal_work,
+			   msecs_to_jiffies(UMS_THERMAL_POLL_MS));
+}
+
+static void ums_thermal_stop(void *data)
+{
+	struct ums_gpu *g = data;
+
+	cancel_delayed_work_sync(&g->thermal_work);
+	dev_pm_qos_remove_request(&g->thermal_qos);
+}
+
+static int ums_thermal_start(struct ums_gpu *g)
+{
+	int ret;
+
+	if (ums_max_rate(g) <= g->rates[3])
+		return 0;
+	ret = ums_thermal_bind(g);
+	if (ret)
+		return dev_err_probe(g->dev, ret, "GPU temperature provider unavailable\n");
+	/* Do not allow high OPPs until a valid cool sample has been observed. */
+	ret = dev_pm_qos_add_request(g->dev, &g->thermal_qos, DEV_PM_QOS_MAX_FREQUENCY,
+					     g->rates[3] / 1000);
+	if (ret < 0)
+		return ret;
+	WRITE_ONCE(g->hot, true);
+	INIT_DEFERRABLE_WORK(&g->thermal_work, ums_thermal_poll);
+	queue_delayed_work(system_freezable_power_efficient_wq, &g->thermal_work, 0);
+	return devm_add_action_or_reset(g->dev, ums_thermal_stop, g);
+}
+
+int panfrost_ums9620_add_opps(struct panfrost_device *pfdev)
+{
+	struct ums_gpu *g = pfdev->platform_data;
+	int i, ret;
+
+	for (i = UMS_IDX_LO; i <= UMS_IDX_HI; i++) {
+		if (!g->rates[i])
+			continue;
+		ret = dev_pm_opp_add(pfdev->dev, g->rates[i], 0);
+		if (ret)
+			return ret;
+	}
+	return 0;
+}
+EXPORT_SYMBOL_GPL(panfrost_ums9620_add_opps);
 
 int panfrost_ums9620_init(struct panfrost_device *pfdev)
 {
@@ -508,7 +748,11 @@ int panfrost_ums9620_init(struct panfrost_device *pfdev)
 	if (!g) return -ENOMEM;
 	g->dev = dev;
 	mutex_init(&g->lock);
-	g->rate = ums9620_freq_index == 2 ? 153600000 : 384000000;
+	if (ums9620_freq_index != 2 && ums9620_freq_index != 3)
+		return -EINVAL;
+	g->rates[2] = 153600000;
+	g->rates[3] = 384000000;
+	g->rate = g->rates[ums9620_freq_index];
 	pfdev->platform_data = g;
 	ret = devm_add_action_or_reset(dev, ums_cleanup, g);
 	if (ret) return ret;
@@ -554,9 +798,13 @@ int panfrost_ums9620_init(struct panfrost_device *pfdev)
 	g->rstc = pfdev->rstc;
 	ret = ums_power_on(g);
 	if (ret) return ret;
+	ret = ums_t760_rates(g);
+	if (ret) return ret;
 	ret = ums_register_core_clock(g, pfdev);
 	if (ret) return ret;
 	pfdev->bus_clock = g->clk[0];
+	ret = ums_thermal_start(g);
+	if (ret) return ret;
 	return devm_device_add_group(dev, &ums_group);
 }
 

@@ -17,8 +17,10 @@ nr_modem_a/b、nr_phy_a/b、pm_sys_a/b 原厂分区实体已归位；CH 固件�
 不直接当作通用 `request_firmware` 输入。A/B 分开保存，归档不代表已运行或驱动验收。
 
 pm_sys 是 SoC 电源管理协处理器，保留在现有基带运行依赖内；不是 UMP9620 PMIC 固件。
-原厂容器不是通用 request_firmware 输入；不修改当前 loader 和固定 bundle。
+原厂容器不是通用 request_firmware 输入；继续使用匹配的原厂 loader，不修改其二进制。
 nr_deltanv、fixnv、runtimenv 仍是独立私有输入，不作为公共固件复制。
 
 来源、SHA256、格式及缺项见 [manifest.json](manifest.json)。
 原始分区备份和解包基线继续独立保全。
+
+2026-11-07 Linux 运行目录支持：通过 `/etc/default/w202-modem-runtime` 的 `W202_MODEM_FIRMWARE_DIR` 指定本机已校验的五个运行输入目录，真机为 `/usr/lib/firmware/w202ds/modem/`。该目录只读绑定到原厂程序的私有根；`*_a` 仅为兼容别名，Linux 无需再复制一套 B 固件。此处保留的 A/B 原厂备份仍独立不动。运行目录包含的 CH、deltanv 依赖按本机私有输入契约准备，不代表将其公开发布；NV 工作镜像单独放在状态目录的 `nv/`，详见 [运行集成](../userspace/integration/README.md)。

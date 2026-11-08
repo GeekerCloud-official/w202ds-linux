@@ -143,17 +143,15 @@ int panfrost_devfreq_init(struct panfrost_device *pfdev)
 	}
 
 	if (panfrost_is_ums9620(pfdev)) {
-  /* Provider holds inherited supply. No high OPPs or reference-clock DVFS. */
+  /* Provider holds inherited supply and offers only the rates this
+   * chip runs at that supply; no reference-clock DVFS. */
   ret = devm_pm_opp_set_clkname(dev, "gpu-core");
   if (ret)
    return ret;
   ret = devm_add_action_or_reset(dev, panfrost_ums_opp_remove, dev);
   if (ret)
    return ret;
-  ret = dev_pm_opp_add(dev, 153600000, 0);
-  if (ret)
-   return ret;
-  ret = dev_pm_opp_add(dev, 384000000, 0);
+  ret = panfrost_ums9620_add_opps(pfdev);
   if (ret)
    return ret;
  } else {

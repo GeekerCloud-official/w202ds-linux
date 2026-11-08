@@ -1,0 +1,9 @@
+config PJ4EDK_BOOT_DISPLAY
+	bool "pj4edk-boot-display retained boot logs (W202DS)"
+	depends on ARM64 && OF && COMMON_CLK
+	select APERTURE_HELPERS
+	select FONT_SUPPORT
+	select FONT_8x16
+	help
+	  Print in the validated boot-display rectangle and hold its clocks
+	  until a native display driver removes the firmware aperture.

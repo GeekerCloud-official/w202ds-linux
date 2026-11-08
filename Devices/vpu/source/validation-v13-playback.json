@@ -1,0 +1,496 @@
+{
+  "date_utc": "2026-11-08",
+  "scope": "Additional application playback evidence for unchanged V13; smoothness remains unqualified.",
+  "driver_code_commit": "06b5f7b0cf71ca333b19be419183f07bdff2b13b",
+  "driver_subtree_at_test_commit": "ef249d0fb7ba401886bb1fc9acbf1b69a2924e13",
+  "original_driver_commit_before_history_rewrite": "e0175192ec3a373bec2d033d3d5e701007eff2ca",
+  "original_and_current_driver_subtrees_identical": true,
+  "kernel_release": "6.18.35-w202ds-m23-wifi",
+  "boot_id": "948f2351-b507-4226-b18f-0432d7e11a93",
+  "codec_version": "w202ds-vpu-codec-v13-v4l2-multiref",
+  "codec_sha256": "72c6c65aa91cf5073e8771fbef9d5486f798c6ff4467621a0165ce908ee86e7c",
+  "bridge_commit": "4f60c51f7841dd74bb61c94a4ad31e630bbdab01",
+  "bridge_sha256": "502ca8f95a7251b69f3dc768032e8fdef22c5204c25bfd938771fc43e27ba058",
+  "code_sha256": {
+    "w202_vpu_h264.c": "38d382756513ee33a26a4491946298e488869b1ba6185f8d171677c26e9e52ae",
+    "w202_vpu_h264.h": "7da72d1e2252b53342067e376f92dd95e56fd50f4ce0749561158f8c2095d5db",
+    "w202_vpu_buffers.c": "f0895bf0c1491b86763367d124ad0b6b2221a5657670cf3833f98d6a66d20a4e",
+    "w202_vpu_codec_main.c": "c02045ea888cb4c4c9c4957f1c1b742bff05d185e6c000f906e5e717f649b4bb",
+    "w202_vpu_video.c": "bf7e33d8c1402c5d867d2389aeaa15c4f896ed70be65ca27f9640cc1e8beecf1"
+  },
+  "browser": "157.0.8103.38, isolated Wayland test profile, VA-API -> libva-v4l2_request -> V4L2 Request",
+  "dash": {
+    "source": "https://dash.akamaized.net/akamai/bbb_30fps/bbb_30fps.mpd",
+    "quality_at_stop": {
+      "total": 10277,
+      "dropped": 13,
+      "corrupted": 0
+    },
+    "drop_percent": 0.12649605916123383,
+    "successful_jobs_and_irqs": 10319,
+    "tested": [
+      "720p30 High",
+      "1080p30 High",
+      "manual resolution switch",
+      "seek forward to 300s",
+      "pause 2s then seek back to 30s and resume"
+    ],
+    "scope": "Partial playback and interaction workflow; the complete 634.566-second movie was not played end to end."
+  },
+  "hls": {
+    "source": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
+    "player": "hls.js 1.7.4 official demo, fixed fresh instance at 1080p",
+    "result": "failed",
+    "next_picture_decode_index_1_based": 5,
+    "next_picture": {
+      "nal_ref_idc": 2,
+      "nal_unit_type": 1,
+      "slice_type": 7,
+      "frame_num": 3,
+      "pic_order_cnt_lsb": 8
+    },
+    "reason": "Next picture is a non-IDR I picture and matches the existing -EOPNOTSUPP guard in w202_vpu_h264.c:174-178.",
+    "diagnostic_basis": "Unmodified source prefix trace_headers, source validation guard, four successful jobs/IRQs, then browser PIPELINE_ERROR_DECODE; per-request kernel errno was not additionally traced.",
+    "throughput_qualification": "1080p60 real-time throughput is not established by this failed test."
+  },
+  "site_cases": {
+    "dash-720-steady": {
+      "evidence": "dash-720-steady.json",
+      "sample_wall_seconds": 30.427,
+      "total_frames_delta": 908,
+      "dropped_frames_delta": 0,
+      "job_delta": 968,
+      "irq_delta": 968,
+      "result": "hardware playback succeeded",
+      "first_video_size": [
+        1280,
+        720
+      ],
+      "last_video_size": [
+        1280,
+        720
+      ],
+      "decoder_names": [
+        "VaapiVideoDecoder"
+      ]
+    },
+    "dash-switch-1080": {
+      "evidence": "dash-switch-1080.json",
+      "sample_wall_seconds": 36.478,
+      "total_frames_delta": 1084,
+      "dropped_frames_delta": 0,
+      "job_delta": 1272,
+      "irq_delta": 1272,
+      "result": "hardware playback succeeded",
+      "first_video_size": [
+        1280,
+        720
+      ],
+      "last_video_size": [
+        1920,
+        1080
+      ],
+      "decoder_names": [
+        "VaapiVideoDecoder"
+      ]
+    },
+    "dash-1080-steady": {
+      "evidence": "dash-1080-steady.json",
+      "sample_wall_seconds": 31.424,
+      "total_frames_delta": 946,
+      "dropped_frames_delta": 0,
+      "job_delta": 1002,
+      "irq_delta": 1001,
+      "result": "hardware playback succeeded",
+      "first_video_size": [
+        1920,
+        1080
+      ],
+      "last_video_size": [
+        1920,
+        1080
+      ],
+      "decoder_names": [
+        "VaapiVideoDecoder"
+      ]
+    },
+    "dash-seek-forward": {
+      "evidence": "dash-seek-forward.json",
+      "sample_wall_seconds": 20.125,
+      "total_frames_delta": 581,
+      "dropped_frames_delta": 0,
+      "job_delta": 666,
+      "irq_delta": 665,
+      "result": "hardware playback succeeded",
+      "first_video_size": [
+        1920,
+        1080
+      ],
+      "last_video_size": [
+        1920,
+        1080
+      ],
+      "decoder_names": [
+        "VaapiVideoDecoder"
+      ]
+    },
+    "dash-seek-back-resume": {
+      "evidence": "dash-seek-back-resume.json",
+      "sample_wall_seconds": 16.346,
+      "total_frames_delta": 487,
+      "dropped_frames_delta": 0,
+      "job_delta": 565,
+      "irq_delta": 564,
+      "result": "hardware playback succeeded",
+      "first_video_size": [
+        1920,
+        1080
+      ],
+      "last_video_size": [
+        1920,
+        1080
+      ],
+      "decoder_names": [
+        "VaapiVideoDecoder"
+      ]
+    },
+    "hls-fixed-1080": {
+      "evidence": "hls-fixed-1080.json",
+      "sample_wall_seconds": 25.526,
+      "total_frames_delta": 4,
+      "dropped_frames_delta": 0,
+      "job_delta": 4,
+      "irq_delta": 4,
+      "result": "failed: unsupported syntax encountered after four decoded pictures",
+      "first_video_size": [
+        0,
+        0
+      ],
+      "last_video_size": [
+        1920,
+        1080
+      ],
+      "decoder_names": [
+        "VaapiVideoDecoder"
+      ]
+    }
+  },
+  "site_test_cleanup": {
+    "test_browser_pid": 7183,
+    "test_browser_exited": true,
+    "module_version": "w202ds-vpu-codec-v13-v4l2-multiref",
+    "state": "opens=0 maps=0 auto_released=41011 copyout_rollbacks=0 interrupts=10394 resets=20788 timeouts=0 faults=0 broken=0 quarantined=0 quarantined_maps=0 powered=0 live_regs=0 clock=256000000 pending=00000000 last_irq=0000104c axi=00000000 raw=00000000 mmu=00000000 native_started=10394 native_inflight=0 native_cancel_before_irq=0 native_cancel_dma_active=0\n",
+    "runtime_status": "suspended",
+    "installed_module_sha256": "841759efba8fc09f25ad87c9882a4a6a67699bdc086acd14e0834c747b2be712",
+    "normal_chrome_pid_2758_exists": true,
+    "persistent_module_files_modified": false,
+    "rebooted": false,
+    "utc_seconds": 1794125536.843398
+  },
+  "site_cleanup_scope": "This cleanup preceded the later user-controlled Bilibili session; it is not a claim that user playback was stopped.",
+  "manual_bilibili": {
+    "urls": [
+      "https://www.bilibili.com/video/BV1Cpxj6QEMn/",
+      "https://www.bilibili.com/video/BV1VeHQ6tEaS/"
+    ],
+    "observed_decoder": "VaapiVideoDecoder",
+    "platform_decoder": true,
+    "codec": "H.264 High",
+    "resolution": [
+      1920,
+      1080
+    ],
+    "source_fps": 30,
+    "display_hz": 90.065,
+    "display_scale": 1.5,
+    "user_feedback": "Playback is not smooth; root cause not yet established and no smoothness fix claimed.",
+    "probe_1": {
+      "utc_start": "2026-11-08T08:32:08.913Z",
+      "utc_end": "2026-11-08T08:32:34.022Z",
+      "resolution": [
+        1920,
+        1080
+      ],
+      "media_seconds": 25.004730999999992,
+      "total_frames_delta": 750,
+      "dropped_delta": 0,
+      "callback_count": 748,
+      "events": [],
+      "min_buffer_seconds": 45.33758799999998,
+      "expected_interval_ms": {
+        "n": 747,
+        "p50": 33.300000000046566,
+        "p95": 33.40000000002328,
+        "p99": 33.40000000002328,
+        "max": 66.59999999997672
+      },
+      "over50ms_expected": 2
+    },
+    "probe_2": {
+      "utc_start": "2026-11-08T08:45:08.248Z",
+      "utc_end": "2026-11-08T08:45:34.486Z",
+      "resolution": [
+        1920,
+        1080
+      ],
+      "media_seconds": 25.004444999999976,
+      "total_frames_delta": 750,
+      "dropped_delta": 0,
+      "callback_count": 750,
+      "events": [],
+      "min_buffer_seconds": 69.43286499999999,
+      "expected_interval_ms": {
+        "n": 749,
+        "p50": 33.300000000046566,
+        "p95": 33.4000000001397,
+        "p99": 33.4000000001397,
+        "max": 44.4000000001397
+      },
+      "over50ms_expected": 0
+    },
+    "load_1": {
+      "seconds": 28.0949490070343,
+      "top_cpu": [
+        {
+          "pid": 9396,
+          "name": "chrome",
+          "percent_one_core": 59.83
+        },
+        {
+          "pid": 9266,
+          "name": "chrome",
+          "percent_one_core": 39.83
+        },
+        {
+          "pid": 1583,
+          "name": "kwin_wayland",
+          "percent_one_core": 37.44
+        },
+        {
+          "pid": 9171,
+          "name": "plasma-systemmo",
+          "percent_one_core": 8.83
+        },
+        {
+          "pid": 9220,
+          "name": "chrome",
+          "percent_one_core": 6.73
+        },
+        {
+          "pid": 1705,
+          "name": "plasmashell",
+          "percent_one_core": 2.78
+        }
+      ],
+      "gpu_frequency_counts": {
+        "153600000": 1,
+        "384000000": 2,
+        "655200000": 25
+      },
+      "vpu_before": "opens=0 maps=0 auto_released=97246 copyout_rollbacks=0 interrupts=25329 resets=50658 timeouts=0 faults=0 broken=0 quarantined=0 quarantined_maps=0 powered=0 live_regs=0 clock=256000000 pending=00000000 last_irq=0000104c axi=00000000 raw=00000000 mmu=00000000 native_started=25329 native_inflight=0 native_cancel_before_irq=0 native_cancel_dma_active=0",
+      "vpu_after": "opens=1 maps=4 auto_released=100409 copyout_rollbacks=0 interrupts=26172 resets=52345 timeouts=0 faults=0 broken=0 quarantined=0 quarantined_maps=0 powered=1 live_regs=1 clock=256000000 pending=00000000 last_irq=0000104c axi=000001ff raw=00000000 mmu=00000000 native_started=26173 native_inflight=1 native_cancel_before_irq=0 native_cancel_dma_active=0"
+    },
+    "load_2": {
+      "seconds": 28.07703161239624,
+      "top_cpu": [
+        {
+          "pid": 9396,
+          "name": "chrome",
+          "percent_one_core": 77.5
+        },
+        {
+          "pid": 9266,
+          "name": "chrome",
+          "percent_one_core": 43.17
+        },
+        {
+          "pid": 10039,
+          "name": "chrome",
+          "percent_one_core": 36.11
+        },
+        {
+          "pid": 1583,
+          "name": "kwin_wayland",
+          "percent_one_core": 24.08
+        },
+        {
+          "pid": 9220,
+          "name": "chrome",
+          "percent_one_core": 10.97
+        },
+        {
+          "pid": 9171,
+          "name": "plasma-systemmo",
+          "percent_one_core": 8.98
+        }
+      ],
+      "gpu_frequency_counts": {
+        "655200000": 7,
+        "512000000": 2,
+        "384000000": 19
+      },
+      "vpu_before": "opens=1 maps=4 auto_released=159012 copyout_rollbacks=0 interrupts=41670 resets=83341 timeouts=0 faults=0 broken=0 quarantined=0 quarantined_maps=0 powered=1 live_regs=1 clock=256000000 pending=00000000 last_irq=0000104c axi=00000080 raw=00000000 mmu=00000000 native_started=41671 native_inflight=1 native_cancel_before_irq=0 native_cancel_dma_active=0",
+      "vpu_after": "opens=0 maps=0 auto_released=162222 copyout_rollbacks=0 interrupts=42514 resets=85028 timeouts=0 faults=0 broken=0 quarantined=0 quarantined_maps=0 powered=0 live_regs=0 clock=256000000 pending=00000000 last_irq=0000104c axi=00000000 raw=00000000 mmu=00000000 native_started=42514 native_inflight=0 native_cancel_before_irq=0 native_cancel_dma_active=0"
+    },
+    "chrome_trace": {
+      "VaapiVideoDecoder::Decode": {
+        "n": 542,
+        "p50": 3.929,
+        "p95": 20.181,
+        "p99": 21.498,
+        "max": 22.361
+      },
+      "VaapiWrapper::Execute_Locked": {
+        "n": 542,
+        "p50": 3.495,
+        "p95": 19.851,
+        "p99": 21.323,
+        "max": 21.899
+      },
+      "Display::DrawAndSwap": {
+        "n": 1620,
+        "p50": 0.77,
+        "p95": 1.446,
+        "p99": 1.656,
+        "max": 5.431
+      },
+      "wayland_feedback_count": 1620,
+      "wayland_discarded_count": 0
+    },
+    "trace_load_caveat": "The second load sample includes finite-duration Chrome tracing overhead.",
+    "callback_gap_caveat": "One first-probe gap has presentedFrames delta=2, so a missed callback can explain that measured interval.",
+    "pixel_comparison_this_stage": false,
+    "measurement_limits": [
+      "requestVideoFrameCallback callbacks measure browser submission and callback scheduling, not direct panel scanout.",
+      "VAAPI Decode/Execute durations are browser task/API call durations, not isolated VPU hardware latency.",
+      "processingDuration metadata includes decode pipeline latency; do not interpret it as serial per-frame VPU execution time.",
+      "GPU maximum frequency does not establish GPU saturation.",
+      "No software versus hardware A/B or 60fps throughput test was performed during active user playback."
+    ]
+  },
+  "deployment": {
+    "temporary_module_only": true,
+    "installed_module_remains_v2": true,
+    "installed_codec_sha256": "841759efba8fc09f25ad87c9882a4a6a67699bdc086acd14e0834c747b2be712",
+    "persistent_module_files_modified": false
+  },
+  "still_unsupported": [
+    "non-IDR I",
+    "multiple slices",
+    "field pictures",
+    "long-term references",
+    "10-bit",
+    "other chroma formats",
+    "other codecs",
+    "encoding"
+  ],
+  "not_qualified": [
+    "smoothness / root cause and fix",
+    "1080p60 real-time throughput",
+    "long duration stability",
+    "default browser configuration",
+    "new-stage raw NV12 pixel comparison"
+  ],
+  "evidence": {
+    "workspace": "/state/workspace/w202ds-projects/vpu-v4l2-high_20261108",
+    "artifacts": {
+      "site-tests/README.md": {
+        "sha256": "b3bf28898247efd7b1731e27637ca7cc01c9dc24082b466039041e0b9a198521",
+        "bytes": 3690
+      },
+      "site-tests/report.json": {
+        "sha256": "26250b1fc32104a1c9e19bbab3ebfc213c043c733b794d9afe187f17a74b2e16",
+        "bytes": 38746
+      },
+      "site-tests/device-results.tar.gz": {
+        "sha256": "4dad1c172a5d6f3e5a85434448462149f4b076d4e54f2f289d7e4627f5eae5d0",
+        "bytes": 468433
+      },
+      "site-tests/mux-1080-prefix-first24.json": {
+        "sha256": "ea166528a31d88578eaf05790dbb671f0eeefc2af8e67256c625f385fc8d200c",
+        "bytes": 5372
+      },
+      "manual-bilibili/pacing-report.json": {
+        "sha256": "7dcddd086e1f032e19a55e1c7a99ce4d111364bfa4a7e17c99403412d3a1f0e4",
+        "bytes": 5341
+      },
+      "manual-bilibili/pacing-notes.md": {
+        "sha256": "79256816d699b4ae8de4c6daa6554a3ded6f8215e20f5fa190917cb142aa3e24",
+        "bytes": 2551
+      },
+      "manual-bilibili/chrome-systeminfo.json": {
+        "sha256": "b3049e766060b65c4bf2693e040a4e9512471f4098c4ac2d7f1bf8252c903547",
+        "bytes": 16312
+      },
+      "manual-bilibili/kwin-support.txt": {
+        "sha256": "dfb8be0fb9ba532b93dea586676c3039d13b788e19e0c3217a9292d915ccaee1",
+        "bytes": 6473
+      },
+      "manual-bilibili/browser-samples.jsonl": {
+        "sha256": "f9b75f4bddb08fbf1aa7ed4d73b5dbce5b036038343c8e0ab7e9ec4cc46d7949",
+        "bytes": 1028309
+      },
+      "manual-bilibili/browser-events.jsonl": {
+        "sha256": "f45d4fad724d2c88b9c7846b9c7dc22cd3823fa8604e7d659f96575514b503c8",
+        "bytes": 45786
+      },
+      "manual-bilibili/chrome-pacing-trace-2.json": {
+        "sha256": "8003cf52b85185632f6407957411690028af25904ac4f6783ce1c60f34453dcb",
+        "bytes": 98364977
+      },
+      "site-tests/dash-720-steady.json": {
+        "sha256": "812249dc264596cc9226d0eae6ce2df1440bc6b0374a83ba27dfa51c956344c4",
+        "bytes": 66780
+      },
+      "site-tests/dash-switch-1080.json": {
+        "sha256": "814a4fd0cd6332e8a54157bdce366b34b2c910ec008928a8c83a77e087794b40",
+        "bytes": 104124
+      },
+      "site-tests/dash-1080-steady.json": {
+        "sha256": "e3e2623e7ab410f0d6046ae35319747dd5e8bb435270d6ac8c00cfe37d090b04",
+        "bytes": 92422
+      },
+      "site-tests/dash-seek-forward.json": {
+        "sha256": "3fbf77c73119bf1a3ece0f424c5ccbca751171da9dbf3070370b97fb0fcf1ec6",
+        "bytes": 68498
+      },
+      "site-tests/dash-seek-back-resume.json": {
+        "sha256": "90e503df1f55671961589ffc26c4c0feb4ece671f8a9d2a4a81d36e4ce886537",
+        "bytes": 67423
+      },
+      "site-tests/hls-fixed-1080.json": {
+        "sha256": "a640b6973aff2783fc1436ec0b73356ab6e2cdfc8c53c7a9c4307cb15951872a",
+        "bytes": 324929
+      },
+      "manual-bilibili/frame-pacing-1.json": {
+        "sha256": "0204fc3690316d774c617ef73dcae193c3f081b0a53a1599af9e987fa49c9929",
+        "bytes": 199809
+      },
+      "manual-bilibili/frame-pacing-2.json": {
+        "sha256": "571f45e089310781f7fe5cccfecadafbfcb5d1459e03caaff0c043bc697e973c",
+        "bytes": 203642
+      },
+      "manual-bilibili/load-pacing-1.jsonl": {
+        "sha256": "b3c714cad53392c4b61cf9a9311faefba1717ccb8f4d436e1b018caabce58932",
+        "bytes": 534079
+      },
+      "manual-bilibili/load-pacing-2.jsonl": {
+        "sha256": "13e2606c856a09f3d17d679ea87a419946d0ba4748218f6257a44d17d742b385",
+        "bytes": 535927
+      },
+      "manual-bilibili/frame-probe.mjs": {
+        "sha256": "c2fe95ebaed8931300c6573d8d3ff8d1e4d232dd670b8550966d5301705f51f1",
+        "bytes": 4557
+      },
+      "manual-bilibili/load-probe.py": {
+        "sha256": "b2979c1699141ce4f81522480750202a72243a52ab94018cebf62566c00ee32d",
+        "bytes": 2006
+      },
+      "manual-bilibili/trace-probe.mjs": {
+        "sha256": "4fb634145b40f585214ca35a5bf83dc39eff877e7ec2e74281d6f354be06b658",
+        "bytes": 2830
+      }
+    }
+  },
+  "validation_kind": "Documentation and evidence update; no driver code change or new device test in this commit."
+}
