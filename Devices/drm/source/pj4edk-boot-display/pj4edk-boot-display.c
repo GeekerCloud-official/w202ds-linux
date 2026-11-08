@@ -14,7 +14,6 @@
 #include <linux/of_fdt.h>
 #include <linux/spinlock.h>
 #include <linux/workqueue.h>
-#include "pj4edk-boot-display.h"
 #include <asm/cacheflush.h>
 #include "pj4edk-boot-display-core.h"
 
@@ -172,13 +171,12 @@ static struct console pj4edk_console = {
 	.flags = CON_ENABLED | CON_PRINTBUFFER, .index = 0,
 };
 
-bool pj4edk_boot_display_console_active(void)
+static bool pj4edk_boot_display_console_active(void)
 {
 	return READ_ONCE(owned);
 }
-EXPORT_SYMBOL_GPL(pj4edk_boot_display_console_active);
 
-void pj4edk_boot_display_console_release(void)
+static void pj4edk_boot_display_console_release(void)
 {
 	unsigned long flags;
 
@@ -190,7 +188,6 @@ void pj4edk_boot_display_console_release(void)
 	 */
 	cancel_delayed_work_sync(&pj4edk_work);
 }
-EXPORT_SYMBOL_GPL(pj4edk_boot_display_console_release);
 
 static int __init pj4edk_console_init(void)
 {
