@@ -702,4 +702,4 @@ module_platform_driver(codec_driver);
 MODULE_IMPORT_NS("DMA_BUF");
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("W202DS native decoder ioctl, reset, IRQ and standard DMA-BUF bridge");
-MODULE_VERSION("w202ds-vpu-codec-v10-v4l2-high-scaling");
+MODULE_VERSION("w202ds-vpu-codec-v13-v4l2-multiref");

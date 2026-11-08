@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Native stateless H.264 frontend. The first supported subset is deliberately
- * limited to independently validated progressive Baseline/Main single-slice
- * IDR/P and non-reference spatial-direct B pictures, one entry per active list.
+/* Native stateless H.264 frontend. Progressive 8-bit 4:2:0 Baseline/Main/High
+ * single-slice IDR/P/B, up to sixteen short-term references per active list,
+ * spatial/temporal direct and explicit/implicit weighted prediction.
  * vb2 owns CPU storage; the native job owns device DMA attachments until reset.
  */
 #include <linux/dma-buf.h>
@@ -33,7 +33,7 @@ struct w202_video_context {
 	struct v4l2_fh fh;
 	struct w202_vpu_video *video;
 	struct v4l2_ctrl_handler controls;
-	struct v4l2_ctrl *sps, *pps, *slice, *decode, *scaling;
+	struct v4l2_ctrl *sps, *pps, *slice, *decode, *scaling, *weights;
 	struct v4l2_pix_format output, capture;
 	struct work_struct work;
 	atomic_t abort;
@@ -373,6 +373,12 @@ out:
 	return ret ? ret : end;
 }
 
+struct w202_video_references {
+	struct dma_buf *buffers[2][W202_H264_MAX_REFERENCES];
+	struct w202_vpu_iova maps[2][W202_H264_MAX_REFERENCES];
+	struct w202_h264_reference h264[2][W202_H264_MAX_REFERENCES];
+};
+
 static void decode_work(struct work_struct *work)
 {
 	struct w202_video_context *ctx = container_of(work, struct w202_video_context, work);
@@ -383,10 +389,11 @@ static void decode_work(struct work_struct *work)
 	struct w202_h264_config *config = NULL;
 	struct w202_h264_job job = {};
 	struct codec_file *native = NULL;
-	struct dma_buf *input = NULL, *frame = NULL, *reference[2] = {};
-	struct w202_vpu_iova input_map = {}, frame_map = {}, reference_map[2] = {};
+	struct dma_buf *input = NULL, *frame = NULL;
+	struct w202_vpu_iova input_map = {}, frame_map = {};
+	struct w202_video_references *references = NULL;
 	u32 pixels = pixel_size(&ctx->capture), rbsp;
-	unsigned int i, references;
+	unsigned int i, list, active[2] = {};
 	int ret, ended;
 
 	ret = v4l2_ctrl_request_setup(request, &ctx->controls);
@@ -408,6 +415,19 @@ static void decode_work(struct work_struct *work)
 			goto done;
 		}
 		job.scaling = ctx->scaling->p_cur.p_h264_scaling_matrix;
+	}
+	if (V4L2_H264_CTRL_PRED_WEIGHTS_REQUIRED(job.pps, job.slice)) {
+		struct v4l2_ctrl_handler *handler =
+			v4l2_ctrl_request_hdl_find(request, &ctx->controls);
+		bool present = handler && v4l2_ctrl_request_hdl_ctrl_find(handler,
+						V4L2_CID_STATELESS_H264_PRED_WEIGHTS);
+
+		v4l2_ctrl_request_hdl_put(handler);
+		if (!present) {
+			ret = -ENOENT;
+			goto done;
+		}
+		job.weights = ctx->weights->p_cur.p_h264_pred_weights;
 	}
 	if ((job.sps->pic_width_in_mbs_minus1 + 1) * 16 != ctx->capture.width ||
 	    (job.sps->pic_height_in_map_units_minus1 + 1) * 16 != ctx->capture.height ||
@@ -447,47 +467,61 @@ static void decode_work(struct work_struct *work)
 	job.input_capacity = vb2_plane_size(&src->vb2_buf, 0);
 	job.output_capacity = pixels;
 	job.auxiliary_capacity = auxiliary_size(&ctx->capture);
-	references = job.slice->slice_type == V4L2_H264_SLICE_TYPE_B ? 2 :
-		     job.slice->slice_type == V4L2_H264_SLICE_TYPE_P ? 1 : 0;
-	for (i = 0; i < references; i++) {
-		struct vb2_queue *queue = v4l2_m2m_get_dst_vq(ctx->fh.m2m_ctx);
-		struct vb2_buffer *buffer;
-		unsigned int index = i ? job.slice->ref_pic_list1[0].index :
-					 job.slice->ref_pic_list0[0].index;
+	if (job.slice->slice_type == V4L2_H264_SLICE_TYPE_P ||
+	    job.slice->slice_type == V4L2_H264_SLICE_TYPE_B)
+		active[0] = (unsigned int)job.slice->num_ref_idx_l0_active_minus1 + 1;
+	if (job.slice->slice_type == V4L2_H264_SLICE_TYPE_B)
+		active[1] = (unsigned int)job.slice->num_ref_idx_l1_active_minus1 + 1;
+	if (active[0] > W202_H264_MAX_REFERENCES || active[1] > W202_H264_MAX_REFERENCES) {
+		ret = -EOPNOTSUPP;
+		goto done;
+	}
+	if (active[0] || active[1]) {
+		references = kzalloc(sizeof(*references), GFP_KERNEL);
+		if (!references) {
+			ret = -ENOMEM;
+			goto done;
+		}
+	}
+	for (list = 0; list < 2; list++) {
+		if (active[list])
+			job.reference_lists[list] = references->h264[list];
+		for (i = 0; i < active[list]; i++) {
+			struct vb2_queue *queue = v4l2_m2m_get_dst_vq(ctx->fh.m2m_ctx);
+			struct w202_h264_reference *ref = &references->h264[list][i];
+			struct vb2_buffer *buffer;
+			struct dma_buf *buf;
+			unsigned int index = list ? job.slice->ref_pic_list1[i].index :
+						    job.slice->ref_pic_list0[i].index;
 
-		if (index >= V4L2_H264_NUM_DPB_ENTRIES) {
-			ret = -EINVAL;
-			goto done;
-		}
-		buffer = vb2_find_buffer(queue, job.decode->dpb[index].reference_ts);
-		if (!buffer || buffer == &dst->vb2_buf || buffer->index > 31 ||
-		    !READ_ONCE(buffer_state(buffer)->decoded) ||
-		    !READ_ONCE(buffer_state(buffer)->reference)) {
-			ret = -EINVAL;
-			goto done;
-		}
-		reference[i] = buffer_dmabuf(buffer);
-		if (IS_ERR(reference[i])) {
-			ret = PTR_ERR(reference[i]);
-			reference[i] = NULL;
-			goto done;
-		}
-		if (reference[i] == frame || reference[i] == input) {
-			ret = -EINVAL;
-			goto done;
-		}
-		if (i) {
-			job.reference1_address = 0x44000000;
-			job.reference1_auxiliary_address = job.reference1_address + pixels;
-			job.reference1_capacity = pixels;
-			job.reference1_auxiliary_capacity = auxiliary_size(&ctx->capture);
-			job.reference1_frame_id = buffer->index;
-		} else {
-			job.reference_address = 0x43000000;
-			job.reference_auxiliary_address = job.reference_address + pixels;
-			job.reference_capacity = pixels;
-			job.reference_auxiliary_capacity = auxiliary_size(&ctx->capture);
-			job.reference_frame_id = buffer->index;
+			if (index >= V4L2_H264_NUM_DPB_ENTRIES) {
+				ret = -EINVAL;
+				goto done;
+			}
+			buffer = vb2_find_buffer(queue, job.decode->dpb[index].reference_ts);
+			if (!buffer || buffer == &dst->vb2_buf || buffer->index > 31 ||
+			    !READ_ONCE(buffer_state(buffer)->decoded) ||
+			    !READ_ONCE(buffer_state(buffer)->reference) ||
+			    vb2_plane_size(buffer, 0) < pixels + auxiliary_size(&ctx->capture)) {
+				ret = -EINVAL;
+				goto done;
+			}
+			buf = buffer_dmabuf(buffer);
+			if (IS_ERR(buf)) {
+				ret = PTR_ERR(buf);
+				goto done;
+			}
+			references->buffers[list][i] = buf;
+			if (buf == frame || buf == input) {
+				ret = -EINVAL;
+				goto done;
+			}
+			/* Placeholder spans are only used for validation, never MMIO. */
+			ref->address = 0x43000000 + (list * W202_H264_MAX_REFERENCES + i) * 0x400000;
+			ref->auxiliary_address = ref->address + pixels;
+			ref->capacity = pixels;
+			ref->auxiliary_capacity = auxiliary_size(&ctx->capture);
+			ref->frame_id = buffer->index;
 		}
 	}
 	/* Reject unsupported controls before powering/mapping the device. */
@@ -503,8 +537,10 @@ static void decode_work(struct work_struct *work)
 	ret = w202_vpu_native_import(native, input, &input_map);
 	if (!ret)
 		ret = w202_vpu_native_import(native, frame, &frame_map);
-	for (i = 0; !ret && i < references; i++)
-		ret = w202_vpu_native_import(native, reference[i], &reference_map[i]);
+	for (list = 0; !ret && list < 2; list++)
+		for (i = 0; !ret && i < active[list]; i++)
+			ret = w202_vpu_native_import(native, references->buffers[list][i],
+						     &references->maps[list][i]);
 	if (!ret)
 		ret = w202_vpu_native_validate_buffers(native, &input_map, &frame_map);
 	if (ret)
@@ -522,14 +558,18 @@ static void decode_work(struct work_struct *work)
 	job.input_capacity = min_t(u64, input_map.size, job.input_capacity);
 	job.output_address = frame_map.iova_addr;
 	job.auxiliary_address = frame_map.iova_addr + pixels;
-	if (reference[0]) {
-		job.reference_address = reference_map[0].iova_addr;
-		job.reference_auxiliary_address = reference_map[0].iova_addr + pixels;
-	}
-	if (reference[1]) {
-		job.reference1_address = reference_map[1].iova_addr;
-		job.reference1_auxiliary_address = reference_map[1].iova_addr + pixels;
-	}
+	for (list = 0; list < 2; list++)
+		for (i = 0; i < active[list]; i++) {
+			struct w202_h264_reference *ref = &references->h264[list][i];
+			struct w202_vpu_iova *map = &references->maps[list][i];
+
+			if (map->size < pixels + auxiliary_size(&ctx->capture)) {
+				ret = -EINVAL;
+				goto done;
+			}
+			ref->address = map->iova_addr;
+			ref->auxiliary_address = map->iova_addr + pixels;
+		}
 	ret = w202_h264_build_ipb(&job, config);
 	if (!ret)
 		ret = w202_vpu_native_execute(native, config, &ctx->abort);
@@ -544,9 +584,12 @@ done:
 		dma_buf_put(input);
 	if (frame)
 		dma_buf_put(frame);
-	for (i = 0; i < ARRAY_SIZE(reference); i++)
-		if (reference[i])
-			dma_buf_put(reference[i]);
+	if (references)
+		for (list = 0; list < 2; list++)
+			for (i = 0; i < W202_H264_MAX_REFERENCES; i++)
+				if (references->buffers[list][i])
+					dma_buf_put(references->buffers[list][i]);
+	kfree(references);
 	kfree(config);
 	if (ret)
 		dev_dbg(video->dev, "V4L2 IPB job failed: %d\n", ret);
@@ -636,6 +679,7 @@ static int controls_init(struct w202_video_context *ctx)
 		{.id = V4L2_CID_STATELESS_H264_SLICE_PARAMS},
 		{.id = V4L2_CID_STATELESS_H264_DECODE_PARAMS},
 		{.id = V4L2_CID_STATELESS_H264_SCALING_MATRIX},
+		{.id = V4L2_CID_STATELESS_H264_PRED_WEIGHTS},
 		{.id = V4L2_CID_STATELESS_H264_DECODE_MODE,
 		 .max = V4L2_STATELESS_H264_DECODE_MODE_SLICE_BASED,
 		 .def = V4L2_STATELESS_H264_DECODE_MODE_SLICE_BASED},
@@ -649,7 +693,7 @@ static int controls_init(struct w202_video_context *ctx)
 		 .def = V4L2_MPEG_VIDEO_H264_PROFILE_BASELINE},
 	};
 	struct v4l2_ctrl **controls[] = {
-		&ctx->sps, &ctx->pps, &ctx->slice, &ctx->decode, &ctx->scaling,
+		&ctx->sps, &ctx->pps, &ctx->slice, &ctx->decode, &ctx->scaling, &ctx->weights,
 	};
 	unsigned int i;
 	int ret;

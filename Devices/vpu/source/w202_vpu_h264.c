@@ -41,6 +41,70 @@ static void emit_scaling(struct w202_h264_config *c, __u32 offset,
 		     ((__u32)weights[i + 3] << 24));
 }
 
+static const struct w202_h264_reference *reference_at(const struct w202_h264_job *j,
+		unsigned int list, unsigned int index, struct w202_h264_reference *legacy)
+{
+	if (j->reference_lists[list])
+		return &j->reference_lists[list][index];
+	if (index)
+		return NULL;
+	*legacy = list ? (struct w202_h264_reference) {
+		j->reference1_address, j->reference1_auxiliary_address,
+		j->reference1_capacity, j->reference1_auxiliary_capacity, j->reference1_frame_id,
+	} : (struct w202_h264_reference) {
+		j->reference_address, j->reference_auxiliary_address,
+		j->reference_capacity, j->reference_auxiliary_capacity, j->reference_frame_id,
+	};
+	return legacy;
+}
+
+static int valid_weights(const struct v4l2_ctrl_h264_pred_weights *w, const unsigned int active[2])
+{
+	unsigned int list, index, plane;
+
+	if (!w || w->luma_log2_weight_denom > 7 || w->chroma_log2_weight_denom > 7)
+		return 0;
+	for (list = 0; list < 2; list++) {
+		const struct v4l2_h264_weight_factors *f = &w->weight_factors[list];
+
+		for (index = 0; index < active[list]; index++) {
+			/* 128 is the inferred unit weight when the denominator is seven. */
+			if (f->luma_weight[index] < -128 || f->luma_weight[index] > 128 ||
+			    (f->luma_weight[index] == 128 && w->luma_log2_weight_denom != 7) ||
+			    f->luma_offset[index] < -128 || f->luma_offset[index] > 127)
+				return 0;
+			for (plane = 0; plane < 2; plane++)
+				if (f->chroma_weight[index][plane] < -128 || f->chroma_weight[index][plane] > 128 ||
+				    (f->chroma_weight[index][plane] == 128 && w->chroma_log2_weight_denom != 7) ||
+				    f->chroma_offset[index][plane] < -128 || f->chroma_offset[index][plane] > 127)
+					return 0;
+		}
+	}
+	return 1;
+}
+
+static void emit_weights(struct w202_h264_config *c,
+			 const struct v4l2_ctrl_h264_pred_weights *w, const unsigned int active[2])
+{
+	unsigned int list, index;
+
+	/* Y/Cb/Cr: signed nine-bit coefficients, signed eight-bit offsets. */
+	for (list = 0; list < 2; list++) {
+		const struct v4l2_h264_weight_factors *f = &w->weight_factors[list];
+
+		for (index = 0; index < active[list]; index++) {
+			__u32 base = 0x1288 + list * 0x80 + index * 8;
+
+			emit(c, base, ((__u32)f->luma_weight[index] & 511) |
+			     ((__u32)f->chroma_weight[index][0] & 511) << 9 |
+			     ((__u32)f->chroma_weight[index][1] & 511) << 18);
+			emit(c, base + 4, ((__u32)f->luma_offset[index] & 255) |
+			     ((__u32)f->chroma_offset[index][0] & 255) << 8 |
+			     ((__u32)f->chroma_offset[index][1] & 255) << 16);
+		}
+	}
+}
+
 static int build_picture(const struct w202_h264_job *j, struct w202_h264_config *c,
 			 int allow_b)
 {
@@ -70,31 +134,36 @@ static int build_picture(const struct w202_h264_job *j, struct w202_h264_config 
 	const struct v4l2_ctrl_h264_pps *p;
 	const struct v4l2_ctrl_h264_slice_params *sl;
 	const struct v4l2_ctrl_h264_decode_params *d;
-	const struct v4l2_h264_dpb_entry *ref = NULL;
-	const struct v4l2_h264_dpb_entry *ref1 = NULL;
+	struct w202_h264_reference legacy;
+	const struct w202_h264_reference *r;
 	__u32 width_mb, height_mb, mbs, width, height, control;
 	__u64 y_size;
 	__u64 reference, reference_aux;
-	int qp, inter, bidir, cabac;
-	unsigned int i;
+	int qp, inter, bidir, cabac, explicit_weights, weighted;
+	unsigned int i, list, index, active[2];
 
 	if (!j || !c || !j->sps || !j->pps || !j->slice || !j->decode)
 		return -EINVAL;
 	s = j->sps; p = j->pps; sl = j->slice; d = j->decode;
 	bidir = sl->slice_type == V4L2_H264_SLICE_TYPE_B;
 	inter = sl->slice_type == V4L2_H264_SLICE_TYPE_P || bidir;
+	active[0] = inter ? (unsigned int)sl->num_ref_idx_l0_active_minus1 + 1 : 0;
+	active[1] = bidir ? (unsigned int)sl->num_ref_idx_l1_active_minus1 + 1 : 0;
+	if (active[0] > W202_H264_MAX_REFERENCES || active[1] > W202_H264_MAX_REFERENCES)
+		return -EOPNOTSUPP;
 	cabac = !!(p->flags & V4L2_H264_PPS_FLAG_ENTROPY_CODING_MODE);
+	explicit_weights = inter && (bidir ? p->weighted_bipred_idc == 1 :
+				    !!(p->flags & V4L2_H264_PPS_FLAG_WEIGHTED_PRED));
+	weighted = inter && (explicit_weights || (bidir && p->weighted_bipred_idc == 2));
 	if ((s->profile_idc != 66 && s->profile_idc != 77 && s->profile_idc != 100) ||
-	    (bidir && (!allow_b || s->profile_idc == 66 || d->nal_ref_idc)) ||
-	    (bidir && !(sl->flags & V4L2_H264_SLICE_FLAG_DIRECT_SPATIAL_MV_PRED)) ||
+	    (bidir && (!allow_b || s->profile_idc == 66)) ||
 	    (s->profile_idc == 66 && cabac) || s->chroma_format_idc != 1 ||
 	    s->bit_depth_luma_minus8 || s->bit_depth_chroma_minus8 ||
 	    !(s->flags & V4L2_H264_SPS_FLAG_FRAME_MBS_ONLY) ||
 	    (s->flags & (V4L2_H264_SPS_FLAG_SEPARATE_COLOUR_PLANE |
 			 V4L2_H264_SPS_FLAG_QPPRIME_Y_ZERO_TRANSFORM_BYPASS |
 			 V4L2_H264_SPS_FLAG_MB_ADAPTIVE_FRAME_FIELD)) ||
-	    p->num_slice_groups_minus1 || p->weighted_bipred_idc ||
-	    (p->flags & V4L2_H264_PPS_FLAG_WEIGHTED_PRED) ||
+	    p->num_slice_groups_minus1 || p->weighted_bipred_idc > 2 ||
 	    (s->profile_idc != 100 && (p->flags & V4L2_H264_PPS_FLAG_TRANSFORM_8X8_MODE)) ||
 	    (sl->slice_type != V4L2_H264_SLICE_TYPE_I && !inter) || sl->first_mb_in_slice ||
 	    (d->flags & (V4L2_H264_DECODE_PARAM_FLAG_FIELD_PIC |
@@ -107,6 +176,8 @@ static int build_picture(const struct w202_h264_job *j, struct w202_h264_config 
 			!(d->flags & V4L2_H264_DECODE_PARAM_FLAG_IDR_PIC) ||
 			d->frame_num || d->top_field_order_cnt != d->bottom_field_order_cnt)))
 		return -EOPNOTSUPP;
+	if (explicit_weights && !valid_weights(j->weights, active))
+		return -EINVAL;
 	if (p->flags & V4L2_H264_PPS_FLAG_SCALING_MATRIX_PRESENT) {
 		const __u8 *weights;
 
@@ -152,45 +223,28 @@ static int build_picture(const struct w202_h264_job *j, struct w202_h264_config 
 	    !valid_span(j->output_address, j->output_capacity, y_size * 3 / 2) ||
 	    !valid_span(j->auxiliary_address, j->auxiliary_capacity, mbs * 80 + 1024))
 		return -EINVAL;
-	if (inter) {
-		unsigned int index = sl->ref_pic_list0[0].index;
+	for (list = 0; list < 2; list++)
+		for (i = 0; i < active[list]; i++) {
+			const struct v4l2_h264_reference *entry = list ?
+				&sl->ref_pic_list1[i] : &sl->ref_pic_list0[i];
+			const struct v4l2_h264_dpb_entry *ref;
 
-		if (sl->num_ref_idx_l0_active_minus1 || index >= V4L2_H264_NUM_DPB_ENTRIES ||
-		    sl->ref_pic_list0[0].fields != V4L2_H264_FRAME_REF ||
-		    j->reference_frame_id > 31)
-			return -EOPNOTSUPP;
-		ref = &d->dpb[index];
-		if ((ref->flags & (V4L2_H264_DPB_ENTRY_FLAG_VALID | V4L2_H264_DPB_ENTRY_FLAG_ACTIVE)) !=
-		    (V4L2_H264_DPB_ENTRY_FLAG_VALID | V4L2_H264_DPB_ENTRY_FLAG_ACTIVE) ||
-		    ref->fields != V4L2_H264_FRAME_REF ||
-		    (ref->flags & (V4L2_H264_DPB_ENTRY_FLAG_LONG_TERM |
-				  V4L2_H264_DPB_ENTRY_FLAG_FIELD)) ||
-		    ref->top_field_order_cnt != ref->bottom_field_order_cnt ||
-		    d->top_field_order_cnt != d->bottom_field_order_cnt ||
-		    !valid_span(j->reference_address, j->reference_capacity, y_size * 3 / 2) ||
-		    !valid_span(j->reference_auxiliary_address, j->reference_auxiliary_capacity,
-				mbs * 80 + 1024))
-			return -EINVAL;
-	}
-	if (bidir) {
-		unsigned int index = sl->ref_pic_list1[0].index;
-
-		if (sl->num_ref_idx_l1_active_minus1 || index >= V4L2_H264_NUM_DPB_ENTRIES ||
-		    sl->ref_pic_list1[0].fields != V4L2_H264_FRAME_REF ||
-		    j->reference1_frame_id > 31)
-			return -EOPNOTSUPP;
-		ref1 = &d->dpb[index];
-		if ((ref1->flags & (V4L2_H264_DPB_ENTRY_FLAG_VALID | V4L2_H264_DPB_ENTRY_FLAG_ACTIVE)) !=
-		    (V4L2_H264_DPB_ENTRY_FLAG_VALID | V4L2_H264_DPB_ENTRY_FLAG_ACTIVE) ||
-		    ref1->fields != V4L2_H264_FRAME_REF ||
-		    (ref1->flags & (V4L2_H264_DPB_ENTRY_FLAG_LONG_TERM |
-				   V4L2_H264_DPB_ENTRY_FLAG_FIELD)) ||
-		    ref1->top_field_order_cnt != ref1->bottom_field_order_cnt ||
-		    !valid_span(j->reference1_address, j->reference1_capacity, y_size * 3 / 2) ||
-		    !valid_span(j->reference1_auxiliary_address, j->reference1_auxiliary_capacity,
-				mbs * 80 + 1024))
-			return -EINVAL;
-	}
+			index = entry->index;
+			r = reference_at(j, list, i, &legacy);
+			if (!r || index >= V4L2_H264_NUM_DPB_ENTRIES ||
+			    entry->fields != V4L2_H264_FRAME_REF || r->frame_id > 31)
+				return -EOPNOTSUPP;
+			ref = &d->dpb[index];
+			if ((ref->flags & (V4L2_H264_DPB_ENTRY_FLAG_VALID | V4L2_H264_DPB_ENTRY_FLAG_ACTIVE)) !=
+			    (V4L2_H264_DPB_ENTRY_FLAG_VALID | V4L2_H264_DPB_ENTRY_FLAG_ACTIVE) ||
+			    ref->fields != V4L2_H264_FRAME_REF ||
+			    (ref->flags & (V4L2_H264_DPB_ENTRY_FLAG_LONG_TERM | V4L2_H264_DPB_ENTRY_FLAG_FIELD)) ||
+			    ref->top_field_order_cnt != ref->bottom_field_order_cnt ||
+			    d->top_field_order_cnt != d->bottom_field_order_cnt ||
+			    !valid_span(r->address, r->capacity, y_size * 3 / 2) ||
+			    !valid_span(r->auxiliary_address, r->auxiliary_capacity, mbs * 80 + 1024))
+				return -EINVAL;
+		}
 	memset(c, 0, sizeof(*c));
 	c->width = width; c->height = height;
 	c->stream_address = (__u32)j->input_address;
@@ -213,13 +267,17 @@ static int build_picture(const struct w202_h264_job *j, struct w202_h264_config 
 		  ((__u32)!!(p->flags & V4L2_H264_PPS_FLAG_TRANSFORM_8X8_MODE) << 13) |
 		  ((__u32)!!(p->flags & V4L2_H264_PPS_FLAG_CONSTRAINED_INTRA_PRED) << 10) |
 		  ((__u32)cabac << 14) |
+		  ((__u32)weighted << 15) |
+		  ((__u32)!!(p->flags & V4L2_H264_PPS_FLAG_WEIGHTED_PRED) << 16) |
+		  ((__u32)p->weighted_bipred_idc << 17) |
 		  ((__u32)!!(sl->flags & V4L2_H264_SLICE_FLAG_DIRECT_SPATIAL_MV_PRED) << 11) |
 		  /* Standard controls carry offset_div2; registers carry the offset. */
 		  (((__u32)(sl->slice_beta_offset_div2 * 2) & 31) << 5) |
 		  ((__u32)(sl->slice_alpha_c0_offset_div2 * 2) & 31);
 	emit(c, 0x1048, control);
 	/* Active reference counts and count-minus-one syntax fields. */
-	emit(c, 0x104c, (bidir ? 0x2100000 : inter ? 0x1f8000 : 0xffc00) |
+	emit(c, 0x104c, (active[0] << 20) | (active[1] << 25) |
+			(((active[0] - 1) & 31) << 10) | (((active[1] - 1) & 31) << 15) |
 			(((__u32)p->second_chroma_qp_index_offset & 31) << 5) |
 			((__u32)p->chroma_qp_index_offset & 31));
 	for (i = 0x1050; i <= 0x107c; i += 4) emit(c, i, 0);
@@ -232,9 +290,23 @@ static int build_picture(const struct w202_h264_job *j, struct w202_h264_config 
 		/* 6-bit picture identities; 0x3f denotes an unused entry. */
 		for (i = 0x1064; i <= 0x107c; i += 4) emit(c, i, 0xffffffff);
 		for (i = 0x1160; i <= 0x1170; i += 4) emit(c, i, 0xffffffff);
-		emit(c, 0x1068, 0xffffffc0 | j->reference_frame_id);
-		if (bidir)
-			emit(c, 0x1074, 0xffffffc0 | j->reference1_frame_id);
+		for (list = 0; list < 2; list++) {
+			__u32 ids[16];
+			unsigned int word, slot;
+
+			for (i = 0; i < 16; i++) {
+				r = i < active[list] ? reference_at(j, list, i, &legacy) : NULL;
+				ids[i] = r ? r->frame_id : 63;
+			}
+			/* Five six-bit IDs per word; ID 15 occupies the top two
+			 * bits of each of the three words. */
+			for (word = 0; word < 3; word++) {
+				control = ((ids[15] >> (2 * word)) & 3) << 30;
+				for (slot = 0; slot < 5; slot++)
+					control |= ids[word * 5 + slot] << (slot * 6);
+				emit(c, 0x1068 + list * 12 + word * 4, control);
+			}
+		}
 	}
 	emit(c, 0x1180, width | (height_mb << 20));
 	for (i = 0x1184; i <= 0x1198; i += 4) emit(c, i, 0);
@@ -264,25 +336,34 @@ static int build_picture(const struct w202_h264_job *j, struct w202_h264_config 
 	}
 	for (i = 0; i < 0x88; i += 4) { emit(c, 0x1200 + i, 0); emit(c, 0x2000 + i, 0); }
 	if (inter) {
-		emit(c, 0x1200, (__u32)ref->top_field_order_cnt);
-		if (bidir)
-			emit(c, 0x1240, (__u32)ref1->top_field_order_cnt);
-		emit(c, 0x1280, bidir ? 0xfffefffe : 0xfffffffe);
+		for (list = 0; list < 2; list++)
+			for (i = 0; i < active[list]; i++) {
+				index = list ? sl->ref_pic_list1[i].index : sl->ref_pic_list0[i].index;
+				emit(c, 0x1200 + list * 64 + i * 4, (__u32)d->dpb[index].top_field_order_cnt);
+			}
+		emit(c, 0x1280, (~((1U << active[0]) - 1) & 0xffff) |
+		     ((~((1U << active[1]) - 1) & 0xffff) << 16));
 		emit(c, 0x2080, 0xffffffff);
 	}
+	/* The hardware computes implicit B weights from the list/current POCs;
+	 * that mode uses denominator five for both luma and chroma. */
+	control = explicit_weights ? j->weights->luma_log2_weight_denom |
+		  ((__u32)j->weights->chroma_log2_weight_denom << 8) :
+		  (bidir && p->weighted_bipred_idc == 2 ? 0x505 : 0);
+	emit(c, 0x1284, control);
+	emit(c, 0x2084, control);
+	if (explicit_weights)
+		emit_weights(c, j->weights, active);
 	/* Every programmed address belongs to this job, including unused entries. */
-	for (i = 0; i < 32; i++) {
-		reference = inter && !i ? j->reference_address : j->output_address;
-		reference_aux = inter && !i ? j->reference_auxiliary_address : j->auxiliary_address;
-		emit(c, 0x2400 + i * 4, (__u32)(reference >> 4));
-		emit(c, 0x2500 + i * 4, (__u32)((reference + y_size) >> 4));
-		emit(c, 0x2600 + i * 4, (__u32)(reference_aux >> 4));
-		reference = bidir && !i ? j->reference1_address : j->output_address;
-		reference_aux = bidir && !i ? j->reference1_auxiliary_address : j->auxiliary_address;
-		emit(c, 0x2480 + i * 4, (__u32)(reference >> 4));
-		emit(c, 0x2580 + i * 4, (__u32)((reference + y_size) >> 4));
-		emit(c, 0x2680 + i * 4, (__u32)(reference_aux >> 4));
-	}
+	for (list = 0; list < 2; list++)
+		for (i = 0; i < 32; i++) {
+			r = i < active[list] ? reference_at(j, list, i, &legacy) : NULL;
+			reference = r ? r->address : j->output_address;
+			reference_aux = r ? r->auxiliary_address : j->auxiliary_address;
+			emit(c, 0x2400 + list * 0x80 + i * 4, (__u32)(reference >> 4));
+			emit(c, 0x2500 + list * 0x80 + i * 4, (__u32)((reference + y_size) >> 4));
+			emit(c, 0x2600 + list * 0x80 + i * 4, (__u32)(reference_aux >> 4));
+		}
 	return c->count <= W202_H264_MAX_REGS ? 0 : -E2BIG;
 }
 

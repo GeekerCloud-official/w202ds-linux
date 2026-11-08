@@ -139,7 +139,8 @@ int w202_vpu_buffers_validate_native(struct w202_vpu_buffers *ctx,
 	int ret = -EINVAL;
 
 	mutex_lock(&ctx->lock);
-	if (ctx->count < 2 || ctx->count > 4 || input->iova_addr == frame->iova_addr)
+	/* Input/output plus up to sixteen entries in each H.264 reference list. */
+	if (ctx->count < 2 || ctx->count > 34 || input->iova_addr == frame->iova_addr)
 		goto out;
 	list_for_each_entry(m, &ctx->maps, list) {
 		if (!m->sgt->orig_nents || check_add_overflow(count, m->sgt->orig_nents, &count))
