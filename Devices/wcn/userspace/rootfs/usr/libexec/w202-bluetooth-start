@@ -1,0 +1,70 @@
+#!/bin/sh
+# SPDX-License-Identifier: MIT
+# Derived from mu300-linux / GeekerCloud's W202DS bring-up. Only toggle BT;
+# do not reset the common WCN bus or the Wi-Fi interface.
+set -eu
+FW=/usr/lib/firmware
+STATE=/var/lib/w202ds/bdaddr
+
+bt_rfkill() {
+    for node in /sys/class/rfkill/rfkill*; do
+        [ -e "$node/type" ] || continue
+        [ "$(cat "$node/type")" = bluetooth ] || continue
+        [ "$(cat "$node/name")" = bluetooth ] || continue
+        printf '%s\n' "$1" > "$node/soft"
+        return 0
+    done
+    echo 'Marlin3 Bluetooth rfkill not found' >&2
+    return 1
+}
+
+if [ "${1:-}" = --block ]; then
+    bt_rfkill 1
+    exit
+fi
+
+modprobe hci_uart
+modprobe wcn_bsp
+modprobe sprdbt_tty
+n=0
+while [ ! -c /dev/ttyBT0 ] && [ "$n" -lt 10 ]; do
+    sleep 1
+    n=$((n + 1))
+done
+[ -c /dev/ttyBT0 ] || { echo 'no /dev/ttyBT0' >&2; exit 1; }
+
+valid_addr() {
+    printf '%s\n' "$1" | LC_ALL=C grep -Eq '^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$' &&
+        [ "$1" != 00:00:00:00:00:00 ] && [ "$1" != FF:FF:FF:FF:FF:FF ] &&
+        [ "$1" != ff:ff:ff:ff:ff:ff ]
+}
+
+mkdir -p "${STATE%/*}"
+BDADDR=$(cat "$STATE" 2>/dev/null || true)
+if ! valid_addr "$BDADDR"; then
+    # Never write NV. Use this tablet's factory address if available.
+    temp=$(mktemp -d)
+    if mount -o ro,noload /dev/disk/by-partlabel/prodnv "$temp" 2>/dev/null; then
+        BDADDR=$(head -n 1 "$temp/btmac.txt" 2>/dev/null | tr -d '\r' || true)
+        umount "$temp"
+    fi
+    rmdir "$temp"
+fi
+if ! valid_addr "$BDADDR"; then
+    h=$(printf 'w202-bt-%s' "$(cat /etc/machine-id)" | sha256sum | cut -c1-12)
+    first=$(( (0x$(printf '%s' "$h" | cut -c1-2) | 2) & 254 ))
+    BDADDR=$(printf '%02x:%s:%s:%s:%s:%s' "$first" \
+        "$(printf '%s' "$h" | cut -c3-4)" "$(printf '%s' "$h" | cut -c5-6)" \
+        "$(printf '%s' "$h" | cut -c7-8)" "$(printf '%s' "$h" | cut -c9-10)" \
+        "$(printf '%s' "$h" | cut -c11-12)")
+fi
+umask 077
+printf '%s\n' "$BDADDR" > "$STATE"
+
+bt_rfkill 1
+sleep 1
+bt_rfkill 0
+sleep 2
+/usr/libexec/w202-bt-init -d /dev/ttyBT0 -p "$FW/bt_configure_pskey.ini" \
+    -r "$FW/bt_configure_rf.ini" -a "$BDADDR"
+exec btattach -B /dev/ttyBT0 -P h4

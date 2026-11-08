@@ -34,5 +34,6 @@ make -C Devices \
 额外的独立测试目标：`w202ds-drm-backlight`、`w202ds-usb3-legacy-phy`。
 二者在当前 Server 内核内建；独立 `.ko` 用于验证模块模式，不能在同一内建实现上重复加载。
 只有 DTSI 的硬件目录暂不注册空模块目标，构建进度以各目录 README 为准。
+`w202ds-wcn-driver` 包含 `w202ds-wcn-wifi` 与 `w202ds-wcn-bluetooth`（`sprdbt_tty.ko`），二者均以 `w202ds-wcn-bus` 为符号提供者；蓝牙用户态在 `wcn/userspace/` 以 `make` 单独构建。
 
 `w202ds-drm-handoff` 独立构建可选 `pj4edk2-handoff.ko`，不依赖 DRM 构建目标。

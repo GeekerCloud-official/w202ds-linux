@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "status": "原厂 WCN/GNSS 启动固件和两份板配置已存在",
+  "status": "原厂 WCN/GNSS 固件、Wi-Fi 板配置与蓝牙 PSKey/RF 参数已存在",
   "files": [
     {
       "path": "firmware/gnssmodem.bin",
@@ -27,6 +27,20 @@
       "path": "firmware/wifi_board_config_ab.ini",
       "bytes": 6831,
       "sha256": "c062fd2cafc17b8878b5be1db3861c83dde16e1b1377e913ba77776173c69470",
+      "storage": "regular",
+      "format": "board-configuration"
+    },
+    {
+      "path": "firmware/bt_configure_pskey.ini",
+      "bytes": 5597,
+      "sha256": "c0b8e544971b17aeee231a71bd1084d0792978abf998db041c21e0b1402199d6",
+      "storage": "regular",
+      "format": "board-configuration"
+    },
+    {
+      "path": "firmware/bt_configure_rf.ini",
+      "bytes": 3182,
+      "sha256": "62c286c15f166cae5c544f7d6d7fc22b2eb7e77a9642a08da5764efb9b9ef0b7",
       "storage": "regular",
       "format": "board-configuration"
     }
