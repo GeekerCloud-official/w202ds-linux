@@ -8,11 +8,10 @@ pmic/
 └── source/
     ├── COPYING
     ├── w202-telemetry/       # 电池、FGU、ADC 与外电状态
-    ├── ump9620-typec/        # Type-C／PD，使用主线 TCPM
-    └── diagnostic-recovery/ # 独立的诊断恢复工程
+    └── ump9620-typec/        # Type-C／PD，使用主线 TCPM
 ```
 
-`source/` 保留板级实现、测试与 GPL 许可证；主线和原厂参考副本已移除，历史版本仍可从 Git 取得。FGU 来源见 [telemetry README](source/w202-telemetry/README.md)。`build.mk` 注册两个独立目标：`w202ds-pmic-telemetry` 生成 `w202_ump9620_power.ko`，`w202ds-pmic-typec` 生成 `w202_ump9620_typec.ko`，均加入 Server 模块集合。`diagnostic-recovery/` 由其 Kconfig／Makefile 单独集成，不随这两个模块自动构建。
+`source/` 保留板级实现、测试与 GPL 许可证；主线和原厂参考副本已移除，历史版本仍可从 Git 取得。FGU 来源见 [telemetry README](source/w202-telemetry/README.md)。`build.mk` 注册两个独立目标：`w202ds-pmic-telemetry` 生成 `w202_ump9620_power.ko`，`w202ds-pmic-typec` 生成 `w202_ump9620_typec.ko`，均加入 Server 模块集合。
 
 | 功能 | 可用性 | 问题描述 |
 | --- | --- | --- |

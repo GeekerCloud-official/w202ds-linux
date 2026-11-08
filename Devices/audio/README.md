@@ -5,8 +5,7 @@ audio/
 ├── build.mk
 ├── devicetree/
 ├── firmware/
-├── README.md
-└── source/
+└── README.md
 ```
 
 | 功能 | 可用性 | 问题描述 |
