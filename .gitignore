@@ -44,3 +44,9 @@ SOURCES*.json
 /Devices/vpu/userspace/*
 !/Devices/vpu/userspace/README.md
 !/Devices/vpu/userspace/source/
+
+# Publish audio startup integration; keep generated test audio/packages local.
+!/Devices/audio/userspace/
+/Devices/audio/userspace/*
+!/Devices/audio/userspace/w202-audio-start
+!/Devices/audio/userspace/w202-audio.service

@@ -1,0 +1,13 @@
+[Unit]
+Description=W202DS AUDCP and AW88166 speakers
+After=local-fs.target systemd-modules-load.service
+Before=display-manager.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/libexec/w202-audio-start
+TimeoutStartSec=20
+
+[Install]
+WantedBy=multi-user.target
