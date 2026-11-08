@@ -6,8 +6,8 @@ wcn/
 ├── devicetree/
 ├── firmware/
 ├── README.md
-├── source/                  # 共用总线、Wi-Fi、蓝牙 H4 tty
-└── userspace/               # 蓝牙初始化与标准 BlueZ 服务
+├── source/                  # 共用总线、Wi-Fi、蓝牙 H4 tty、GNSS 电源
+└── userspace/               # 蓝牙初始化、标准 BlueZ 服务与 GNSS/NMEA 工具
 ```
 
 | 功能 | 可用性 | 问题描述 |
@@ -19,7 +19,7 @@ wcn/
 | 蓝牙配对与基础链路 | 已验证 | 2026-11-07 与 USB 所接 Debian 主机完成 BR/EDR 数字确认配对，双方 Paired／Bonded／Trusted 均为 yes；L2CAP echo 3 发 3 收。 |
 | 经典蓝牙 Central／Peripheral | 已验证 | 两种实际角色分别完成 30×128 字节认证加密往返；抓取 HCI 角色标志，不按连接发起方推断。短测通过，BLE 角色另待验。 |
 | 蓝牙业务传输、音频与休眠恢复 | 待验证 | 文件传输、LE／HID、音频和休眠恢复尚未验收；L2CAP echo 不等于这些业务已通过。 |
-| GNSS 卫星定位 | 待验证 | 尚无实际定位结果。 |
+| GNSS 电源、导航与 NMEA | 部分已验证 | 固件启动、独立 rfkill、NMEA、真实 3D 定位及停止／休眠通过；gpsd／xgps 已接入。Marble 底图加载通过，实时标点、GeoClue 和系统休眠恢复仍待完成。 |
 
 ### 热点断连与扫描保护（2026-11-08）
 
@@ -125,3 +125,26 @@ BLE Central／Peripheral、GATT、音频、文件协议和长期稳定性仍待�
 
 证据与测试源码只读保存于研究目录 `archive/linux/bluetooth-roles-20261107/`。
 测试后临时可连接设置恢复，配对与互信保留；热点及基带保持在线。
+
+### GNSS（2026-11-08）
+
+新增 `source/gnss-power/` 的独立 `w202ds_gnss_power.ko`，使用现有 DT 子节点和
+标准 GPS rfkill；请求位与错误状态不等同于定位。WCN BSP 改用标准固件目录加载
+`gnssmodem.bin`，移除 Android 分区回退，传递下载／校准／启动错误，GNSS 单独失败
+时保留已运行的 Wi-Fi／蓝牙。原厂签名容器没有可用的 Trusty 验证器时明确拒绝，
+当前已验证的是仓库内原有的 raw 固件。
+
+[userspace/gnss](userspace/gnss/README.md) 将本机 SIPC 二进制帧转为校验通过的 NMEA，
+不修改内核或新建 DT 通道。本地编译两模块后更新当前 KDE 的 BSP 与对应 initramfs，
+重启和电源循环通过；无需替换 kernel Image／DTB。独立模块的构建目标为
+`w202ds-wcn-gnss`，仍为显式选择，不加入默认 Server 模块集。
+
+REA 分析原厂库并经真机核对后，修正输出周期为导航 epoch `1`，而非毫秒 `1000`。
+12 秒得到 82 条标准语句；含完整清理的 10 秒得到 66 条，停止导航、休眠应答均通过。
+上述短测仅报告至多 3 颗 GPS 卫星、没有有效位置；随后连续 300 秒观测得到 3184 条
+NMEA，帧解析错误为 0，并取得真实 3D 定位。gpsd 返回 `mode:3`，观察到 7 颗卫星
+参与解算及 GPS／北斗数据；估算水平误差约数十米，尚非精度或长期稳定性验收。
+已安装标准 gpsd／xgps／Marble；xgps 的卫星图和定位数据已显示，Marble 下载并显示
+OpenStreetMap 道路／地名。Marble 25.04 的 gpsd 插件每秒只读一个报告，本机观察到
+数据积压，实时标点仍未通过；GeoClue、系统休眠恢复及开机常驻服务仍待完成。
+当前桌面演示为有限的临时会话，不启用开机定位。原厂参考库和位置抓取资料不提交。

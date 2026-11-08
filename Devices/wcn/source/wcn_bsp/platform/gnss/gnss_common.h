@@ -17,6 +17,7 @@
 /* end: address map on gnss side */
 
 int gnss_data_init(void);
+void gnss_data_deinit(void);
 int gnss_write_data(void);
 int gnss_backup_data(void);
 int gnss_boot_wait(void);

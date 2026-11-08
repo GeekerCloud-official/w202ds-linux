@@ -67,10 +67,21 @@ int gnss_data_init(void)
 	gnss_efuse_data = kzalloc(GNSS_EFUSE_DATA_SIZE, GFP_KERNEL);
 	if (gnss_efuse_data == NULL) {
 		pr_err("%s malloc efuse data fail\n", __func__);
+		kfree(gnss_cali_data.cali_data);
+		gnss_cali_data.cali_data = NULL;
 		return -ENOMEM;
 	}
 
 	return 0;
+}
+
+void gnss_data_deinit(void)
+{
+	kfree(gnss_efuse_data);
+	gnss_efuse_data = NULL;
+	kfree(gnss_cali_data.cali_data);
+	gnss_cali_data.cali_data = NULL;
+	gnss_cali_data.cali_done = false;
 }
 
 static int gnss_write_cali_data(void)
@@ -88,7 +99,7 @@ static int gnss_write_cali_data(void)
 	pr_info("%s flag %d\n", __func__,
 		gnss_cali_data.cali_done);
 	if (gnss_cali_data.cali_done) {
-		sprdwcn_bus_direct_write(gnss_cali_addr,
+		return sprdwcn_bus_direct_write(gnss_cali_addr,
 					 gnss_cali_data.cali_data,
 					 gnss_cali_data_size);
 	}
@@ -107,7 +118,7 @@ static int gnss_write_efuse_data(void)
 
 	pr_info("%s flag %d\n", __func__, gnss_cali_data.cali_done);
 	if (gnss_cali_data.cali_done && (gnss_efuse_data != NULL))
-		sprdwcn_bus_direct_write(gnss_efuse_addr,
+		return sprdwcn_bus_direct_write(gnss_efuse_addr,
 					 gnss_efuse_data,
 					 GNSS_EFUSE_DATA_SIZE);
 
@@ -118,7 +129,9 @@ int gnss_write_data(void)
 {
 	int ret = 0;
 
-	gnss_write_cali_data();
+	ret = gnss_write_cali_data();
+	if (ret)
+		return ret;
 	ret = gnss_write_efuse_data();
 
 	return ret;
@@ -127,6 +140,7 @@ int gnss_write_data(void)
 static int gnss_backup_cali(void)
 {
 	int i = 15;
+	int ret;
 	int tempvalue = 0;
 	unsigned int gnss_cali_addr, gnss_cali_data_size;
 	struct wcn_match_data *g_match_config = get_wcn_match_config();
@@ -140,15 +154,19 @@ static int gnss_backup_cali(void)
 	}
 	pr_info("%s entry\n", __func__);
 
+	if (!gnss_cali_data.cali_data)
+		return -ENOMEM;
 	if (!gnss_cali_data.cali_done) {
 		pr_info("%s begin\n", __func__);
 		if (gnss_cali_data.cali_data != NULL) {
 			while (i--) {
-				sprdwcn_bus_direct_read(gnss_cali_addr,
+				ret = sprdwcn_bus_direct_read(gnss_cali_addr,
 					gnss_cali_data.cali_data,
 					gnss_cali_data_size);
+				if (ret)
+					return ret;
 				tempvalue = *(gnss_cali_data.cali_data);
-				pr_err("cali %d time, value is 0x%x\n",
+				pr_debug("cali %d time, value is 0x%x\n",
 				       i, tempvalue);
 				if (tempvalue != GNSS_CALI_DONE_FLAG) {
 					msleep(100);
@@ -162,12 +180,12 @@ static int gnss_backup_cali(void)
 	} else
 		pr_err("no need back again\n");
 
-	return 0;
+	return gnss_cali_data.cali_done ? 0 : -ETIMEDOUT;
 }
 
 static int gnss_backup_efuse(void)
 {
-	int ret = 1;
+	int ret = -ENODATA;
 	unsigned int gnss_efuse_addr;
 	struct wcn_match_data *g_match_config = get_wcn_match_config();
 
@@ -180,10 +198,10 @@ static int gnss_backup_efuse(void)
 
 	/* efuse data is ok when cali done */
 	if (gnss_cali_data.cali_done && (gnss_efuse_data != NULL)) {
-		sprdwcn_bus_direct_read(gnss_efuse_addr, gnss_efuse_data,
+		ret = sprdwcn_bus_direct_read(gnss_efuse_addr, gnss_efuse_data,
 					GNSS_EFUSE_DATA_SIZE);
-		ret = 0;
-		pr_info("%s 0x%x\n", __func__, *gnss_efuse_data);
+		if (!ret)
+			pr_debug("%s efuse backup complete\n", __func__);
 	} else
 		pr_err("%s no need back again\n", __func__);
 
@@ -194,15 +212,22 @@ int gnss_backup_data(void)
 {
 	int ret;
 
-	gnss_backup_cali();
+	ret = gnss_backup_cali();
+	if (ret)
+		return ret;
 	ret = gnss_backup_efuse();
+	/* Calibration and efuse form one cached set. Never restore a partial
+	 * backup after a failed efuse read.
+	 */
+	if (ret)
+		gnss_cali_data.cali_done = false;
 
 	return ret;
 }
 
 int gnss_boot_wait(void)
 {
-	int ret = -1;
+	int ret = -ETIMEDOUT;
 	int i = 125;
 	u32 *buffer = NULL;
 	unsigned int gnss_bootsts_addr;
@@ -227,19 +252,22 @@ int gnss_boot_wait(void)
 			if (!wcn_get_edma_status()) {
 				pr_err("%s:card removed.stop boot gnss", __func__);
 				kfree(buffer);
-				return -1;
+				return -ENODEV;
 			}
 			if (sprdwcn_bus_get_carddump_status()) {
 				pr_err("%s:stop boot gnss in dump status", __func__);
 				kfree(buffer);
-				return -1;
+				return -EIO;
 			}
 		}
 #endif
-		sprdwcn_bus_direct_read(gnss_bootsts_addr, buffer,
+		ret = sprdwcn_bus_direct_read(gnss_bootsts_addr, buffer,
 					GNSS_BOOTSTATUS_SIZE);
-		pr_err("boot read %d time,val=0x%x\n", i, *buffer);
+		if (ret)
+			break;
+		pr_debug("boot read %d time,val=0x%x\n", i, *buffer);
 		if (*buffer != GNSS_BOOTSTATUS_MAGIC) {
+			ret = -ETIMEDOUT;
 			msleep(20);
 			continue;
 		}

@@ -93,6 +93,8 @@ struct marlin_device {
 	struct completion carddetect_done;
 	struct completion download_done;
 	struct completion gnss_download_done;
+	int gnss_boot_result;
+	bool gnss_cali_done;
 	unsigned long power_state;
 	char *write_buffer;
 	struct delayed_work power_wq;
@@ -101,7 +103,6 @@ struct marlin_device {
 	bool keep_power_on;
 	bool wait_ge2;
 	bool is_btwf_in_sysfs;
-	bool is_gnss_in_sysfs;
 	int wifi_need_download_ini_flag;
 	int first_power_on_ready;
 	atomic_t download_finish_flag;

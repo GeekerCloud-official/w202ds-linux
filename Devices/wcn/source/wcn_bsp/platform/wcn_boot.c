@@ -710,270 +710,63 @@ void wcn_gnss_ops_unregister(void)
 	gnss_ops = NULL;
 }
 
-static char *gnss_load_firmware_data(unsigned long int imag_size)
-{
-#ifdef FIRMWARE_PARTITION_DEBUG_EN
-	int read_len, size, i, opn_num_max = 15;
-	char *buffer = NULL;
-	char *data = NULL;
-	struct file *file = NULL;
-	loff_t pos = 0;
-
-	pr_info("%s entry\n", __func__);
-
-	gnss_file_path_set(&GNSS_FIRMWARE_PATH[0]);
-	pr_info("%s gnss file path=%s\n", __func__, GNSS_FIRMWARE_PATH);
-
-	file = filp_open(GNSS_FIRMWARE_PATH, O_RDONLY, 0);
-	for (i = 1; i <= opn_num_max; i++) {
-		if (IS_ERR(file)) {
-			pr_info("try open file %s,count_num:%d,errno=%ld,%s\n",
-				 GNSS_FIRMWARE_PATH, i,
-				 PTR_ERR(file), __func__);
-			if (PTR_ERR(file) == -ENOENT)
-				pr_err("No such file or directory\n");
-			if (PTR_ERR(file) == -EACCES)
-				pr_err("Permission denied\n");
-			ssleep(1);
-			file = filp_open(GNSS_FIRMWARE_PATH, O_RDONLY, 0);
-		} else {
-			break;
-		}
-	}
-
-	if (IS_ERR(file)) {
-		pr_err("%s marlin3 gnss open file %s error\n",
-			GNSS_FIRMWARE_PATH, __func__);
-		return NULL;
-	}
-	pr_info("%s open image file  successfully\n", __func__);
-	size = imag_size;
-	buffer = vmalloc(size);
-	if (!buffer) {
-		fput(file);
-		pr_err("no memory for gnss img\n");
-		return NULL;
-	}
-
-	data = buffer;
-	do {
-		read_len = kernel_read(file, buffer, size, &pos);
-		if (read_len > 0) {
-			size -= read_len;
-			buffer += read_len;
-		}
-	} while ((read_len > 0) && (size > 0));
-	fput(file);
-	pr_info("%s finish read_Len:%d\n", __func__, read_len);
-	if (read_len <= 0)
-		return NULL;
-
-	return data;
-#else
-	return NULL;
-#endif
-}
-
-static int gnss_download_from_partition(void)
-{
-	int err, len, trans_size;
-	unsigned long int imgpack_size, img_size;
-	char *buffer = NULL;
-	char *temp = NULL;
-	char *temp_img = NULL;
-	u32 sec_img_magic, img_copy_len;
-	struct sys_img_header *pimghdr = NULL;
-
-	img_size = imgpack_size = get_gnss_firmware_max_size();
-	if (marlin_dev->maxsz_gnss > get_gnss_firmware_max_size())
-		imgpack_size = marlin_dev->maxsz_gnss;
-
-	pr_info("GNSS %s entry\n", __func__);
-	temp = buffer = gnss_load_firmware_data(imgpack_size);
-	if (!buffer) {
-		pr_info("%s gnss buff is NULL\n", __func__);
-		return -1;
-	}
-
-	pimghdr = (struct sys_img_header *)buffer;
-	sec_img_magic = pimghdr->magic_num;
-	if (sec_img_magic != SEC_IMAGE_MAGIC) {
-		pr_info("%s image magic 0x%x.\n",
-			__func__, sec_img_magic);
-		goto write_gnss_img;
-	}
-
-	if (pimghdr->img_real_size == 0 ||
-		(pimghdr->img_signed_size <=
-		(SEC_IMAGE_HDR_SIZE + pimghdr->img_real_size))) {
-		vfree(temp);
-		pr_err("%s check signed img fail.\n", __func__);
-		return -1;
-	}
-
-	if (marlin_dev->maxsz_gnss >= pimghdr->img_signed_size) {
-		wcn_write_data_to_phy_addr(
-			marlin_dev->base_addr_gnss,
-			buffer, pimghdr->img_signed_size);
-		if (wcn_firmware_sec_verify(2, marlin_dev->base_addr_gnss,
-			pimghdr->img_signed_size) < 0) {
-			vfree(temp);
-			pr_err("%s sec verify fail.\n", __func__);
-			return -1;
-		}
-
-		if (img_size > pimghdr->img_real_size) {
-			memset(buffer + pimghdr->img_real_size, 0,
-				img_size - pimghdr->img_real_size);
-			img_copy_len = pimghdr->img_real_size;
-		} else {
-			img_copy_len = img_size;
-		}
-		wcn_read_data_from_phy_addr(
-			marlin_dev->base_addr_gnss + SEC_IMAGE_HDR_SIZE,
-			buffer, img_copy_len);
-	} else if (marlin_dev->maxsz_gnss > 0) {
-		// we only get part of the signed-image.
-		pr_info("%s without enough reserved memory, check DTS pls.\n",
-			__func__);
-		vfree(temp);
-		return -1;
-	} else {
-		if (img_size > pimghdr->img_real_size) {
-			memset(buffer + pimghdr->img_real_size, 0,
-				img_size - pimghdr->img_real_size);
-			img_copy_len = pimghdr->img_real_size;
-		} else {
-			img_copy_len = img_size;
-		}
-
-		temp_img = gnss_load_firmware_data(
-			SEC_IMAGE_HDR_SIZE + img_copy_len);
-		if (!temp_img) {
-			pr_info("%s read gnss buff is NULL\n", __func__);
-			vfree(temp);
-			return -1;
-		}
-		memcpy(buffer, (temp_img + SEC_IMAGE_HDR_SIZE), img_copy_len);
-		vfree(temp_img);
-	}
-
-write_gnss_img:
-	len = 0;
-	while (len < img_size) {
-		trans_size = (img_size - len) > PACKET_SIZE ?
-				PACKET_SIZE : (img_size - len);
-		memcpy(marlin_dev->write_buffer, buffer + len, trans_size);
-		err = sprdwcn_bus_direct_write(get_gnss_cp_start_addr() + len,
-			marlin_dev->write_buffer, trans_size);
-		if (err < 0) {
-			pr_err("gnss dt write %s error:%d\n", __func__, err);
-			vfree(temp);
-			return -1;
-		}
-		len += PACKET_SIZE;
-	}
-	vfree(temp);
-	pr_info("%s gnss download firmware finish\n", __func__);
-
-	return 0;
-}
-
+/* GNSS uses the Linux firmware search path. Do not fall back to Android
+ * partitions or permanently disable firmware lookup after a missing file.
+ */
 static int gnss_download_firmware(void)
 {
 	const struct firmware *firmware;
-	char *buf;
-	int err;
-	int i, len, count, trans_size;
-	char *tx_img_ptr = NULL;
-	u32 sec_img_magic, tx_img_size;
-	struct sys_img_header *pimghdr = NULL;
+	const u8 *image;
+	size_t image_size, offset, transfer;
+	u32 magic;
+	int ret;
 
-	if (marlin_dev->is_gnss_in_sysfs) {
-		err = gnss_download_from_partition();
-		return err;
+	ret = request_firmware_direct(&firmware, "gnssmodem.bin", marlin_dev->dev);
+	if (ret) {
+		dev_err(marlin_dev->dev, "GNSS firmware unavailable: %d\n", ret);
+		return ret;
 	}
 
-	pr_info("%s start from /system/etc/firmware/\n", __func__);
-	buf = marlin_dev->write_buffer;
-
-#ifdef FIRMWARE_PARTITION_DEBUG_EN
-	err = request_firmware_direct(&firmware, "gnssmodem.bin", NULL);
-#else
-	err = request_firmware(&firmware, "gnssmodem.bin", NULL);
-#endif
-	if (err < 0) {
-		pr_err("%s no find gnssmodem.bin err:%d(ignore)\n",
-			__func__, err);
-		marlin_dev->is_gnss_in_sysfs = true;
-		err = gnss_download_from_partition();
-
-		return err;
+	if (firmware->size < sizeof(magic)) {
+		ret = -EINVAL;
+		goto release;
 	}
 
-	pimghdr = (struct sys_img_header *)(firmware->data);
-	sec_img_magic = pimghdr->magic_num;
-	if (sec_img_magic != SEC_IMAGE_MAGIC) {
-		pr_info("%s image magic 0x%x, SEC_IMAGE_MAGIC =  0x%x\n",
-			__func__, sec_img_magic, SEC_IMAGE_MAGIC);
-	}
-	if (sec_img_magic == SEC_IMAGE_MAGIC) {
-		if (pimghdr->img_real_size == 0 ||
-			(pimghdr->img_signed_size <=
-			(SEC_IMAGE_HDR_SIZE + pimghdr->img_real_size)) ||
-			pimghdr->img_signed_size > firmware->size) {
-			release_firmware(firmware);
-			pr_err("%s check signed img fail.\n", __func__);
-			return -1;
-		}
+	/* Read only the discriminator, without assuming a complete header. */
+	memcpy(&magic, firmware->data, sizeof(magic));
+	magic = le32_to_cpu(magic);
+	image = firmware->data;
+	image_size = firmware->size;
 
-		wcn_write_data_to_phy_addr(
-			marlin_dev->base_addr_gnss,
-			(void *)firmware->data, pimghdr->img_signed_size);
-		if (wcn_firmware_sec_verify(2, marlin_dev->base_addr_gnss,
-			pimghdr->img_signed_size) < 0) {
-			pr_err("%s sec verify fail.\n", __func__);
-			release_firmware(firmware);
-			return -1;
-		}
-
-		tx_img_size = pimghdr->img_real_size;
-		tx_img_ptr = vmalloc(tx_img_size);
-		if (!tx_img_ptr) {
-			release_firmware(firmware);
-			pr_err("%s no memory for image\n", __func__);
-			return -1;
-		}
-		memcpy(tx_img_ptr, (firmware->data + SEC_IMAGE_HDR_SIZE),
-			tx_img_size);
-	} else {
-		tx_img_size = firmware->size;
-		tx_img_ptr = (char *)firmware->data;
+	if (magic == SEC_IMAGE_MAGIC) {
+		/* This port has no working Trusty verifier. Its vendor helper can
+		 * report success when Trusty is absent, so it cannot establish
+		 * validity here. Require an explicitly extracted raw payload.
+		 */
+		dev_err(marlin_dev->dev, "GNSS signed container unsupported; use raw firmware\n");
+		ret = -EOPNOTSUPP;
+		goto release;
 	}
 
-	count = (tx_img_size + PACKET_SIZE - 1) / PACKET_SIZE;
-	len = 0;
-	for (i = 0; i < count; i++) {
-		trans_size = (tx_img_size - len) > PACKET_SIZE ?
-				PACKET_SIZE : (tx_img_size - len);
-		memcpy(buf, tx_img_ptr + len, trans_size);
-		err = sprdwcn_bus_direct_write(get_gnss_cp_start_addr() + len, buf,
-				trans_size);
-		if (err < 0) {
-			pr_err("gnss dt write %s error:%d\n", __func__, err);
-			release_firmware(firmware);
-
-			return err;
-		}
-		len += trans_size;
+	if (!image_size || image_size > get_gnss_firmware_max_size()) {
+		ret = -EFBIG;
+		goto release;
 	}
+
+	for (offset = 0; offset < image_size; offset += transfer) {
+		transfer = min_t(size_t, PACKET_SIZE, image_size - offset);
+		memcpy(marlin_dev->write_buffer, image + offset, transfer);
+		ret = sprdwcn_bus_direct_write(get_gnss_cp_start_addr() + offset,
+					      marlin_dev->write_buffer, transfer);
+		if (ret)
+			goto release;
+	}
+	ret = 0;
+release:
 	release_firmware(firmware);
-	pr_info("%s successfully through request_firmware!\n", __func__);
-
-	if (sec_img_magic == SEC_IMAGE_MAGIC && tx_img_ptr)
-		vfree(tx_img_ptr);
-
-	return 0;
+	if (ret)
+		dev_err(marlin_dev->dev, "GNSS firmware download failed: %d\n", ret);
+	return ret;
 }
 
 static int reg_set_bit(unsigned long reg, unsigned long bit)
@@ -2255,41 +2048,35 @@ EXPORT_SYMBOL_GPL(gnss_firmware_path_get);
 
 static void pre_gnss_download_firmware(struct work_struct *work)
 {
-	static int cali_flag;
-	int ret = -2;
+	int ret;
 
-	/* ./fstab.xxx is prevent for user space progress */
-	//find_firmware_path();
-
-	if (gnss_download_firmware() != 0) {
-		pr_err("gnss download firmware fail\n");
-		return;
-	}
+	ret = gnss_download_firmware();
+	if (ret)
+		goto done;
 
 	ret = gnss_write_data();
-	if (ret != 0) {
-		pr_err("%s gnss_write_data err=%d\n", __func__, ret);
-		return;
-	}
+	if (ret)
+		goto done;
 
-	if (gnss_start_run() != 0)
-		pr_err("gnss start run fail\n");
+	ret = gnss_start_run();
+	if (ret)
+		goto done;
 
-	if (cali_flag == 0) {
-		pr_info("gnss start to backup calidata\n");
+	if (!marlin_dev->gnss_cali_done) {
 		ret = gnss_backup_data();
-		if (ret == 0)
-			cali_flag = 1;
-		else
-			pr_err("%s gnss_backup_data err=%d\n", __func__, ret);
+		if (!ret)
+			marlin_dev->gnss_cali_done = true;
 	} else {
-		pr_info("gnss wait boot start\n");
 		ret = gnss_boot_wait();
-		if (ret != 0)
-			pr_err("%s gnss wait boot err=%d\n", __func__, ret);
-		else
-			pr_info("%s gnss wait boot end\n", __func__);
 	}
+
+done:
+	if (ret)
+		dev_err(marlin_dev->dev, "GNSS preparation failed: %d\n", ret);
+	/* Completion means the operation ended; its result is separate. Even
+	 * errors must wake the caller rather than masquerade as a 10 s hang.
+	 */
+	marlin_dev->gnss_boot_result = ret;
 	complete(&marlin_dev->gnss_download_done);
 }
 
@@ -2658,6 +2445,7 @@ static int marlin_set_power(enum wcn_sub_sys subsys, int val)
 	unsigned long timeleft;
 	struct wcn_match_data *g_match_config = get_wcn_match_config();
 	int locked = 0;
+	int ret;
 
 	locked = mutex_trylock(&marlin_dev->power_lock);
 
@@ -2696,17 +2484,20 @@ static int marlin_set_power(enum wcn_sub_sys subsys, int val)
 			set_bit(subsys, &marlin_dev->power_state);
 
 			pr_info("GNSS start to auto download\n");
+			marlin_dev->gnss_boot_result = -EINPROGRESS;
 			schedule_work(&marlin_dev->gnss_dl_wq);
 			timeleft
 				= wait_for_completion_timeout(
 				&marlin_dev->gnss_download_done, 10 * HZ);
 			if (!timeleft) {
 				pr_err("GNSS download timeout\n");
+				cancel_work_sync(&marlin_dev->gnss_dl_wq);
 				goto out;
 			}
-			pr_info("gnss auto download finished and run ok\n");
+			pr_info("gnss auto preparation finished: %d\n",
+				marlin_dev->gnss_boot_result);
 
-			if (subsys & MARLIN_MASK)
+			if (subsys != MARLIN_GNSS)
 				gnss_powerdomain_close();
 			marlin_dev->first_power_on_ready = 1;
 
@@ -2734,17 +2525,6 @@ static int marlin_set_power(enum wcn_sub_sys subsys, int val)
 				marlin_set_power(WCN_AUTO, false);
 				return 0;
 			}
-			/*
-			 * If first power on is GNSS, must power off it
-			 * after cali finish, and then re-power on it.
-			 * This is gnss requirement.
-			 */
-			if (subsys == MARLIN_GNSS) {
-				marlin_set_power(MARLIN_GNSS, false);
-				marlin_set_power(MARLIN_GNSS, true);
-				return 0;
-			}
-
 			return 0;
 		}
 		/* 2. the second time, WCN_AUTO coming */
@@ -2780,17 +2560,31 @@ static int marlin_set_power(enum wcn_sub_sys subsys, int val)
 				pr_info("BTWF ready, GPS start to download\n");
 				set_wifipa_status(subsys, val);
 				set_bit(subsys, &marlin_dev->power_state);
-				gnss_powerdomain_open();
+				ret = gnss_powerdomain_open();
+				if (ret) {
+					if (!gnss_powerdomain_close())
+						clear_bit(subsys, &marlin_dev->power_state);
+					if (unlikely(locked))
+						mutex_unlock(&marlin_dev->power_lock);
+					return ret;
+				}
 
+				marlin_dev->gnss_boot_result = -EINPROGRESS;
 				schedule_work(&marlin_dev->gnss_dl_wq);
 				timeleft = wait_for_completion_timeout(
 					&marlin_dev->gnss_download_done, 10*HZ);
 				if (!timeleft) {
 					pr_err("GNSS download timeout\n");
-					goto out;
+					cancel_work_sync(&marlin_dev->gnss_dl_wq);
+					if (!gnss_powerdomain_close())
+						clear_bit(subsys, &marlin_dev->power_state);
+					if (unlikely(locked))
+						mutex_unlock(&marlin_dev->power_lock);
+					return -ETIMEDOUT;
 				}
 
-				pr_info("GNSS download finished and ok\n");
+				pr_info("GNSS preparation finished: %d\n",
+					marlin_dev->gnss_boot_result);
 
 			} else {
 				pr_info("marlin have open, GNSS is closed\n");
@@ -2826,14 +2620,17 @@ static int marlin_set_power(enum wcn_sub_sys subsys, int val)
 				pr_info("marlin dl finished and run ok\n");
 
 				pr_info("GNSS start to download\n");
+				marlin_dev->gnss_boot_result = -EINPROGRESS;
 				schedule_work(&marlin_dev->gnss_dl_wq);
 				timeleft = wait_for_completion_timeout(
 					&marlin_dev->gnss_download_done, 10*HZ);
 				if (!timeleft) {
 					pr_err("then GNSS download timeout\n");
+					cancel_work_sync(&marlin_dev->gnss_dl_wq);
 					goto out;
 				}
-				pr_info("then gnss dl finished and ok\n");
+				pr_info("GNSS preparation finished: %d\n",
+					marlin_dev->gnss_boot_result);
 			}
 			/*
 			 * 5.2 only download marlin, and then
@@ -2893,8 +2690,16 @@ static int marlin_set_power(enum wcn_sub_sys subsys, int val)
 		clear_bit(subsys, &marlin_dev->power_state);
 		if ((marlin_dev->power_state != 0) && (!flag_reset)) {
 			pr_info("can not power off, other module is on\n");
-			if (subsys == MARLIN_GNSS)
-				gnss_powerdomain_close();
+			if (subsys == MARLIN_GNSS) {
+				ret = gnss_powerdomain_close();
+				if (ret) {
+					/* Preserve the request so its owner can retry cleanup. */
+					set_bit(subsys, &marlin_dev->power_state);
+					if (unlikely(locked))
+						mutex_unlock(&marlin_dev->power_lock);
+					return ret;
+				}
+			}
 			goto check_power_state_notify;
 		}
 
@@ -3100,7 +2905,8 @@ EXPORT_SYMBOL_GPL(marlin_reset_reg);
 int start_marlin(enum wcn_sub_sys subsys)
 {
 	struct wcn_match_data *g_match_config = get_wcn_match_config();
-	int ret = 0;
+	bool needs_gnss_calibration;
+	int ret = -EIO;
 
 	if (g_match_config && g_match_config->unisoc_wcn_integrated)
 		return start_integ_marlin(subsys);
@@ -3129,8 +2935,39 @@ int start_marlin(enum wcn_sub_sys subsys)
 			/* not need write cali */
 			marlin_dev->wifi_need_download_ini_flag = 2;
 	}
-	if (marlin_set_power(subsys, true) < 0)
+	needs_gnss_calibration = subsys == MARLIN_GNSS &&
+		!marlin_dev->gnss_cali_done;
+	ret = marlin_set_power(subsys, true);
+	if (ret < 0)
 		goto unlock;
+
+	/* Calibration may have failed during the automatic first WCN start.
+	 * When it succeeds later, GNSS still requires the same off/on sequence
+	 * before normal boot. Keep both operations under the shared power lock.
+	 */
+	if (needs_gnss_calibration && !marlin_dev->gnss_boot_result) {
+		ret = marlin_set_power(MARLIN_GNSS, false);
+		if (ret)
+			goto unlock;
+		ret = marlin_set_power(MARLIN_GNSS, true);
+		if (ret)
+			goto unlock;
+	}
+
+	if (subsys == MARLIN_GNSS && marlin_dev->gnss_boot_result) {
+		int stop_ret;
+
+		ret = marlin_dev->gnss_boot_result;
+		/* A GNSS failure must not tear down working Wi-Fi or Bluetooth.
+		 * Remove only this subsystem's request through the common power
+		 * manager; do not reset or unload the shared WCN bus.
+		 */
+		stop_ret = marlin_set_power(MARLIN_GNSS, false);
+		if (stop_ret)
+			dev_warn(marlin_dev->dev, "GNSS rollback failed: %d\n", stop_ret);
+		mutex_unlock(&marlin_dev->power_lock);
+		return ret;
+	}
 
 	if (g_match_config && g_match_config->unisoc_wcn_m3lite && is_ums9620_uob) {
 		set_cp_pin_ds(SD_D3, 3);
@@ -3149,7 +2986,7 @@ int start_marlin(enum wcn_sub_sys subsys)
 
 unlock:
 	mutex_unlock(&marlin_dev->power_lock);
-	return -1;
+	return ret;
 }
 EXPORT_SYMBOL_GPL(start_marlin);
 
@@ -3319,8 +3156,10 @@ int marlin_probe(struct platform_device *pdev)
 		goto error0;
 	}
 
-	/* init data for pre_gnss_download_firmware*/
-	gnss_data_init();
+	/* init data for pre_gnss_download_firmware */
+	err = gnss_data_init();
+	if (err)
+		goto error_gnss_data;
 
 	flag_reset = 0;
 	loopcheck_init();
@@ -3336,6 +3175,8 @@ int marlin_probe(struct platform_device *pdev)
 	pr_info("%s driver match successful v2!\n", __func__);
 
 	return 0;
+error_gnss_data:
+	wcn_op_exit();
 error0:
 	wcn_gnss_dump_exit();
 error1:
@@ -3360,9 +3201,14 @@ int marlin_remove(struct platform_device *pdev)
 {
 	struct wcn_match_data *g_match_config = get_wcn_match_config();
 
+	/* Prevent new child probes, then remove GNSS/WLAN/BT consumers while
+	 * their shared power manager and bus are still alive.
+	 */
+	cancel_delayed_work_sync(&marlin_dev->power_wq);
+	devm_of_platform_depopulate(&pdev->dev);
 	cancel_work_sync(&marlin_dev->download_wq);
 	cancel_work_sync(&marlin_dev->gnss_dl_wq);
-	cancel_delayed_work_sync(&marlin_dev->power_wq);
+	gnss_data_deinit();
 	loopcheck_deinit();
 	wcn_op_exit();
 	log_dev_exit();
@@ -3488,3 +3334,5 @@ MODULE_LICENSE("GPL v2");
 MODULE_DESCRIPTION("Spreadtrum  WCN Marlin Driver");
 MODULE_AUTHOR("Yufeng Yang <yufeng.yang@spreadtrum.com>");
 #endif
+
+MODULE_FIRMWARE("gnssmodem.bin");

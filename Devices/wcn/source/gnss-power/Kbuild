@@ -1,0 +1,4 @@
+# SPDX-License-Identifier: GPL-2.0-only
+obj-m += w202ds_gnss_power.o
+WCN_BSP_DIR ?= $(src)/../wcn_bsp
+ccflags-y += -I $(WCN_BSP_DIR)/kinclude
