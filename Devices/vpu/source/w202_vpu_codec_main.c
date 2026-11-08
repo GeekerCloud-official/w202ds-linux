@@ -25,6 +25,7 @@
 #include <linux/wait.h>
 #include "w202_vpu.h"
 #include "w202_vpu_buffers.h"
+#include "w202_vpu_native.h"
 
 #define REG_INT_MASK 0x1004
 #define REG_INT_CLEAR 0x1008
@@ -65,6 +66,8 @@ struct codec_device {
 	int irq;
 	atomic_t opens, interrupts, resets, timeouts, faults;
 	atomic_t maps, auto_released, copyout_rollbacks;
+	atomic_t native_started, native_inflight, native_cancel_before_irq;
+	atomic_t native_cancel_dma_active;
 	spinlock_t irq_lock;
 	struct mutex power_lock;
 	bool powered;
@@ -72,6 +75,7 @@ struct codec_device {
 	wait_queue_head_t wait;
 	bool broken;
 	struct codec_file *quarantine;
+	struct w202_vpu_video *video;
 };
 
 struct codec_file {
@@ -163,10 +167,9 @@ static int codec_stop(struct codec_file *ctx)
 	return ret;
 }
 
-static int codec_open(struct inode *inode, struct file *file)
+static int codec_context_get(struct codec_device *c, struct codec_file **result)
 {
-	struct miscdevice *misc = file->private_data;
-	struct codec_device *c = container_of(misc, struct codec_device, misc);
+	struct miscdevice *misc = &c->misc;
 	struct codec_file *ctx;
 	int ret;
 
@@ -198,7 +201,7 @@ static int codec_open(struct inode *inode, struct file *file)
 	ctx->codec = c;
 	mutex_init(&ctx->lock);
 	w202_vpu_buffers_init(&ctx->buffers, misc->parent);
-	file->private_data = ctx;
+	*result = ctx;
 	return 0;
 open_failed:
 	mutex_unlock(&c->power_lock);
@@ -207,9 +210,8 @@ open_failed:
 	return ret;
 }
 
-static int codec_close(struct inode *inode, struct file *file)
+static int codec_context_put(struct codec_file *ctx)
 {
-	struct codec_file *ctx = file->private_data;
 	struct codec_device *c = ctx->codec;
 	int ret;
 
@@ -244,6 +246,147 @@ static int codec_close(struct inode *inode, struct file *file)
 	kfree(ctx);
 	atomic_set(&c->opens, 0);
 	return 0;
+}
+
+static int codec_open(struct inode *inode, struct file *file)
+{
+	struct miscdevice *misc = file->private_data;
+	struct codec_device *c = container_of(misc, struct codec_device, misc);
+	struct codec_file *ctx;
+	int ret = codec_context_get(c, &ctx);
+
+	if (!ret)
+		file->private_data = ctx;
+	return ret;
+}
+
+static int codec_close(struct inode *inode, struct file *file)
+{
+	return codec_context_put(file->private_data);
+}
+
+int w202_vpu_native_begin(struct device *dev, struct codec_file **context)
+{
+	struct codec_device *c = dev_get_drvdata(dev);
+	struct codec_file *ctx;
+	int ret;
+
+	ret = codec_context_get(c, &ctx);
+	if (ret)
+		return ret;
+	ctx->acquired = true;
+	ret = clk_set_parent(c->clock, c->parents[0]);
+	if (!ret)
+		ret = codec_reset(c);
+	if (ret) {
+		codec_context_put(ctx);
+		return ret;
+	}
+	ctx->enabled = true;
+	*context = ctx;
+	return 0;
+}
+
+int w202_vpu_native_import(struct codec_file *ctx, struct dma_buf *buf,
+			   struct w202_vpu_iova *map)
+{
+	int ret = w202_vpu_buffers_import(&ctx->buffers, buf, map);
+
+	if (!ret)
+		atomic_inc(&ctx->codec->maps);
+	return ret;
+}
+
+void w202_vpu_native_wake(struct device *dev)
+{
+	struct codec_device *c = dev_get_drvdata(dev);
+
+	wake_up_interruptible(&c->wait);
+}
+
+int w202_vpu_native_validate_buffers(struct codec_file *ctx,
+				     const struct w202_vpu_iova *input,
+				     const struct w202_vpu_iova *frame)
+{
+	return w202_vpu_buffers_validate_native(&ctx->buffers, input, frame);
+}
+
+int w202_vpu_native_end(struct codec_file *ctx)
+{
+	return codec_context_put(ctx);
+}
+
+int w202_vpu_native_execute(struct codec_file *ctx,
+			    const struct w202_h264_config *config,
+			    const atomic_t *abort)
+{
+	struct codec_device *c = ctx->codec;
+	u32 value, bits, n;
+	unsigned int i;
+	long waited;
+	int ret;
+
+	if (atomic_read(abort))
+		return -ECANCELED;
+	writel(0xd0, c->base + 0x1010);
+	writel(0, c->base + 0x1028);
+	writel(4, c->base + 0x1020);
+	ret = readl_poll_timeout(c->base + 0x8018, value,
+				 !(value & BIT(27)), 1, 20000);
+	if (ret)
+		goto bsm_timeout;
+	writel(config->stream_address >> 4, c->base + 0x1080);
+	writel(config->stream_address >> 4, c->base + 0x1084);
+	writel(6, c->base + 0x8008);
+	writel(BIT(31), c->base + 0x8004);
+	writel((config->stream_bytes + W202_H264_BSM_PADDING) | BIT(31), c->base + 0x8000);
+	for (bits = config->header_bits; bits; bits -= n) {
+		if (atomic_read(abort))
+			return -ECANCELED;
+		n = min(bits, 32U);
+		ret = readl_poll_timeout(c->base + 0x8020, value, value & 1, 1, 20000);
+		if (ret)
+			goto bsm_timeout;
+		writel(n << 24, c->base + 0x8008);
+		writel((n << 24) | 1, c->base + 0x8008);
+		readl(c->base + 0x8010);
+	}
+	for (i = 0; i < config->count; i++)
+		writel(config->regs[i].value, c->base + config->regs[i].offset);
+	if (atomic_read(abort))
+		return -ECANCELED;
+	writel(0x7ff, c->base + REG_INT_CLEAR);
+	writel(0x1035, c->base + REG_INT_MASK);
+	writel(0xfb, c->base + REG_MMU_MASK);
+	writel(0xffffffff, c->base + 0x1038);
+	writel(1, c->base + 0x1028);
+	writel(10, c->base + 0x1030);
+	atomic_inc(&c->native_started);
+	atomic_set(&c->native_inflight, 1);
+	waited = wait_event_interruptible_timeout(c->wait,
+		READ_ONCE(c->pending) || atomic_read(abort), msecs_to_jiffies(200));
+	atomic_set(&c->native_inflight, 0);
+	if (atomic_read(abort)) {
+		/* Cancellation observed after START and before any completion/fault
+		 * IRQ. The caller still owns all mappings until native_end resets. */
+		if (!READ_ONCE(c->pending)) {
+			atomic_inc(&c->native_cancel_before_irq);
+			if (readl(c->base + REG_AXI_STATUS) & 0x101)
+				atomic_inc(&c->native_cancel_dma_active);
+		}
+		return -ECANCELED;
+	}
+	if (waited < 0)
+		return waited;
+	if (!waited) {
+		ret = -ETIMEDOUT;
+		goto bsm_timeout;
+	}
+	value = READ_ONCE(c->pending);
+	return (value & 4) && !(value & 0xffffe031) ? 0 : -EIO;
+bsm_timeout:
+	atomic_inc(&c->timeouts);
+	return ret;
 }
 
 static long codec_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
@@ -410,7 +553,8 @@ static ssize_t state_show(struct device *dev, struct device_attribute *attr, cha
 		mmu = readl(c->base + REG_MMU_RAW);
 	}
 	count = sysfs_emit(buf, "opens=%d maps=%d auto_released=%d copyout_rollbacks=%d interrupts=%d resets=%d timeouts=%d faults=%d "
-			 "broken=%u quarantined=%u quarantined_maps=%u powered=%u live_regs=%u clock=%lu pending=%08x last_irq=%08x axi=%08x raw=%08x mmu=%08x\n",
+			 "broken=%u quarantined=%u quarantined_maps=%u powered=%u live_regs=%u clock=%lu pending=%08x last_irq=%08x axi=%08x raw=%08x mmu=%08x "
+			 "native_started=%d native_inflight=%d native_cancel_before_irq=%d native_cancel_dma_active=%d\n",
 			 atomic_read(&c->opens), atomic_read(&c->maps),
 			 atomic_read(&c->auto_released), atomic_read(&c->copyout_rollbacks),
 			 atomic_read(&c->interrupts),
@@ -419,7 +563,9 @@ static ssize_t state_show(struct device *dev, struct device_attribute *attr, cha
 			 c->quarantine ? READ_ONCE(c->quarantine->buffers.count) : 0,
 			 c->powered, c->powered,
 			 clk_get_rate(c->clock),
-			 READ_ONCE(c->pending), READ_ONCE(c->last_irq), axi, raw, mmu);
+			 READ_ONCE(c->pending), READ_ONCE(c->last_irq), axi, raw, mmu,
+			 atomic_read(&c->native_started), atomic_read(&c->native_inflight),
+			 atomic_read(&c->native_cancel_before_irq), atomic_read(&c->native_cancel_dma_active));
 	mutex_unlock(&c->power_lock);
 	return count;
 }
@@ -495,7 +641,15 @@ static int codec_probe(struct platform_device *pdev)
 	if (ret) goto put_power;
 	platform_set_drvdata(pdev, c);
 	ret = misc_register(&c->misc);
-	if (!ret) dev_info(dev, "decoder native ABI /dev/sprd_vsp; exclusive owner; runtime power lease\n");
+	if (!ret) {
+		c->video = w202_vpu_video_register(dev);
+		if (IS_ERR(c->video)) {
+			ret = PTR_ERR(c->video);
+			misc_deregister(&c->misc);
+		} else {
+			dev_info(dev, "decoder ABI and V4L2 share exclusive runtime power lease\n");
+		}
+	}
 put_power:
 	w202_vpu_iommu_put(dev);
 put_codec:
@@ -515,6 +669,7 @@ static void codec_remove(struct platform_device *pdev)
 	struct codec_device *c = platform_get_drvdata(pdev);
 	int ret;
 
+	w202_vpu_video_unregister(c->video);
 	misc_deregister(&c->misc);
 	synchronize_irq(c->irq);
 	ret = pm_runtime_resume_and_get(&pdev->dev);
@@ -547,4 +702,4 @@ module_platform_driver(codec_driver);
 MODULE_IMPORT_NS("DMA_BUF");
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("W202DS native decoder ioctl, reset, IRQ and standard DMA-BUF bridge");
-MODULE_VERSION("w202ds-vpu-codec-v2-pm");
+MODULE_VERSION("w202ds-vpu-codec-v13-v4l2-multiref");
