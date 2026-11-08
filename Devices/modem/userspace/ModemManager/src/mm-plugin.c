@@ -1120,11 +1120,17 @@ mm_plugin_create_modem (MMPlugin  *self,
             GError                  *inner_error = NULL;
             MMKernelDevice          *kernel_device;
             MMKernelEventProperties *properties;
+            gboolean                 is_net;
+
+            /* Test profiles may pair an abstract AT socket with a virtual
+             * network data port, as required by packet-only modem plugins.
+             * No real network interface is created or configured here. */
+            is_net = g_str_has_prefix (virtual_ports[i], "net:");
 
             properties = mm_kernel_event_properties_new ();
             mm_kernel_event_properties_set_action (properties, "add");
             mm_kernel_event_properties_set_subsystem (properties, "virtual");
-            mm_kernel_event_properties_set_name (properties, virtual_ports[i]);
+            mm_kernel_event_properties_set_name (properties, is_net ? virtual_ports[i] + 4 : virtual_ports[i]);
 
             /* Give an empty set of rules, because we don't want them to be
              * loaded from the udev rules path (as there may not be any
@@ -1137,7 +1143,7 @@ mm_plugin_create_modem (MMPlugin  *self,
                 g_clear_error (&inner_error);
             } else if (!mm_base_modem_grab_port (modem,
                                                  kernel_device,
-                                                 MM_PORT_TYPE_AT,
+                                                 is_net ? MM_PORT_TYPE_NET : MM_PORT_TYPE_AT,
                                                  MM_PORT_SERIAL_AT_FLAG_NONE,
                                                  &inner_error)) {
                 mm_obj_warn (self, "could not grab virtual port %s: %s",

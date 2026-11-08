@@ -38,9 +38,9 @@ make OUT="$PWD/output" DESTDIR="$PWD/output/rootfs" install
 
 ## TODO / 实验中
 
-- 未适配的发行版 ModemManager 不能识别 SIPC。2026-11-07 KDE 已复用 11 月 5 日通过联网测试的 W202DS 适配二进制，接入发行版自己的 ModemManager systemd 单元及 NetworkManager；旧 `w202-cellular` 停用。详见 [桌面接入](integration/README.md)。当前源码较该固定包另有并发保护、5GS 探测和排版差异，未在本轮重新构建 MM，不把该包称作当前源码的新构建。
+- 未适配的发行版 ModemManager 不能识别 SIPC。KDE 接入发行版自己的 ModemManager systemd 单元及 NetworkManager；旧 `w202-cellular` 停用。详见 [桌面接入](integration/README.md)。2026-11-08 当前源码通过本地 x86_64 回归和 ARM64 交叉编译，已部署 `1.24.0-w202ds-sim-hotplug-20261108`；无卡识别、热插卡自动恢复 5G／NM 联网和蜂窝 DNS／HTTPS 已实测通过，热拔卡待验。
 - 现有 runtime 显式校验 `6.18.35-w202ds-m23-wifi`。后续缩短内核名称时必须同时更新运行约定，并重新验证。
-- IPv6、双卡、SIM/无线复位、长期稳定性仍待实现或验收。
+- IPv6、双卡、SIM 热插拔真机验收、无线复位、长期稳定性仍待实现或验收。
 - `runtime/private-inputs.json` 仅描述已有准备流程所需的输入。旧 BSP 的 `server-runtime-20261103-v5/` 包作为既有运行参考保留，其中厂商依赖不是本项目的开源实现；设备 NV、IMEI 和密钥仍由本机单独提供。
 
 顶层旧文件名兼容链接已移除；源码直接使用 `at/`、`runtime/`。`ModemManager/` 自带的枚举模板链接属于上游构建结构，保留在其工程内部。目录整理后的三个 ARM64 工具、离线安装暂存，以及8项 AT 回包/锁测试均通过。
@@ -50,3 +50,5 @@ make OUT="$PWD/output" DESTDIR="$PWD/output/rootfs" install
 `tests/test_modem_at.py` 配合本机编译的 `modem-at-fixture.c` 检查回包和锁；测试不启用无线电。loader 锁测试仅适用于匹配的进程所有权实现，不作为自动启动程序。
 
 2026-11-07 NV 修复已部署：`runtime/w202-modem-storage.py` 安装为 `/usr/libexec/w202-modem-storage`，提供 `prepare`、`verify`、`release`，校验镜像长度、NV 头和校验和及 loop 映射；损坏的旧文件直接报错，不补零伪造 NV。原厂 diskserver 的截断打开和脏扇区写入通过 loop 保持块设备语义。六项本地测试及真机截断／局部写对照通过；普通重启后自动联网和原厂服务实际保存 NV 后，镜像容量、校验及原厂分区哈希均通过。运行说明见 [集成说明](integration/README.md)，本地交付保留于 `releases/kde-nv-loop-20261107-v1/`。
+
+2026-11-08 SIM 热插拔修复：W202DS MM 插件监听原厂 RIL 使用的 `+ECIND: 3,...` 通知，随后通过 MM 串行命令队列发送不缓存的 `+CPIN?`。明确返回“SIM 未插入”才停用并重探测，清除旧 SIM 和网络对象；无卡时继续保留 AT 通知通道，插卡后重新识别。注册状态变化只触发确认查询，掉网、超时和普通 SIM 错误不会直接判为拔卡。没有新增轮询服务或内核修改。本地两项 SIM 单元测试、三项 AT 串口测试和八项模拟流程检查通过；构建和复现方法见 [SIM 测试说明](ModemManager/src/plugins/w202ds/tests/README.md)。ARM64 新版已部署：无卡启动识别正确，实际插卡后自动重探测并恢复 5G／NM 连接；绑定蜂窝源地址的 DNS 及绑定 `sipa_eth0`、校验证书的 HTTPS 200 通过，MM 进程未重启。热拔卡测试由用户暂缓，KDE GUI、PIN 锁卡及长期稳定性待验收。

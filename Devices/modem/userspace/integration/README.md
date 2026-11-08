@@ -24,7 +24,13 @@ nmcli connection up 'W202DS Cellular'
 
 APN 按 SIM 配置。本次 IPv4 已验证，IPv6 未验收。Wi-Fi metric 600 优先，蜂窝 900 为备用。绑定蜂窝接口的流量验证须用 IPv4，避免普通 DNS/默认 Wi-Fi 路由使测试经过别的出口。实际首次普通域名 HTTPS 有超时，随后指定已解析的 IPv4 地址、保留 TLS 主机名与证书校验，经过蜂窝接口的请求成功；不把第一次超时隐藏成全程通过。
 
-2026-11-07 在 p77 KDE 实测：MM 识别插件、SIM/5G 注册、NM 建连、主动断开重连、基带运行服务重启后自动恢复，以及恢复后的蜂窝 DNS/HTTPS。整机冷启动、移动网络断网自动恢复及 GUI 点击仍待用户验收。固定包及本轮源码/证据仅在本地 `../releases/kde-networkmanager-20261107-v1/` 保留，不随 GitHub 源码发布；MM 当前工作树另有尚未在本轮构建的改动，以该交付所记二进制版本为准。
+2026-11-07 在 p77 KDE 实测：MM 识别插件、SIM/5G 注册、NM 建连、主动断开重连、基带运行服务重启后自动恢复，以及恢复后的蜂窝 DNS/HTTPS。整机冷启动、移动网络断网自动恢复及 GUI 点击仍待用户验收。固定包及本轮源码/证据仅在本地 `../releases/kde-networkmanager-20261107-v1/` 保留，不随 GitHub 源码发布；板上二进制仍以该交付所记版本为准。
+
+2026-11-08 当前源码补上 SIM 热插拔：原厂 `+ECIND` 第 3 组或注册变化触发 `+CPIN?` 确认，明确拔卡后调用 MM 标准停用／重探测流程，让 NM 收到旧 modem、SIM 和 bearer 对象移除。无卡时保留通知端口，插卡可恢复识别；不新增独立管理服务。本地 daemon 编译和模拟回归通过，ARM64 `1.24.0-w202ds-sim-hotplug-20261108` 已替换 `/opt/w202ds/modemmanager` 内的 daemon、私有 libmm-glib 和私有 mmcli。未替换发行版系统 libmm-glib，仍使用原有 systemd／NM 接入；无卡启动实测正确显示 SIM_MISSING，没有旧 SIM、注册或附着状态。基带运行服务和热点保持运行。
+
+本轮插卡实测通过：收到 `+ECIND: 3,100` 后首次 CPIN 返回 SIM busy，后续第 3 组通知触发 CPIN READY，MM 标准重探测后由已有 NM 配置自动恢复 5G／CID1 连接。蜂窝源地址 DNS 与绑定 `sipa_eth0`、保留证书校验的 HTTPS 200 通过；MM 进程未重启，热点保持连接。联网时热拔卡由用户暂缓；KDE GUI、PIN 锁卡和长期稳定性仍待验收。
+
+测试时通过 `/run/systemd/system/ModemManager.service.d/zz-sim-hotplug-debug.conf` 临时启用 `--debug`。测试暂停后已删除该文件、daemon-reload，并通过 MM 的 SetLogging 恢复 INFO；没有为清理而重启当前已联网进程，下次启动使用原永久命令。独立日志跟随已停止，旧运行包及本轮日志在本地保留，上传暂存已清理。没有更换内核、写原厂分区或重启整个基带运行环境。测试说明见 [插件测试](../ModemManager/src/plugins/w202ds/tests/README.md)。
 
 同日用户验收：手机通过 Wi-Fi 5／5 GHz／80 MHz 热点使用平板的蜂窝出口，端到端测速为 663 Mbps、103 Mbps，用户确认蜂窝联网与热点共享通过；两项数值未标注上下行方向。此项不覆盖整机冷启动、长期稳定性或 KDE GUI 操作。
 

@@ -394,7 +394,9 @@ base_modem_internal_grab_port (MMBaseModem         *self,
         port = base_modem_create_qrtr_port (self, name, kernel_device, ptype);
 #endif
     else if (g_str_equal (subsys, "virtual"))
-        port = base_modem_create_virtual_port (self, name);
+        port = (ptype == MM_PORT_TYPE_NET ?
+                base_modem_create_net_port (self, name) :
+                base_modem_create_virtual_port (self, name));
     else if (g_str_equal (subsys, "wwan"))
         port = MM_BASE_MODEM_GET_CLASS (self)->create_wwan_port (self, name, ptype);
 
