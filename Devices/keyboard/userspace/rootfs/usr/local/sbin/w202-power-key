@@ -5,7 +5,9 @@ LONG_PRESS seconds opens the power menu (Power Off / Restart / Suspend / Cancel)
 GNOME's own power-button action is 'nothing' (dconf 60-w202-power-key) and logind ignores the key
 (logind.conf.d/50-w202-power-key.conf), so this is its only handler. It reads the gpio-keys device without grabbing
 it, chooses between off and on from the outputs' DPMS state when the key goes down, and acts in the active graphical
-session through GNOME Shell's and Mutter's D-Bus interfaces. The power menu is the GNOME Shell extension
+session through GNOME Shell's and Mutter's D-Bus interfaces. Screen off and on go through the GNOME Shell extension
+w202-screen-lock@w202ds (no lock screen while going dark, lock screen on wake, password after the lock delay);
+without it the shield is raised and lowered through org.gnome.ScreenSaver as before. The power menu is the extension
 w202-power-menu@w202ds; without it (no graphical session, extension not running) a long press suspends as before.
 Each action is logged to the journal.
 
@@ -35,6 +37,8 @@ SCREENSAVER = ["gdbus", "call", "--session", "--dest", "org.gnome.ScreenSaver",
                "--object-path", "/org/gnome/ScreenSaver", "--method"]
 POWER_MENU = ["gdbus", "call", "--session", "--dest", "org.gnome.Shell",
               "--object-path", "/io/github/w202/PowerMenu", "--method", "io.github.w202.PowerMenu.Open"]
+SCREEN_LOCK = ["gdbus", "call", "--session", "--dest", "org.gnome.Shell",
+               "--object-path", "/io/github/w202/ScreenLock", "--method"]
 
 
 def log(msg):
@@ -86,6 +90,8 @@ def displays_lit():
 
 
 def screen_off():
+    if user_bus(SCREEN_LOCK + ["io.github.w202.ScreenLock.ScreenOff"]) is not None:
+        return
     active = user_bus(SCREENSAVER + ["org.gnome.ScreenSaver.GetActive"])
     if active is None:
         return
@@ -102,6 +108,8 @@ def screen_off():
 
 
 def screen_on():
+    if user_bus(SCREEN_LOCK + ["io.github.w202.ScreenLock.ScreenOn"]) is not None:
+        return
     user_bus(["busctl", "--user", "set-property"] + MUTTER + ["PowerSaveMode", "i", "0"])
 
 
