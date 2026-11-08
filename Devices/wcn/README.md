@@ -21,6 +21,18 @@ wcn/
 | 蓝牙业务传输、音频与休眠恢复 | 待验证 | 文件传输、LE／HID、音频和休眠恢复尚未验收；L2CAP echo 不等于这些业务已通过。 |
 | GNSS 卫星定位 | 待验证 | 尚无实际定位结果。 |
 
+### 热点断连与扫描保护（2026-11-08）
+
+复测时手机完成 WPA2 认证与 DHCP 后仍多次在约 40–58 秒断开，热点本身和蜂窝连接保持运行。D-Bus 抓取确认 KDE 网络面板约每 10 秒请求全频扫描，驱动将扫描发送到 AP 固件；这是干扰热点的可疑因素，尚未证明是全部断连和低速的原因。
+
+`source/sprd_wlan_combo/sc2355/scan.c` 在 cfg80211 已成功启动 AP 后拒绝扫描并返回 `-EBUSY`，保留 AP 启动前的 HT／ACS 扫描及 STA 扫描。本地构建通过（原厂代码仍有既有编译警告），真机在新模块下完成 STA 自动认证、DHCP，再切回 5 GHz／信道 36／80 MHz 热点；运行中的扫描请求返回 `-16`，未继续下发固件扫描。模块已安装到当前内核对应目录，未替换内核或 WCN 总线。
+
+独立 Debian 主机改为 STA、关闭客户端省电，WPA2 认证与 DHCP DISCOVER→OFFER→REQUEST→ACK 均通过。主机 AppArmor 拒绝临时 DHCP 配置脚本，测试随后只应用实际分配的 `10.42.0.92/24`，保留有线默认路由与 DNS。主机到平板 AP 的局域网 TCP 每项约 8 秒：单连接下载 496.47 Mbps、上传 454.14 Mbps；四连接下载 609.34 Mbps、上传 431.33 Mbps，方向以 STA 为准。实际协商 VHT／80 MHz／两流，最高观察到 866.7 Mbps；测试前后各 10 个 ping 均零丢包，平均约 3.84 ms。这是 TCP 有效吞吐，未经过蜂窝网络。测试结束已恢复主机原有热点。
+
+同一时段平板直接绑定 `sipa_eth0` 访问此前使用的 CAICT 云浮移动节点，下载约 179.88 Mbps、上传 88.40 Mbps，5 个 ping 零丢包、平均 25.31 ms；ModemManager 为 connected／5gnr／attached。下载 8 条连接均为 HTTP 206，上传 4 条均为 HTTP 200，curl 均成功。当前蜂窝路径到该节点低于 300 Mbps，不能据此归因为基带驱动或无线网络中的某一个因素。手机连续关联超过 8 分钟未见再次断连，但手机 ICMP 仍有高延迟／丢包，期间是否待机尚未确认；手机省电兼容性、长时间运行和冷启动恢复仍待验。
+
+本轮热点由 NetworkManager 保存 WPA2 密码，不依赖 KWallet；开启热点使用同一个 `wlan0` 切换模式并断开 STA，无需关闭 Wi-Fi 无线电。80 MHz 配置和界面入口见下文。重载 Wi-Fi 时使用 `rmmod sprd_wlan_combo` 保留依赖；若卸载了 cfg80211，原有 supplicant 可能暂用失效的 nl80211 状态，本轮通过重启标准 wpa_supplicant 后恢复。
+
 2026-11-07：早先手机已在 2.4 GHz 下取得地址并上网，但后续重开热点又认证失败。本轮用独立客户端对照：独立 hostapd 能认证，NM 默认创建 P2P-device 时连续认证超时；移除 P2P-device 并重开热点后恢复。重启 wpa_supplicant 使 P2P-device 重建又复现，移除后再次恢复。关闭测试客户端自身省电后，无预设 IPv4 的 DHCP 广播分配也稳定通过；不能把此前漏收的 DHCPOFFER 当成 dnsmasq 故障。WPA2／CCMP、PMF 禁用，WPS 和 key_mgmt 保留 NM 默认。
 
 `source/sprd_wlan_combo/sc2355/init.c` 新增只读布尔模块参数 `disable_p2p`，默认关闭以保留原驱动行为。本板设置 `options sprd_wlan_combo disable_p2p=1`：只上报 managed／AP，取消 P2P 和并发组合以及 software_iftypes 旁路，由 cfg80211 限制为一个 STA 或 AP 接口。参数需在模块加载时设置。KDE rootfs 的标准 modprobe 配置由外层 `bsp/integration/boot-handoff/kde-rootfs/etc/modprobe.d/w202-wifi.conf` 管理；本机 factory_mac 私有值留在设备配置，不写入通用配置。
