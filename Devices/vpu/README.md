@@ -8,7 +8,7 @@ vpu/
 ├── source/                          # 当前内核驱动
 │   ├── w202_vpu_power.c             # 电源域
 │   ├── w202_vpu_iommu.c             # VAU IOMMU
-│   ├── w202_vpu_codec_main.c        # 私有 /dev/sprd_vsp、IRQ、reset
+│   ├── w202_vpu_codec_main.c        # 硬件独占、原生执行、IRQ、reset 及私有资源接口
 │   ├── w202_vpu_buffers.c           # DMA-BUF 引用和映射
 │   ├── w202_vpu_ranges.c            # 原生作业 SG 物理范围别名校验
 │   ├── w202_vpu_h264.c             # Baseline/Main/High、I/P/B、加权、多参考、8×8 和 scaling
@@ -17,6 +17,7 @@ vpu/
 │   ├── w202_vpu_native.h            # 共享作业、DMA 导入和复位接口
 │   ├── w202_vpu*.h                  # 公共头文件及私有缓冲 ABI
 │   ├── v4l2.md                      # 标准接口适配路线和控制模型
+│   ├── validation-*.json            # 分阶段硬件验证、网站播放与已知限制
 │   └── tests/                       # 内核诊断模块
 ├── userspace/
 │   ├── README.md                    # 用户态源码说明
@@ -36,7 +37,9 @@ vpu/
 | KDE 下 H.264 硬解 | 短测通过 | 2026-11-06 在 KDE 标准版解码 60 帧 640×360，逐帧匹配软件参考；零超时 / 故障，结束后 suspended。Chrome 视频播放不代表已使用此 VPU。 |
 | 解码后空闲省电 | 已验证 | 测试结束后进入 suspended；尚未覆盖长时间播放及反复启停。 |
 | 普通播放器与浏览器硬件解码 | 受限 H.264 短测通过 | FFmpeg 32 帧，Chrome 157 与 Firefox ESR 153 各三组 24 帧原始 NV12 匹配软件参考；两浏览器均有实际 VPU 作业／IRQ 证据。使用独立 profile、VA-API 桥与进程级沙箱调试例外，长期和默认配置未验收。 |
-| Chrome B 站播放 | 匿名 360p High 连续硬解通过 | V13／Chrome 157：VaapiVideoDecoder、平台标志 true，约 62 秒呈现 1864 帧、丢帧 0，VPU 作业／IRQ 各增 1880；随后网站登录窗暂停。默认 AV1 仍走软件；登录后高清和长期播放尚未验证。 |
+| Chrome B 站播放 | 1080p30 High 硬解已观测 | 两条 1080p 视频各采样 25 秒、各增加 750 帧、无新增丢帧，实际使用 VaapiVideoDecoder 且 VPU 作业／IRQ 增长；用户仍反馈画面不流畅，流畅度未验收。默认 AV1 仍走软件。 |
+| DASH 公开视频播放 | 720p30／1080p30 High 及交互通过 | 切清晰度、前后 seek、暂停恢复通过；整个测试流程累计 10277 帧、丢 13 帧，未完整播放全片。 |
+| HLS／1080p60 | 当前测试失败 | Mux 样本前四个 VPU 作业完成，第五个图像为尚不支持的非 IDR I；未证明 1080p60 实时吞吐。 |
 | 视频编码 | 待验证 | 尚无编码功能验收结果。 |
 | 其他视频格式 | 待验证 | 当前结果只覆盖 H.264 / AVC。 |
 
@@ -64,8 +67,13 @@ Firefox 呈现 8 帧、丢帧 0。Firefox 需要进程内绑定匹配 Mesa GLES 
 和其他 chroma format 仍不支持，L1 超过两项尚无本轮像素资格覆盖。
 具体分步目标、限制及验证条件见 [V4L2 适配路线](source/v4l2.md)。
 
+后续网站播放、HLS 失败样本和用户反馈的卡顿诊断见
+[validation-v13-playback.json](source/validation-v13-playback.json)。两段 1080p30 现场采样
+缓冲充足、无新增 VPU 超时或故障；一次采样出现较长的视频帧提交／回调间隔，
+不能只凭零新增丢帧推断画面流畅。卡顿根因仍未锁定，也未修复。
+
 历史源码、候选与证据位于只读研究归档 `archive/linux/vpu-v4l2-20261107-v2/`，
-统一报告为 `evidence/qualification-v9.json`。测试 profile 和临时目录已清理。
+统一报告为 `evidence/qualification-v9.json`。该历史轮次的测试 profile 和临时目录已清理。
 当前 V13 仅临时加载在内存，磁盘仍为 V2，重启后回到 V2；尚未持久安装。
 V13 用例、模块／桥身份、网页和空闲证据见 [validation-v13.json](source/validation-v13.json)。
 V10 历史用例见 [validation-v10.json](source/validation-v10.json)；V13 的完整截图、日志、

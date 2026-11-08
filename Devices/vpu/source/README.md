@@ -45,7 +45,10 @@ codec 新增 `v4l2-mem2mem` 和既有 videodev/vb2-vmalloc 依赖；独立 M2M h
 V13 在 Chrome 157 的 B 站匿名 360p High 上连续硬解约 62 秒：VaapiVideoDecoder、
 平台标志 true、呈现 1864 帧且丢帧 0，VPU 作业／IRQ 各增 1880；随后网站登录窗暂停。
 抓取的 65 秒原码流 1950 帧与软件 NV12 逐帧一致；默认 AV1 仍是 Dav1d 软件解码。
-Chrome/Firefox 的 Baseline/Main 独立配置短测为 V9 历史结果；登录后高清、
+后续在两条 B 站视频观测到 1920×1080 High 硬解，各 25 秒采样增加 750 帧且无新增丢帧；
+DASH 720p30／1080p30 及切清晰度、前后 seek、暂停恢复通过。
+用户仍反馈不流畅，流畅度未验收；Mux HLS 样本遇到非 IDR I 后失败，不能据此认定
+1080p60 吞吐通过。Chrome/Firefox 的 Baseline/Main 独立配置短测为 V9 历史结果；
 视频编码、其他格式及长时稳定性仍待完成。
 用户态源码在 [`../userspace/source/`](../userspace/source/) 维护；专有运行包、厂商参考
 和历史移植记录保留在本地。
@@ -58,6 +61,8 @@ Chrome/Firefox 的 Baseline/Main 独立配置短测为 V9 历史结果；登录�
 92 项 Request（520 帧）及 FFmpeg VA-API 九组 65 帧回归通过。
 精确范围、模块身份及本轮未重跑的历史项目见 [validation-v13.json](validation-v13.json)。
 V10 的 High／scaling 历史记录见 [validation-v10.json](validation-v10.json)。
+后续网站播放和帧间隔采样见 [validation-v13-playback.json](validation-v13-playback.json)，
+失败样本与未完成的流畅度验证单独保留；这些测试没有修改 V13 驱动或桥接库。
 
 以下为 V9 的历史验证：2026-11-07 正常重启后临时加载
 `w202ds-vpu-codec-v9-v4l2-poc-origin`，32 项标准 Request 全部通过，覆盖

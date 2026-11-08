@@ -75,7 +75,11 @@ FFmpeg 9 组通过；V10 未重做浏览器 High、B 站及完整第三方 Meson
 V13 已补齐内核加权、多活动参考、参考 B 和 temporal direct；桥及 Chrome 二进制沿用。
 FFmpeg 解码 B 站原码流 1950 帧、额外多参考 576 帧和加权 72 帧均匹配软件 NV12。
 Chrome 的匿名 360p High 连续硬解约 62 秒，VaapiVideoDecoder、平台标志 true，呈现
-1864 帧、丢帧 0，VPU 作业／IRQ 各增 1880；随后网站登录窗暂停。登录后高清未验证。
+1864 帧、丢帧 0，VPU 作业／IRQ 各增 1880；随后网站登录窗暂停。
+后续两条 B 站视频已观测到 1080p30 High 硬解，各 25 秒增加 750 帧且无新增丢帧；
+DASH 720p30／1080p30 及交互也已通过。用户仍反馈不流畅，不能将吞吐／丢帧计数
+当作流畅度验收。Mux HLS 样本遇到非 IDR I 后失败，1080p60 吞吐尚未证明。
+后续记录见 [validation-v13-playback.json](../source/validation-v13-playback.json)。
 现有诊断解析器仍保持上述单参考／无加权限制；新的预测能力通过标准 FFmpeg／VA-API
 路径验证，未放宽该解析器或伪造 controls。精确范围和候选身份见
 [validation-v13.json](../source/validation-v13.json)。完整第三方 Meson 套件仍未运行。
