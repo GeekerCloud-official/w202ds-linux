@@ -6,6 +6,7 @@
 #include <linux/delay.h>
 #include <linux/gpio.h>
 #include <linux/gpio/consumer.h>
+#include <linux/input.h>
 #include <linux/interrupt.h>
 #include <linux/module.h>
 #include <linux/mutex.h>
@@ -19,6 +20,7 @@ struct w202_zsk {
 	struct device *dev;
 	struct gpio_desc *id;
 	struct gpio_desc *enable;
+	struct input_dev *tablet_mode;
 	struct delayed_work detect_work;
 	struct mutex lock;
 	int irq;
@@ -60,6 +62,8 @@ static void w202_zsk_detect_work(struct work_struct *work)
 		dev_info(zsk->dev, "attached=%u power=%u (ID raw=%d)\n",
 			 zsk->attached, zsk->powered, raw);
 	}
+	input_report_switch(zsk->tablet_mode, SW_TABLET_MODE, !attached);
+	input_sync(zsk->tablet_mode);
 out:
 	mutex_unlock(&zsk->lock);
 }
@@ -129,6 +133,17 @@ static int w202_zsk_probe(struct platform_device *pdev)
 	ret = devm_add_action_or_reset(dev, w202_zsk_power_off, zsk);
 	if (ret)
 		return ret;
+	/* A detached cover exposes the standard tablet-mode switch to the desktop. */
+	zsk->tablet_mode = devm_input_allocate_device(dev);
+	if (!zsk->tablet_mode)
+		return -ENOMEM;
+	zsk->tablet_mode->name = "W202DS Tablet Mode";
+	zsk->tablet_mode->phys = "w202-zsk/tablet-mode";
+	zsk->tablet_mode->id.bustype = BUS_HOST;
+	input_set_capability(zsk->tablet_mode, EV_SW, SW_TABLET_MODE);
+	ret = input_register_device(zsk->tablet_mode);
+	if (ret)
+		return dev_err_probe(dev, ret, "registering tablet mode switch\n");
 	zsk->irq = gpiod_to_irq(zsk->id);
 	if (zsk->irq < 0)
 		return dev_err_probe(dev, zsk->irq, "keyboard attachment IRQ\n");
