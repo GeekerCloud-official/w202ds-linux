@@ -14,16 +14,16 @@
 #include <linux/of_fdt.h>
 #include <linux/spinlock.h>
 #include <linux/workqueue.h>
-#include "w202-pjb-console.h"
+#include "pj4edk-boot-display.h"
 #include <asm/cacheflush.h>
-#include "w202-pjb-console-core.h"
+#include "pj4edk-boot-display-core.h"
 
 #define PRESENT_RETRY_MS 1
-static struct pjb_terminal terminal, frame;
-static struct pjb_glyphs glyphs;
-static struct pjb_shadow shadow;
-static struct pjb_damage damage;
-static DEFINE_RAW_SPINLOCK(pjb_lock);
+static struct pj4edk_terminal terminal, frame;
+static struct pj4edk_glyphs glyphs;
+static struct pj4edk_shadow shadow;
+static struct pj4edk_damage damage;
+static DEFINE_RAW_SPINLOCK(pj4edk_lock);
 static bool owned, workers_ready;
 static void __iomem *inherited_dpu;
 static bool present_pending, present_inflight, single_run;
@@ -40,13 +40,13 @@ module_param(render_max_ns, ulong, 0444);
 module_param(present_count, ulong, 0444);
 module_param(queue_max_ns, ulong, 0444);
 module_param(present_busy, ulong, 0444);
-static void pjb_flush_work(struct work_struct *work);
-static DECLARE_DELAYED_WORK(pjb_work, pjb_flush_work);
+static void pj4edk_flush_work(struct work_struct *work);
+static DECLARE_DELAYED_WORK(pj4edk_work, pj4edk_flush_work);
 
 /* The inherited panel uses single-run command mode on UEFI boots. Cleaning
  * framebuffer cache alone does not submit it. Use the existing scanout only,
  * without IRQ ownership, resets, clock changes or a synchronous busy wait. */
-static void pjb_present(void)
+static void pj4edk_present(void)
 {
 	u32 ctrl;
 
@@ -67,21 +67,21 @@ static void pjb_present(void)
 	present_count++;
 }
 
-static void pjb_render(void)
+static void pj4edk_render(void)
 {
 	unsigned int col, x;
 	u64 start = ktime_get_mono_fast_ns(), elapsed;
 
-	pjb_draw_damage(&frame, &shadow, &damage);
+	pj4edk_draw_damage(&frame, &shadow, &damage);
 	for (col = 0; col < frame.cols; col++) {
 		unsigned int px, height;
 
 		if (!damage.end[col])
 			continue;
-		px = 1200 - frame.top - damage.end[col] * PJB_CELL_H;
-		height = (damage.end[col] - damage.first[col]) * PJB_CELL_H;
-		for (x = frame.left + col * PJB_CELL_W;
-		     x < frame.left + (col + 1) * PJB_CELL_W; x++) {
+		px = 1200 - frame.top - damage.end[col] * PJ4EDK_CELL_H;
+		height = (damage.end[col] - damage.first[col]) * PJ4EDK_CELL_H;
+		for (x = frame.left + col * PJ4EDK_CELL_W;
+		     x < frame.left + (col + 1) * PJ4EDK_CELL_W; x++) {
 			unsigned long address = (unsigned long)(frame.pixels + x * 1200 + px);
 
 			dcache_clean_poc(address, address + height * sizeof(u16));
@@ -98,13 +98,13 @@ static void pjb_render(void)
 	render_max_ns = max_t(unsigned long, render_max_ns, elapsed);
 }
 
-static void pjb_flush_work(struct work_struct *work)
+static void pj4edk_flush_work(struct work_struct *work)
 {
 	unsigned long flags;
 
-	raw_spin_lock_irqsave(&pjb_lock, flags);
+	raw_spin_lock_irqsave(&pj4edk_lock, flags);
 	if (!owned) {
-		raw_spin_unlock_irqrestore(&pjb_lock, flags);
+		raw_spin_unlock_irqrestore(&pj4edk_lock, flags);
 		return;
 	}
 	/* Coalesce only while hardware owns an in-flight frame. No fixed log
@@ -114,8 +114,8 @@ static void pjb_flush_work(struct work_struct *work)
 	if (inherited_dpu && present_inflight &&
 	    !(readl(inherited_dpu + 0x25c) & present_done)) {
 		present_busy++;
-		schedule_delayed_work(&pjb_work, msecs_to_jiffies(PRESENT_RETRY_MS));
-		raw_spin_unlock_irqrestore(&pjb_lock, flags);
+		schedule_delayed_work(&pj4edk_work, msecs_to_jiffies(PRESENT_RETRY_MS));
+		raw_spin_unlock_irqrestore(&pj4edk_lock, flags);
 		return;
 	}
 	/* The bounded text snapshot is the only work under the IRQ-off lock.
@@ -128,71 +128,71 @@ static void pjb_flush_work(struct work_struct *work)
 				    ktime_get_mono_fast_ns() - queued_ns);
 		queued_ns = 0;
 	}
-	raw_spin_unlock_irqrestore(&pjb_lock, flags);
+	raw_spin_unlock_irqrestore(&pj4edk_lock, flags);
 	if (frame.dirty)
-		pjb_render();
-	pjb_present();
-	raw_spin_lock_irqsave(&pjb_lock, flags);
+		pj4edk_render();
+	pj4edk_present();
+	raw_spin_lock_irqsave(&pj4edk_lock, flags);
 	if (owned && (terminal.dirty || (present_pending && inherited_dpu))) {
 		if (!queued_ns)
 			queued_ns = ktime_get_mono_fast_ns();
-		schedule_delayed_work(&pjb_work, present_pending ?
+		schedule_delayed_work(&pj4edk_work, present_pending ?
 			msecs_to_jiffies(PRESENT_RETRY_MS) : 0);
 	}
-	raw_spin_unlock_irqrestore(&pjb_lock, flags);
+	raw_spin_unlock_irqrestore(&pj4edk_lock, flags);
 }
 
-static void pjb_console_write(struct console *con, const char *s, unsigned int count)
+static void pj4edk_console_write(struct console *con, const char *s, unsigned int count)
 {
 	unsigned long flags;
 
-	raw_spin_lock_irqsave(&pjb_lock, flags);
+	raw_spin_lock_irqsave(&pj4edk_lock, flags);
 	if (!owned) {
-		raw_spin_unlock_irqrestore(&pjb_lock, flags);
+		raw_spin_unlock_irqrestore(&pj4edk_lock, flags);
 		return;
 	}
 	while (count--)
-		pjb_character(&terminal, *s++);
+		pj4edk_character(&terminal, *s++);
 	/* Do not move an already pending deadline: a log storm must not starve
 	 * rendering. No raster, cache maintenance or MMIO in printk context.
 	 */
 	if (terminal.dirty && workers_ready) {
 		if (!queued_ns)
 			queued_ns = ktime_get_mono_fast_ns();
-		schedule_delayed_work(&pjb_work, 0);
+		schedule_delayed_work(&pj4edk_work, 0);
 	}
-	raw_spin_unlock_irqrestore(&pjb_lock, flags);
+	raw_spin_unlock_irqrestore(&pj4edk_lock, flags);
 }
 
 /* A persistent secondary console: ordinary serial-console registration must
  * not discard it before KMS has a complete frame. It never becomes a tty.
  */
-static struct console pjb_console = {
-	.name = "pjblog", .write = pjb_console_write,
+static struct console pj4edk_console = {
+	.name = "pj4edklog", .write = pj4edk_console_write,
 	.flags = CON_ENABLED | CON_PRINTBUFFER, .index = 0,
 };
 
-bool w202_pjb_console_active(void)
+bool pj4edk_boot_display_console_active(void)
 {
 	return READ_ONCE(owned);
 }
-EXPORT_SYMBOL_GPL(w202_pjb_console_active);
+EXPORT_SYMBOL_GPL(pj4edk_boot_display_console_active);
 
-void w202_pjb_console_release(void)
+void pj4edk_boot_display_console_release(void)
 {
 	unsigned long flags;
 
-	raw_spin_lock_irqsave(&pjb_lock, flags);
+	raw_spin_lock_irqsave(&pj4edk_lock, flags);
 	owned = false;
-	raw_spin_unlock_irqrestore(&pjb_lock, flags);
+	raw_spin_unlock_irqrestore(&pj4edk_lock, flags);
 	/* Process context only. Return only after framebuffer/MMIO writes stop.
 	 * Retained clock references are released separately by aperture takeover.
 	 */
-	cancel_delayed_work_sync(&pjb_work);
+	cancel_delayed_work_sync(&pj4edk_work);
 }
-EXPORT_SYMBOL_GPL(w202_pjb_console_release);
+EXPORT_SYMBOL_GPL(pj4edk_boot_display_console_release);
 
-static int __init pjb_console_init(void)
+static int __init pj4edk_console_init(void)
 {
 	const __be32 *property, *reg;
 	struct memblock_region *r;
@@ -225,19 +225,19 @@ static int __init pjb_console_init(void)
 	for_each_reserved_mem_region(r)
 		if (r->base <= 0xb0000000 && r->base + r->size >= 0xb09e4000)
 			reserved = true;
-	if (!reserved || pjb_terminal_init(&terminal, v, phys_to_virt(0xb0000000), font_vga_8x16.data))
+	if (!reserved || pj4edk_terminal_init(&terminal, v, phys_to_virt(0xb0000000), font_vga_8x16.data))
 		return 0;
-	pjb_prepare_font(&glyphs, terminal.font);
+	pj4edk_prepare_font(&glyphs, terminal.font);
 	terminal.glyphs = &glyphs;
 	owned = true;
-	register_console(&pjb_console);
-	pr_info("PJB: boot-output console %ux%u; native 12x24 font; retained scanout\n",
+	register_console(&pj4edk_console);
+	pr_info("pj4edk-boot-display: boot-output console %ux%u; native 12x24 font; retained scanout\n",
 		terminal.cols, terminal.rows);
 	return 0;
 }
-console_initcall(pjb_console_init);
+console_initcall(pj4edk_console_init);
 
-static int __init pjb_workers_init(void)
+static int __init pj4edk_workers_init(void)
 {
 	unsigned long flags;
 	void __iomem *dpu = NULL;
@@ -252,18 +252,18 @@ static int __init pjb_workers_init(void)
 		}
 	}
 
-	raw_spin_lock_irqsave(&pjb_lock, flags);
+	raw_spin_lock_irqsave(&pj4edk_lock, flags);
 	inherited_dpu = dpu;
 	if (dpu) {
 		single_run = (readl(dpu + 0x0c) & (BIT(0) | BIT(1))) != 0;
 		present_done = single_run ? BIT(0) : BIT(18);
 	}
 	workers_ready = true;
-	raw_spin_unlock_irqrestore(&pjb_lock, flags);
-	if (w202_pjb_console_active())
-		schedule_delayed_work(&pjb_work, 0);
+	raw_spin_unlock_irqrestore(&pj4edk_lock, flags);
+	if (pj4edk_boot_display_console_active())
+		schedule_delayed_work(&pj4edk_work, 0);
 	return 0;
 }
-core_initcall(pjb_workers_init);
+core_initcall(pj4edk_workers_init);
 
-#include "w202-pjb-display.h"
+#include "pj4edk-boot-display-clocks.h"

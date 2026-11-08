@@ -1,7 +1,7 @@
-# Linux boot-display
+# pj4edk-boot-display
 
 DRM 前的可选启动日志实现，源码属于 Linux；没有导入 EFI、LK 或 PocketJS 运行时。
-`CONFIG_W202_PJB_CONSOLE=y` 时内建，真实启用还要求 `/chosen/pocketjs,boot-display`
+`CONFIG_PJ4EDK_BOOT_DISPLAY=y` 时内建，真实启用还要求 `/chosen/pocketjs,boot-display`
 通过长度、格式、几何和已保留显存校验。缺少或无效描述时不注册此 console。
 
 `printk` 回调更新文本，workqueue 异步画脏字符、清理缓存并提交继承的 DPU 帧。
@@ -21,7 +21,7 @@ DRM 必须先取得自己的时钟引用。本组件不控制 DRM 的私有入�
 CPU/MMU/缓存状态、内存与 initramfs 布局属于启动协议；黑框继承是本项目可选扩展。
 
 显示描述在 DTB `/chosen/pocketjs,boot-display`，80 字节、20 个大端 u32。
-EFI 内部发布的 `PJB_BOOT_DISPLAY` 是另一份 36 字节矩形描述，启动器读取它，
+EFI 内部发布的 BootDisplay 配置表使用另一份 36 字节矩形描述，启动器读取它，
 核对 GOP/显示寄存器/保留内存后转换成这 80 字节；Linux 不使用 EFI 配置表中的原指针。
 
 | 索引 | 当前约定 |

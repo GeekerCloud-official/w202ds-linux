@@ -9,8 +9,8 @@
 #include <linux/sysfs.h>
 
 /* Optional early-console ABI, resolved and pinned independently of DRM. */
-extern bool w202_pjb_console_active(void);
-extern void w202_pjb_console_release(void);
+extern bool pj4edk_boot_display_console_active(void);
+extern void pj4edk_boot_display_console_release(void);
 static bool (*console_active)(void);
 static void (*console_release)(void);
 static DEFINE_MUTEX(release_lock);
@@ -73,13 +73,13 @@ MODULE_PARM_DESC(release, "Write 1 to drain and stop the early writer; clock own
 
 static int __init pj4edk2_handoff_init(void)
 {
-	console_active = symbol_get(w202_pjb_console_active);
-	console_release = symbol_get(w202_pjb_console_release);
+	console_active = symbol_get(pj4edk_boot_display_console_active);
+	console_release = symbol_get(pj4edk_boot_display_console_release);
 	if (!console_active || !console_release) {
 		if (console_active)
-			symbol_put(w202_pjb_console_active);
+			symbol_put(pj4edk_boot_display_console_active);
 		if (console_release)
-			symbol_put(w202_pjb_console_release);
+			symbol_put(pj4edk_boot_display_console_release);
 		console_active = NULL;
 		console_release = NULL;
 	}
@@ -95,9 +95,9 @@ static void __exit pj4edk2_handoff_exit(void)
 {
 	/* Unload itself does not release ownership or change hardware. */
 	if (console_release)
-		symbol_put(w202_pjb_console_release);
+		symbol_put(pj4edk_boot_display_console_release);
 	if (console_active)
-		symbol_put(w202_pjb_console_active);
+		symbol_put(pj4edk_boot_display_console_active);
 }
 module_init(pj4edk2_handoff_init);
 module_exit(pj4edk2_handoff_exit);

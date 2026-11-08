@@ -41,8 +41,10 @@ make -C Devices/wcn/userspace OUT="$PWD/output/wcn-bt-arm64" DESTDIR="$PWD/outpu
 
 ## 分离后的内建与模块
 
-`kernel/` 内 5 个功能位置的相对链接指向 `Devices/`；复制源码时保留整个 `6.18.35` 布局和链接。
-早期黑框日志、背光、USB PHY、旧诊断 fbcon 和恢复接口仍按 Server 配置内建，模块归属不等于晚加载。
+`kernel/` 内 4 个功能位置的相对链接指向 `Devices/`；复制源码时保留整个 `6.18.35` 布局和链接。
+早期黑框日志、背光、USB PHY 和恢复接口仍按 Server 配置内建，模块归属不等于晚加载。
+早期日志组件为 `pj4edk-boot-display`，由 `CONFIG_PJ4EDK_BOOT_DISPLAY` 控制。
+旧 `/dev/w202fbcon` 接口及其实现、构建入口已删除。
 背光、USB PHY 另有显式 `.ko` 编译目标，见 `Devices/BUILD.md`。
 
 内核 Panfrost 是原版，板级版本仅在 `Devices/gpu/source/panfrost/` 维护。

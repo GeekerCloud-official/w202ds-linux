@@ -6,7 +6,7 @@
 
 外层用户态在适当阶段向 `/sys/devices/platform/w202-r6p0-lk-dsi/display_enable` 写1，才启用时钟和中断并执行显示初始化。若 DT 提供有效的 `pocketjs,boot-display` 区域合同，创建原生 DRM 黑框 console；普通启动则创建全屏 fbdev。写入同步返回初始化结果，请求不能写0回退。`defer_modeset=0` 仅供明确选择立即启用行为。
 
-启用流程先分配 RGB565 framebuffer、持有 DPU/DSI 时钟，再通过 Linux 通用 aperture API 移除继承的 framebuffer 所有者，复制旧画面并初始化显示。DRM 不引用私有 handoff 符号；boot-display 的 aperture remove 回调同步停止写屏后释放其时钟引用。首次 KMS 提交锁存成功后开启背光，异步 console 只改黑框内变化的字形，框外保留原图。DPU 连续扫描，不逐行 atomic commit。
+启用流程先分配 RGB565 framebuffer、持有 DPU/DSI 时钟，再通过 Linux 通用 aperture API 移除继承的 framebuffer 所有者，复制旧画面并初始化显示。DRM 不引用私有 handoff 符号；`pj4edk-boot-display` 的 aperture remove 回调同步停止写屏后释放其时钟引用。首次 KMS 提交锁存成功后开启背光，异步 console 只改黑框内变化的字形，框外保留原图。DPU 连续扫描，不逐行 atomic commit。
 
 `boot_console_status` 提供接管、帧数、字形数及 CPU 绘制计时；向 `boot_console` 写0停止黑框 writer 并启用全屏 fbdev。写入 `preserve` 则只停 writer，保留画面且不创建全屏 fbdev，供桌面 compositor 随后提交。引导 framebuffer 保留至 DRM 注销或重启，避免释放仍可能扫描的内存。登录阶段由外层集成判定，驱动不认识 systemd 或 handoff。
 
@@ -20,7 +20,7 @@
 
 仅当 `/chosen/pocketjs,boot-display` 完整且布局有效时，使用继承画面和框内日志。
 缺失、长度错误、未知版本、地址/格式/旋转不符、矩形越界均回到普通 fbdev；不因可选描述损坏阻止 DRM 激活。
-资源分配或真正的硬件初始化失败仍返回错误。协议内容见 `../boot-display/README.md`。
+资源分配或真正的硬件初始化失败仍返回错误。协议内容见 `../pj4edk-boot-display/README.md`。
 
 CM2 主机测试（无硬件访问）：
 

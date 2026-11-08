@@ -7,7 +7,7 @@
 上游：`https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git`。
 W202DS 内核仓库：`https://github.com/Yeamika/w202ds-linux-kernel.git`，分支 `6.18.35`。
 基线提交：`acb7cf4c1184e27622be0faf89244d5001ed1e87`。
-当前适配提交：`815a26419264a57cb9a7a8f4f4bf2869fd70048a`。
+当前适配提交：`53bb26e2e0d531ba4113eaa898cfdfb3765537c1`。
 本轮新提交的作者和提交者均使用 `Yeamika <255833500+Yeamika@users.noreply.github.com>`。
 
 ## 检查与继续开发
@@ -24,7 +24,7 @@ git -C kernel log --oneline v6.18.35..HEAD
 
 先在 `kernel/` 提交内核改动，再在主仓库 `git add kernel` 并提交新指针。
 `Devices/` 中的模块实现、配置和设备树由主仓库维护，不属于内核子模块提交。
-内核仍有 5 个相对链接接入这些实现，构建必须保留同级 `Devices/` 布局。
+内核仍有 4 个相对链接接入这些实现，构建必须保留同级 `Devices/` 布局。
 构建命令见 [BUILD.md](BUILD.md)，显式设置 `LOCALVERSION=`，防止新 Git 提交使内核版本多出 `+`。
 
 ## 从 GitHub 检出

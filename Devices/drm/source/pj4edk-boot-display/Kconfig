@@ -1,5 +1,5 @@
-config W202_PJB_CONSOLE
-	bool "W202DS retained boot display log"
+config PJ4EDK_BOOT_DISPLAY
+	bool "pj4edk-boot-display retained boot logs (W202DS)"
 	depends on ARM64 && OF && COMMON_CLK
 	select APERTURE_HELPERS
 	select FONT_SUPPORT

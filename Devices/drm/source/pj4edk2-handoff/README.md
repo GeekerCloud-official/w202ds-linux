@@ -3,7 +3,8 @@
 独立 Linux 控制模块，输出 `pj4edk2-handoff.ko`。从原项目
 `bsp/integration/boot-handoff/pj4edk2-handoff/` 迁入源码；不含 EFI/LK 工程。
 
-加载默认 `release=0`，通过 `symbol_get` 查询可选早期 console。
+加载默认 `release=0`，通过 `symbol_get` 查询可选的 `pj4edk-boot-display` 早期 console。
+使用 `pj4edk_boot_display_console_active/release` 导出符号。
 没有 provider 也能加载；`/sys/module/pj4edk2_handoff/parameters/` 提供：
 
 | 属性 | 用途 |
