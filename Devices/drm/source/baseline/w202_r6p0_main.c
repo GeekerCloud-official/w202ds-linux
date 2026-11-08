@@ -19,6 +19,7 @@
 #include <linux/of_irq.h>
 #include <linux/platform_device.h>
 #include <linux/regmap.h>
+#include <drm/drm_atomic.h>
 #include <drm/drm_atomic_helper.h>
 #include <drm/drm_connector.h>
 #include <drm/clients/drm_client_setup.h>
@@ -31,6 +32,7 @@
 #include <drm/drm_gem_dma_helper.h>
 #include <drm/drm_gem_framebuffer_helper.h>
 #include <drm/drm_managed.h>
+#include <drm/drm_modeset_helper_vtables.h>
 #include <drm/drm_probe_helper.h>
 #include <drm/drm_prime.h>
 #include <drm/drm_simple_kms_helper.h>
@@ -497,6 +499,31 @@ static const struct drm_mode_config_funcs config_funcs = {
 	.atomic_check = w202_atomic_check,
 	.atomic_commit = drm_atomic_helper_commit,
 };
+
+static void w202_atomic_commit_tail(struct drm_atomic_state *state)
+{
+	struct drm_device *dev = state->dev;
+
+	drm_atomic_helper_commit_modeset_disables(dev, state);
+	drm_atomic_helper_commit_planes(dev, state, 0);
+	drm_atomic_helper_commit_modeset_enables(dev, state);
+	drm_atomic_helper_fake_vblank(state);
+	drm_atomic_helper_commit_hw_done(state);
+	/* The layer-update IRQ has already retired the old framebuffer when
+	 * update sends its event. A following DPMS commit may stop scanout as
+	 * soon as hw_done and flip_done are signalled. Waiting for a fresh
+	 * vblank here can therefore time out after the panel has gone to sleep.
+	 * Wait for this commit's event instead; this also covers the optional
+	 * arm-vblank path and the synthetic event sent by disable.
+	 */
+	drm_atomic_helper_wait_for_flip_done(dev, state);
+	drm_atomic_helper_cleanup_planes(dev, state);
+}
+
+static const struct drm_mode_config_helper_funcs config_helpers = {
+	.atomic_commit_tail = w202_atomic_commit_tail,
+};
+
 static struct drm_gem_object *w202_prime_import(struct drm_device *drm,
 					      struct dma_buf *buffer)
 {
@@ -572,6 +599,7 @@ static int w202_probe(struct platform_device *pdev)
 	if (ret) goto out_nodes;
 	ret = drmm_mode_config_init(&d->drm); if (ret) goto out_nodes;
 	d->drm.mode_config.funcs = &config_funcs;
+	d->drm.mode_config.helper_private = &config_helpers;
 	d->drm.mode_config.min_width = d->drm.mode_config.max_width = 1200;
 	d->drm.mode_config.min_height = d->drm.mode_config.max_height = 1920;
 	ret = drm_connector_init(&d->drm, &d->connector, &connector_funcs, DRM_MODE_CONNECTOR_DSI);
