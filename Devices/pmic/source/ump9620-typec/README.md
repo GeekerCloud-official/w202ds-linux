@@ -87,4 +87,4 @@ PMIC telemetry 的 w202-usb-c/voltage_max 为 TCPM 当前合同名义值，volta
 
 ## 来源
 
-寄存器／eFuse 校准来自 `Devices/usb3/source/vendor-reference/drivers/usb/typec/tcpm/sc27xx_pd.c`，CC 参考同树 sc27xx_typec.c，保留原作者许可证。原厂限制核对 B 槽 DT、sqc_bq2560x.ko、sprd_battery_info.ko 和匹配电池解析源码。标准接口依据本项目 kernel 的 tcpm.c、pd.h、tcpm.h 与 power_supply_class 文档。
+寄存器／eFuse 校准来自原厂 [sc27xx_pd.c](https://github.com/Yeamika/w202ds-linux/blob/e517c65be6a13e7ae8bce64a5813622c9e56fdb0/Devices/usb3/source/vendor-reference/drivers/usb/typec/tcpm/sc27xx_pd.c)，CC 参考原厂 [sc27xx_typec.c](https://github.com/Yeamika/w202ds-linux/blob/e517c65be6a13e7ae8bce64a5813622c9e56fdb0/Devices/usb3/source/vendor-reference/drivers/usb/typec/sc27xx_typec.c)，保留原作者许可证；参考副本已从当前源码树移除。原厂限制核对 B 槽 DT、sqc_bq2560x.ko、sprd_battery_info.ko 和匹配电池解析源码。标准接口依据本项目 kernel 的 tcpm.c、pd.h、tcpm.h 与 power_supply_class 文档。

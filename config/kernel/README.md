@@ -83,7 +83,7 @@ python3 -B scripts/kernel-build.py configure --profile debug \
 ## 两种预设的边界
 
 debug 保留当前 `CONFIG_LOCALVERSION="-w202ds"`、自动 Git 后缀、
-强制诊断命令行 `rdinit=/w202diag`、初始 120 秒恢复策略，需要匹配的诊断用户态。
+强制诊断命令行 `rdinit=/w202diag`，需要匹配的诊断用户态。
 完整功能与内建清单见 [DEBUG.md](DEBUG.md)。
 
 旧 `/dev/w202fbcon` 诊断实现及其 Kconfig、构建接入已删除；维护中的 initramfs
@@ -93,7 +93,7 @@ debug 保留当前 `CONFIG_LOCALVERSION="-w202ds"`、自动 Git 后缀、
 
 desktop 保留正常显示/键盘所需的基础支持和现有驱动 y/m 分工，
 关闭显式的 debugfs、SysRq、PM 调试、锁死检测、内嵌配置与早期启动日志。
-`/dev/w202diagctl` 与恢复代码保留，初始计时设为 0；正常 DRM/面板驱动与键盘仍需配套模块。
+正常 DRM/面板驱动与键盘仍需配套模块。
 启动参数优先使用引导器提供的内容；没有参数时使用 desktop 片段中的保底值。
 引导器须提供实际 rootfs/initramfs 和板级所需参数。release 使用 `-w202ds-desktop` 区分模块目录。
 这是配置模型，desktop 完整启动和屏幕/键盘联调仍需另行实机验收。

@@ -18,7 +18,6 @@ debug 继承 desktop 的屏幕、键盘及正常交互基础，并保留原 `con
 | 符号与栈信息 | `KALLSYMS=y`、`STACKTRACE=y`；没有 `KALLSYMS_ALL`。 |
 | 崩溃日志设施 | 共同层的 `PSTORE/CONSOLE/PMSG/RAM=y`；实际保存依赖匹配的后端和保留内存。 |
 | 内存基础检查 | Kconfig 默认的 `SLUB_DEBUG=y`、`DEBUG_MEMORY_INIT=y` 等；`SLUB_DEBUG_ON=n`，不会默认开启所有 SLUB 检查。 |
-| 诊断恢复 | `W202DS_DIAG_RECOVERY=y`，提供 `/dev/w202diagctl`。debug 初始计时 120 秒；有权限的用户态可取消，或重新设置 30 秒恢复。 |
 | 诊断入口 | `CMDLINE_FORCE=y`，`rdinit=/w202diag`；需要配套诊断 initramfs。命令行 `panic=10` 覆盖编译默认 `PANIC_TIMEOUT=5`。 |
 
 当前未开启 ftrace/function tracer、Kprobes、KGDB、动态调试、DWARF 调试信息、lockdep/
@@ -32,7 +31,6 @@ PROVE_LOCKING、KASAN/KCSAN/UBSAN。`DEBUG_KERNEL=y` 不代表这些功能都已
 | PWM 背光控制 | `CONFIG_W202DS_BACKLIGHT=y` | 板级，共同能力 |
 | USB2 PHY 兼容 | `CONFIG_USB_W202DS_DUMMY_PHY=y` | 板级，共同能力 |
 | DRM/KMS 公共辅助能力 | `CONFIG_DRM_W202DS_BRINGUP_HELPERS=y` | 板级，共同能力；此项选择框架依赖，不是整条显示驱动 |
-| 诊断恢复接口与恢复实现 | `CONFIG_W202DS_DIAG_RECOVERY=y` | 板级，共同能力；desktop 初始计时为 0 |
 
 旧 `/dev/w202fbcon` 接口及其实现、配置和构建入口已删除；维护中的 initramfs
 没有调用它。当前面板模块使用独立 DRM 路径，普通 framebuffer/DRM fbdev 支持继续保留。

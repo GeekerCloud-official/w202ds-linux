@@ -17,6 +17,12 @@ SOURCES*.json
 !/Devices/*/firmware/
 !/Devices/*/source/
 
+# Reference snapshots and the retired diagnostic recovery project stay local.
+/Devices/**/vendor-reference/
+/Devices/*/source/*-vendor-reference/
+/Devices/*/source/mainline-current/
+/Devices/pmic/source/diagnostic-recovery/
+
 # Publish modem userspace sources and configuration; keep delivery packages local.
 !/Devices/modem/userspace/
 !/Devices/modem/userspace/SOURCES.json
