@@ -1,0 +1,8 @@
+[Unit]
+Description=W202DS reopen Wi-Fi (after a WCN chip reset or a data TX stall)
+# started by /usr/lib/udev/rules.d/70-w202-wcn.rules on the driver's FW_ERROR or TX_STALL uevent; a second event while
+# it runs is the same run (starting a oneshot that is already starting)
+
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/w202-wcn-reopen

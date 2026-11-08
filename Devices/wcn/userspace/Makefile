@@ -15,6 +15,7 @@ $(OUT)/w202-bt-init: bt-init/w202-bt-init.c
 
 test: all
 	python3 tests/test-init.py "$(OUT)/w202-bt-init" "$(FIRMWARE)"
+	python3 tests/test-recovery.py rootfs "$(OUT)/recovery-tests"
 
 # Stage only: no module loads, service changes or device access.
 install: all

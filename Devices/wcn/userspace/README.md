@@ -13,8 +13,11 @@ userspace/
 ├── bt-init/                 # w202-bt-init.c、MIT LICENSE
 ├── rootfs/usr/
 │   ├── lib/systemd/system/w202-bluetooth.service
-│   └── libexec/w202-bluetooth-start
-└── tests/test-init.py       # 本地 PTY 模拟 H4 控制器
+│   ├── lib/systemd/system/w202-wcn-reopen.service
+│   ├── lib/systemd/system-sleep/w202-wcn
+│   ├── lib/udev/rules.d/70-w202-wcn.rules
+│   └── libexec/             # w202-bluetooth-start、w202-wcn-reopen
+└── tests/                  # PTY/H4 协议测试及恢复流程模拟测试
 ```
 
 启动顺序为：加载标准 `hci_uart` 和厂商 `sprdbt_tty` → 仅复位蓝牙 rfkill →
@@ -25,8 +28,22 @@ userspace/
 模块：`wcn_bsp`、`sprdbt_tty`、`bluetooth`、`hci_uart`，桌面协议另有
 `rfcomm`、`bnep`、`hidp`。系统依赖 BlueZ（含 `btattach`）、kmod、systemd、
 util-linux 及基本 shell 工具。启动服务按 `w202-wifi.service` 之后排序，但不依赖
-Wi-Fi 联网，不重启 Wi-Fi，也不卸载公共 WCN 总线。没有安装来源项目中的 Wi-Fi
-恢复脚本、udev 重开规则或休眠钩子；这些功能需要分别适配和验证。
+Wi-Fi 联网。普通蓝牙启动不重启 Wi-Fi，也不卸载公共 WCN 总线；故障恢复服务和
+休眠钩子按下述条件执行。
+
+## WCN 故障与休眠恢复
+
+- `70-w202-wcn.rules` 在驱动上报 `FW_ERROR`／`TX_STALL` 时，异步启动一次性的
+  `w202-wcn-reopen.service`，执行 `/usr/libexec/w202-wcn-reopen`。
+- 恢复脚本记录蓝牙是否运行，先停止正在运行的蓝牙，通过 Wi-Fi rfkill 关闭并重开
+  无线接口，最多三轮等待 NetworkManager 接管，最后恢复原来运行的蓝牙。原来关闭的
+  Wi-Fi 接口会在临时上电后回到关闭状态；原来被屏蔽的关闭接口恢复屏蔽状态。
+- `system-sleep/w202-wcn` 在休眠前停止正在运行的蓝牙并保存标记，恢复后仅重启带有
+  该标记的蓝牙服务，以重新初始化共用芯片上的蓝牙功能。
+
+故障恢复会短暂中断 Wi-Fi／热点与蓝牙连接；休眠钩子会中断蓝牙连接，后续重连由
+BlueZ 和设备处理。恢复流程的模拟测试不访问真实无线接口，覆盖原状态保留、重试上限
+和休眠标记。真实芯片故障、热点恢复、休眠唤醒及长期稳定性仍待实机验证。
 
 地址优先使用 `/var/lib/w202ds/bdaddr`，其次只读挂载本机 `prodnv` 读取 `btmac.txt`，
 无有效地址时从本机 machine-id 派生本地管理地址。缓存仅留在设备，不写入固件参数或源码。
@@ -56,4 +73,5 @@ PSKey／RF／启用被拒绝，以及地址格式校验。2026-11-07 本机和 A
 30×128 字节逐包往返正确，认证加密开启。发起连接的一端可能经角色切换成为 Peripheral。
 
 待验收：文件等业务数据传输、LE／HID、A2DP／SCO、冷启动和休眠恢复。
-共用芯片发生固件复位后需要重新初始化蓝牙；目前没有增加自动重置 Wi-Fi 的恢复机制。
+共用芯片固件复位后的自动恢复由上述服务处理；服务与规则只在 `DESTDIR` 中暂存，
+部署时需随 rootfs 安装、重新加载 systemd／udev 配置，不能仅凭代码安装声明实机恢复已通过。

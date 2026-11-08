@@ -59,7 +59,7 @@ SC2355 的 H4 tty 驱动位于 `source/sprdbt_tty/`，本轮与来源项目逐�
 无需覆盖。新增 [userspace](userspace/README.md) 的厂商初始化工具、BlueZ 启动服务、
 本地协议测试及 `firmware/bt_configure_*.ini` 参数。来源是 GeekerCloud 在 CM2 的
 蓝牙分支 `7a9eadb4ae503ded740e1b69faac45f1972ead24`，已适配我们的模块与服务路径。
-没有启用来源项目会重开 Wi-Fi 的恢复规则或休眠钩子。
+同时接入来源项目的 WCN 故障恢复服务、udev 规则及休眠钩子，服务和脚本路径已适配本仓库；流程与触发条件见 [userspace/README.md](userspace/README.md)。故障恢复会中断 Wi-Fi／热点与蓝牙连接，休眠恢复会重新初始化蓝牙；脚本模拟测试与安装检查通过，真实故障及休眠唤醒仍待实机验证。
 
 完整内核配置已加入蓝牙选项，独立片段为 `config/fragments/bluetooth.config`。
 重新构建内核时，将该片段合入实际配置；`CONFIG_BT=m`、BR/EDR、LE、HCIUART/H4
