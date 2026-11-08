@@ -50,14 +50,15 @@ struct w202_h264_job {
  * Unsupported syntax is rejected before any DMA or register programming. */
 int w202_h264_build_idr(const struct w202_h264_job *job,
 		       struct w202_h264_config *config);
-/* Progressive Baseline/Main IDR/P, one slice and at most one short-term reference.
+/* Progressive 8-bit 4:2:0 Baseline/Main/High IDR/P, one slice and at most
+ * one short-term reference. High supports 8x8 transforms and resolved scaling.
  * Shared by the experimental V4L2 frontend and the native diagnostic client.
  */
 int w202_h264_build_ip(const struct w202_h264_job *job,
 		      struct w202_h264_config *config);
-/* Also accepts progressive Main non-reference spatial-direct B pictures,
+/* Also accepts progressive Main/High non-reference spatial-direct B pictures,
  * one short-term reference in each list. Shared by diagnostics and V4L2;
- * Request queue execution still needs hardware qualification. */
+ * The restricted Request path has hardware pixel qualification (v4l2.md). */
 int w202_h264_build_ipb(const struct w202_h264_job *job,
 		       struct w202_h264_config *config);
 

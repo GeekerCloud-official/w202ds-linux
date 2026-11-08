@@ -405,10 +405,12 @@ int main(int argc, char **argv)
 			{.id = V4L2_CID_STATELESS_H264_PPS, .size = sizeof(f->pps), .ptr = &f->pps},
 			{.id = V4L2_CID_STATELESS_H264_SLICE_PARAMS, .size = sizeof(f->slice), .ptr = &f->slice},
 			{.id = V4L2_CID_STATELESS_H264_DECODE_PARAMS, .size = sizeof(f->decode), .ptr = &f->decode},
-			{.id = V4L2_CID_STATELESS_H264_SCALING_MATRIX, .size = sizeof(scaling), .ptr = &scaling},
+			{.id = V4L2_CID_STATELESS_H264_SCALING_MATRIX, .size = sizeof(f->scaling),
+			 .ptr = flat_matrix ? &scaling : &f->scaling},
 		};
 		struct v4l2_ext_controls parameters = {
-			.which = V4L2_CTRL_WHICH_REQUEST_VAL, .count = missing ? 3 : flat_matrix ? 5 : 4,
+			.which = V4L2_CTRL_WHICH_REQUEST_VAL,
+			.count = missing ? 3 : (f->pps.flags & V4L2_H264_PPS_FLAG_SCALING_MATRIX_PRESENT) ? 5 : 4,
 			.request_fd = request_fd, .controls = controls,
 		};
 		check(!ioctl(decoder, VIDIOC_S_EXT_CTRLS, &parameters), "request controls");

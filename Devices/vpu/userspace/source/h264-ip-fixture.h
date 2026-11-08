@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
-/* Diagnostic parser for generated, single-reference Baseline IP fixtures.
+/* Diagnostic parser for generated, single-reference Baseline/Main/High IP fixtures.
  * No list reordering, weighted prediction, MMCO, fields or multi-slice frames.
  */
 #ifndef W202_H264_IP_FIXTURE_H

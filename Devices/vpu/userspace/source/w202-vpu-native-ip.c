@@ -149,7 +149,7 @@ int main(int argc, char **argv)
   cpu_access(&input, DMA_BUF_SYNC_END | DMA_BUF_SYNC_WRITE);
   struct w202_h264_job job = {
    .sps = &f->sps, .pps = &f->pps, .slice = &f->slice, .decode = &f->decode,
-   .scaling = flat_matrix ? &scaling : NULL,
+   .scaling = flat_matrix ? &scaling : &f->scaling,
    .input_address = input.address, .output_address = frame->address,
    .auxiliary_address = frame->address + pixels,
    .input_capacity = input.size, .output_capacity = pixels, .auxiliary_capacity = aux,

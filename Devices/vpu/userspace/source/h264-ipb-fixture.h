@@ -61,7 +61,7 @@ static int h264_parse_ipb(const unsigned char *stream, size_t length,
 			if (fixture->count || h264_parse_idr(stream, pos, &fixture->frame[0]))
 				goto out;
 			const struct h264_fixture *f = &fixture->frame[0];
-			if (f->sps.profile_idc != 77 || f->sps.pic_order_cnt_type ||
+			if ((f->sps.profile_idc != 77 && f->sps.profile_idc != 100) || f->sps.pic_order_cnt_type ||
 			    f->decode.frame_num || f->decode.top_field_order_cnt ||
 			    f->decode.bottom_field_order_cnt || f->slice.first_mb_in_slice ||
 			    (f->pps.flags & (V4L2_H264_PPS_FLAG_WEIGHTED_PRED |

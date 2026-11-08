@@ -99,11 +99,12 @@ int main(int argc, char **argv)
 	check(stream && fread(stream, 1, (size_t)length, source) == (size_t)length, "read input");
 	fclose(source);
 	struct h264_fixture f;
-	check(!h264_parse_idr(stream, (size_t)length, &f), "supported single Baseline IDR syntax");
+	check(!h264_parse_idr(stream, (size_t)length, &f), "supported single IDR syntax");
 	unsigned int width = (f.sps.pic_width_in_mbs_minus1 + 1) * 16;
 	unsigned int height = (f.sps.pic_height_in_map_units_minus1 + 1) * 16;
 	struct w202_h264_job job = {
 		.sps = &f.sps, .pps = &f.pps, .slice = &f.slice, .decode = &f.decode,
+		.scaling = &f.scaling,
 		.input_address = 0x40000000, .output_address = 0x41000000, .auxiliary_address = 0x42000000,
 		.input_capacity = f.nal_size + W202_H264_BSM_PADDING,
 		.output_capacity = (uint64_t)width * height * 3 / 2,

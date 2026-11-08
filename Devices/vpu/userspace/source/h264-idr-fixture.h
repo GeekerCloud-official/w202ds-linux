@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /* Restricted software parser for native-IDR and Request API test clients.
- * Accepts a Baseline/Main SPS/PPS and one IDR; never used by the kernel driver.
+ * Accepts an 8-bit 4:2:0 Baseline/Main/High SPS/PPS and one IDR;
+ * never used by the kernel driver.
  */
 #ifndef W202_H264_IDR_FIXTURE_H
 #define W202_H264_IDR_FIXTURE_H
@@ -12,6 +13,7 @@
 struct h264_fixture {
 	struct v4l2_ctrl_h264_sps sps;
 	struct v4l2_ctrl_h264_pps pps;
+	struct v4l2_ctrl_h264_scaling_matrix scaling;
 	struct v4l2_ctrl_h264_slice_params slice;
 	struct v4l2_ctrl_h264_decode_params decode;
 	const unsigned char *nal;
@@ -46,6 +48,66 @@ static int h264_se(struct h264_bits *b)
 	uint32_t n = h264_ue(b);
 	return n & 1 ? (int)((n + 1) / 2) : -(int)(n / 2);
 }
+
+static const uint8_t h264_default4[2][16] = {
+	{6,13,20,28, 13,20,28,32, 20,28,32,37, 28,32,37,42},
+	{10,14,20,24, 14,20,24,27, 20,24,27,30, 24,27,30,34},
+};
+static const uint8_t h264_default8[2][64] = {
+	{6,10,13,16,18,23,25,27, 10,11,16,18,23,25,27,29,
+	 13,16,18,23,25,27,29,31, 16,18,23,25,27,29,31,33,
+	 18,23,25,27,29,31,33,36, 23,25,27,29,31,33,36,38,
+	 25,27,29,31,33,36,38,40, 27,29,31,33,36,38,40,42},
+	{9,13,15,17,19,21,22,24, 13,13,17,19,21,22,24,25,
+	 15,17,19,21,22,24,25,27, 17,19,21,22,24,25,27,28,
+	 19,21,22,24,25,27,28,30, 21,22,24,25,27,28,30,32,
+	 22,24,25,27,28,30,32,33, 24,25,27,28,30,32,33,35},
+};
+
+/* Convert bitstream zigzag order to the raster order required by V4L2. */
+static int h264_scaling_list(struct h264_bits *b, uint8_t *list,
+			     unsigned int side, const uint8_t *defaults)
+{
+	int last = 8, next = 8;
+	unsigned int index = 0;
+
+	for (unsigned int diagonal = 0; diagonal < 2 * side - 1; diagonal++) {
+		unsigned int low = diagonal < side ? 0 : diagonal - side + 1;
+		unsigned int high = diagonal < side ? diagonal : side - 1;
+
+		for (unsigned int j = low; j <= high; j++, index++) {
+			unsigned int row = diagonal & 1 ? j : high - (j - low);
+			unsigned int col = diagonal - row;
+
+			if (next) {
+				int delta = h264_se(b);
+
+				if (b->bad || delta < -128 || delta > 127)
+					return -1;
+				next = (last + delta + 256) % 256;
+				if (!index && !next) {
+					memcpy(list, defaults, side * side);
+					return 0;
+				}
+			}
+			last = next ? next : last;
+			list[row * side + col] = last;
+		}
+	}
+	return b->bad ? -1 : 0;
+}
+
+static int h264_more_rbsp(const struct h264_bits *b)
+{
+	struct h264_bits tail = *b;
+
+	if (tail.bit >= tail.size * 8 || !h264_get(&tail, 1))
+		return 1;
+	while (tail.bit < tail.size * 8)
+		if (h264_get(&tail, 1))
+			return 1;
+	return 0;
+}
 static unsigned int h264_startcode(const unsigned char *p, size_t n)
 {
 	if (n >= 4 && !p[0] && !p[1] && !p[2] && p[3] == 1) return 4;
@@ -55,9 +117,10 @@ static unsigned int h264_startcode(const unsigned char *p, size_t n)
 static int h264_parse_idr(const unsigned char *stream, size_t length, struct h264_fixture *f)
 {
 	unsigned char *rbsp = malloc(length);
-	int have_sps = 0, have_pps = 0, result = -1;
+	int have_sps = 0, have_pps = 0, sps_scaling = 0, result = -1;
 	if (!rbsp) return -1;
 	memset(f, 0, sizeof(*f));
+	memset(&f->scaling, 16, sizeof(f->scaling));
 	for (size_t pos = 0; pos < length;) {
 		unsigned int prefix = h264_startcode(stream + pos, length - pos);
 		if (!prefix) goto out;
@@ -85,8 +148,25 @@ static int h264_parse_idr(const unsigned char *stream, size_t length, struct h26
 			for (unsigned int i = 0; i < 6; i++) if (constraint & (128U >> i)) s->constraint_set_flags |= 1U << i;
 			s->level_idc = h264_get(&b, 8);
 			uint32_t sps_id = h264_ue(&b);
-			if ((s->profile_idc != 66 && s->profile_idc != 77) || sps_id > 31) goto out;
+			if ((s->profile_idc != 66 && s->profile_idc != 77 && s->profile_idc != 100) || sps_id > 31) goto out;
 			s->seq_parameter_set_id = sps_id; s->chroma_format_idc = 1;
+			if (s->profile_idc == 100) {
+				if (h264_ue(&b) != 1 || h264_ue(&b) || h264_ue(&b) || h264_get(&b, 1)) goto out;
+				sps_scaling = h264_get(&b, 1);
+				if (sps_scaling) {
+					for (unsigned int i = 0; i < 8; i++) {
+						uint8_t *list = i < 6 ? f->scaling.scaling_list_4x4[i] : f->scaling.scaling_list_8x8[i - 6];
+						const uint8_t *defaults = i < 6 ? h264_default4[i / 3] : h264_default8[i - 6];
+						if (h264_get(&b, 1)) {
+							if (h264_scaling_list(&b, list, i < 6 ? 4 : 8, defaults)) goto out;
+						} else if (i < 6 && i % 3) {
+							memcpy(list, f->scaling.scaling_list_4x4[i - 1], 16);
+						} else {
+							memcpy(list, defaults, i < 6 ? 16 : 64);
+						}
+					}
+				}
+			}
 			uint32_t log2 = h264_ue(&b), poc = h264_ue(&b);
 			if (log2 > 12 || (poc != 0 && poc != 2)) goto out;
 			s->log2_max_frame_num_minus4 = log2; s->pic_order_cnt_type = poc;
@@ -130,7 +210,31 @@ static int h264_parse_idr(const unsigned char *stream, size_t length, struct h26
 			if (h264_get(&b, 1)) p->flags |= V4L2_H264_PPS_FLAG_DEBLOCKING_FILTER_CONTROL_PRESENT;
 			if (h264_get(&b, 1)) p->flags |= V4L2_H264_PPS_FLAG_CONSTRAINED_INTRA_PRED;
 			if (h264_get(&b, 1)) p->flags |= V4L2_H264_PPS_FLAG_REDUNDANT_PIC_CNT_PRESENT;
-			/* The Baseline fixture generator emits no PPS extensions. */
+			if (sps_scaling) p->flags |= V4L2_H264_PPS_FLAG_SCALING_MATRIX_PRESENT;
+			if (h264_more_rbsp(&b)) {
+				int transform8 = h264_get(&b, 1);
+
+				if (transform8) p->flags |= V4L2_H264_PPS_FLAG_TRANSFORM_8X8_MODE;
+				if (h264_get(&b, 1)) {
+					p->flags |= V4L2_H264_PPS_FLAG_SCALING_MATRIX_PRESENT;
+					for (unsigned int i = 0; i < 6U + 2U * transform8; i++) {
+						uint8_t *list = i < 6 ? f->scaling.scaling_list_4x4[i] : f->scaling.scaling_list_8x8[i - 6];
+						const uint8_t *defaults = i < 6 ? h264_default4[i / 3] : h264_default8[i - 6];
+						if (h264_get(&b, 1)) {
+							if (h264_scaling_list(&b, list, i < 6 ? 4 : 8, defaults)) goto out;
+						} else if (i < 6 && i % 3) {
+							memcpy(list, f->scaling.scaling_list_4x4[i - 1], 16);
+						} else if (!sps_scaling) {
+							memcpy(list, defaults, i < 6 ? 16 : 64);
+						}
+					}
+				}
+				int second = h264_se(&b);
+				if (second < -12 || second > 12) goto out;
+				p->second_chroma_qp_index_offset = second;
+			}
+			if (b.bad || !h264_get(&b, 1)) goto out;
+			while (b.bit < b.size * 8) if (h264_get(&b, 1)) goto out;
 		} else if (nal_type == 5) {
 			if (!have_sps || !have_pps || f->nal) goto out;
 			struct v4l2_ctrl_h264_slice_params *sl = &f->slice;

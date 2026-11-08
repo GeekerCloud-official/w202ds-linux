@@ -644,7 +644,8 @@ static int controls_init(struct w202_video_context *ctx)
 		 .def = V4L2_STATELESS_H264_START_CODE_NONE},
 		{.id = V4L2_CID_MPEG_VIDEO_H264_PROFILE,
 		 .min = V4L2_MPEG_VIDEO_H264_PROFILE_BASELINE,
-		 .max = V4L2_MPEG_VIDEO_H264_PROFILE_MAIN,
+		 .max = V4L2_MPEG_VIDEO_H264_PROFILE_HIGH,
+		 .menu_skip_mask = BIT(V4L2_MPEG_VIDEO_H264_PROFILE_EXTENDED),
 		 .def = V4L2_MPEG_VIDEO_H264_PROFILE_BASELINE},
 	};
 	struct v4l2_ctrl **controls[] = {

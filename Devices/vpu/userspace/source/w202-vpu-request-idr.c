@@ -136,8 +136,23 @@ int main(int argc, char **argv)
 	fclose(source);
 	struct h264_fixture fixture;
 	check(!h264_parse_idr(stream, bytes, &fixture), "parse fixture");
+	const char *bad_matrix = getenv("W202_BAD_MATRIX");
+	bool matrix_error = bad_matrix && strcmp(bad_matrix, "unused8");
+
+	check(!bad_matrix || !strcmp(bad_matrix, "missing") || !strcmp(bad_matrix, "zero4") ||
+	      !strcmp(bad_matrix, "zero8") || !strcmp(bad_matrix, "unused8"), "matrix test mode");
+	check(!bad_matrix || (fixture.pps.flags & V4L2_H264_PPS_FLAG_SCALING_MATRIX_PRESENT),
+	      "matrix test requires explicit scaling lists");
+	if (bad_matrix && !strcmp(bad_matrix, "zero4"))
+		fixture.scaling.scaling_list_4x4[5][15] = 0;
+	if (bad_matrix && !strcmp(bad_matrix, "zero8")) {
+		check(fixture.pps.flags & V4L2_H264_PPS_FLAG_TRANSFORM_8X8_MODE, "8x8 matrix test");
+		fixture.scaling.scaling_list_8x8[1][63] = 0;
+	}
+	if (bad_matrix && !strcmp(bad_matrix, "unused8"))
+		memset(&fixture.scaling.scaling_list_8x8[2], 0, 4 * 64);
 	if (getenv("W202_INVALID_PROFILE"))
-		fixture.sps.profile_idc = 100;
+		fixture.sps.profile_idc = 110;
 	unsigned int width = (fixture.sps.pic_width_in_mbs_minus1 + 1) * 16;
 	unsigned int height = (fixture.sps.pic_height_in_map_units_minus1 + 1) * 16;
 	decoder = open(argv[3], O_RDWR | O_NONBLOCK | O_CLOEXEC);
@@ -165,9 +180,12 @@ int main(int argc, char **argv)
 		{.id = V4L2_CID_STATELESS_H264_PPS, .size = sizeof(fixture.pps), .ptr = &fixture.pps},
 		{.id = V4L2_CID_STATELESS_H264_SLICE_PARAMS, .size = sizeof(fixture.slice), .ptr = &fixture.slice},
 		{.id = V4L2_CID_STATELESS_H264_DECODE_PARAMS, .size = sizeof(fixture.decode), .ptr = &fixture.decode},
+		{.id = V4L2_CID_STATELESS_H264_SCALING_MATRIX, .size = sizeof(fixture.scaling), .ptr = &fixture.scaling},
 	};
 	struct v4l2_ext_controls parameters = {
-		.which = V4L2_CTRL_WHICH_REQUEST_VAL, .count = 4,
+		.which = V4L2_CTRL_WHICH_REQUEST_VAL,
+		.count = (fixture.pps.flags & V4L2_H264_PPS_FLAG_SCALING_MATRIX_PRESENT) &&
+			 !(bad_matrix && !strcmp(bad_matrix, "missing")) ? 5 : 4,
 		.request_fd = request_fd, .controls = controls,
 	};
 	int output = open(argv[2], O_WRONLY | O_CREAT | O_EXCL | O_CLOEXEC, 0600);
@@ -185,7 +203,7 @@ int main(int argc, char **argv)
 		check(poll(&done, 1, 3000) == 1 && (done.revents & POLLPRI), "request completion poll");
 		struct v4l2_buffer captured = dequeue(&frame), consumed = dequeue(&input);
 		bool failed = (captured.flags | consumed.flags) & V4L2_BUF_FLAG_ERROR;
-		check(failed == !!getenv("W202_INVALID_PROFILE"), "buffer completion status");
+		check(failed == (matrix_error || !!getenv("W202_INVALID_PROFILE")), "buffer completion status");
 		check(captured.bytesused == width * height * 3 / 2 &&
 		      captured.sequence == i && consumed.sequence == i && captured.timestamp.tv_sec == 1,
 		      "capture payload, sequence and timestamp");
@@ -209,7 +227,8 @@ int main(int argc, char **argv)
 	check(!close(output), "close pixel output");
 	fprintf(stderr, "V4L2 Request IDR: coded=%ux%u visible=%ux%u mode=%s requests=%u bytes=%zu rbsp=%zu header=%u negative=%u\n",
 		width, height, fixture.width, fixture.height, dmabuf ? "DMABUF" : "MMAP", repeat,
-		fixture.nal_size, fixture.rbsp_size, fixture.slice.header_bit_size, !!getenv("W202_INVALID_PROFILE"));
+		fixture.nal_size, fixture.rbsp_size, fixture.slice.header_bit_size,
+		matrix_error || !!getenv("W202_INVALID_PROFILE"));
 	close(request_fd);
 	close(media);
 	close(decoder);
