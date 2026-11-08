@@ -50,3 +50,7 @@ SOURCES*.json
 /Devices/audio/userspace/*
 !/Devices/audio/userspace/w202-audio-start
 !/Devices/audio/userspace/w202-audio.service
+
+# Keep keyboard diagnostic state snapshots local.
+/Devices/keyboard/source/keyboard-m22/super-layout.json
+/Devices/keyboard/source/keyboard-m22/*-lease.json
