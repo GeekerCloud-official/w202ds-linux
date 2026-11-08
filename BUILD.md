@@ -53,6 +53,10 @@ python3 -B scripts/build.py --skip-kernel-check \
 现有 Server 配置强制使用自身命令行，入口为 `rdinit=/w202diag`，需要另行提供匹配 initramfs/rootfs。
 这份配置和源码不是通用发行版安装器，也不包含任何引导固件。板级 DT 中继承的硬件/保留内存必须与启动环境一致。
 
+CPU 调频默认由 desktop 合入 `config/fragments/cpu-dvfs.config`，debug 继承该配置。
+驱动 `sprd-cpufreq-v2` 与 `sprd_sip_svc` 均内建，无独立 CPU 模块；外部配置仍可通过重复的
+`--fragment` 覆盖。硬件频点与验收范围见 [CPU 调频](Devices/cpu/README.md)。
+
 desktop 基础层已保留蓝牙选项（BT、`hci_uart` H4、RFCOMM、BNEP、HIDP）。
 外部工程可用重复的 `--fragment` 传入覆盖；已有蓝牙兼容片段为 `config/fragments/bluetooth.config`。
 
@@ -66,7 +70,7 @@ make -C Devices/wcn/userspace OUT="$PWD/output/wcn-bt-arm64" DESTDIR="$PWD/outpu
 使用现有 CM2 冻结构建目录进行单模块开发时，见 [独立模块构建说明](Devices/BUILD.md) 的 cfg80211 导出选项。
 构建检查与真机功能验收分别记录，不能由编译成功推断硬件完整可用。
 
-2026-11-05 的完整构建已在 Server 上机。随后按用户要求只保留下一次构建的 `CONFIG_LOCALVERSION="-w202ds"`；当前运行版本仍为 `6.18.35-w202ds-m23-wifi`。更换 release 时还须同步 initramfs、模块目录和用户态版本约定，不能只改 Image 文件名。
+2026-11-08 的 debug 构建已在 KDE 启动项上机，运行版本为 `6.18.35-w202ds-00002-g53bb26e2e0d5`，CPU 三簇的低、中、高频点均已验证硬件读回。更换 release 时还须同步 initramfs、模块目录和用户态版本约定，不能只改 Image 文件名。
 
 基带用户态独立入口为 `make -C Devices/modem/userspace OUT=绝对输出目录 all`，不触发内核构建。目录名称已简化，内核模块目标名称不变。
 
