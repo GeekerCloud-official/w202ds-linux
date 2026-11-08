@@ -17,6 +17,7 @@
 #include <linux/mutex.h>
 #include <linux/nvmem-consumer.h>
 #include <linux/of.h>
+#include <linux/of_platform.h>
 #include <linux/pm_opp.h>
 #include <linux/pm_qos.h>
 #include <linux/string.h>
@@ -24,6 +25,7 @@
 #include <linux/workqueue.h>
 #include "w202_gpu_qos.h"
 #include "panfrost_ums9620.h"
+#include "panfrost_ums9620_thermal.h"
 
 /* A separate provider module owns the CCF callbacks. Registering these
  * clocks on Panfrost itself makes its two consumers pin their own module.
@@ -84,6 +86,7 @@ struct ums_gpu {
 	struct delayed_work thermal_work;
 	struct thermal_zone_device *tz;
 	bool hot;
+	bool sensor_fault;
 };
 
 static unsigned int ums9620_freq_index = 3;
@@ -610,24 +613,74 @@ static int ums9620_cool_mc = 65000;
 module_param(ums9620_cool_mc, int, 0644);
 MODULE_PARM_DESC(ums9620_cool_mc, "gpu-thmzone millicelsius at which the 384MHz cap is released");
 #define UMS_THERMAL_POLL_MS 1000
+
+static int ums_thermal_bind(struct ums_gpu *g)
+{
+	struct device_node *zone;
+	struct of_phandle_args args;
+	struct platform_device *supplier;
+	struct device_link *link;
+	int ret;
+
+	zone = of_find_node_by_path("/thermal-zones/gpu-thmzone");
+	if (!zone)
+		return -ENODEV;
+	ret = of_parse_phandle_with_args(zone, "thermal-sensors",
+					 "#thermal-sensor-cells", 0, &args);
+	of_node_put(zone);
+	if (ret)
+		return ret;
+	supplier = of_find_device_by_node(args.np);
+	of_node_put(args.np);
+	if (!supplier)
+		return -EPROBE_DEFER;
+	/* The thermal API returns a borrowed zone pointer. Keep its provider
+	 * bound until GPU devres has stopped this work, including during probe.
+	 * A link created after supplier unbind began cannot protect the zone.
+	 */
+	link = device_link_add(g->dev, &supplier->dev,
+			       DL_FLAG_AUTOREMOVE_CONSUMER);
+	put_device(&supplier->dev);
+	if (!link)
+		return -EINVAL;
+	if (READ_ONCE(link->status) != DL_STATE_CONSUMER_PROBE)
+		return -EPROBE_DEFER;
+	g->tz = thermal_zone_get_zone_by_name("gpu-thmzone");
+	if (IS_ERR(g->tz)) {
+		ret = PTR_ERR(g->tz);
+		return ret == -ENODEV ? -EPROBE_DEFER : ret;
+	}
+	return 0;
+}
+
 static void ums_thermal_poll(struct work_struct *work)
 {
 	struct ums_gpu *g = container_of(to_delayed_work(work), struct ums_gpu,
 					 thermal_work);
-	int temp;
+	int temp = 0, ret;
+	bool capped;
 
-	if (IS_ERR_OR_NULL(g->tz))
-		g->tz = thermal_zone_get_zone_by_name("gpu-thmzone");
-	if (!IS_ERR(g->tz) && !thermal_zone_get_temp(g->tz, &temp)) {
-		if (!g->hot && temp >= READ_ONCE(ums9620_hot_mc)) {
-			WRITE_ONCE(g->hot, true);
-			dev_pm_qos_update_request(&g->thermal_qos, g->rates[3] / 1000);
-			dev_warn(g->dev, "GPU at %dmC: capped at %luHz\n", temp, g->rates[3]);
-		} else if (g->hot && temp <= READ_ONCE(ums9620_cool_mc)) {
-			WRITE_ONCE(g->hot, false);
-			dev_pm_qos_update_request(&g->thermal_qos,
-						  PM_QOS_MAX_FREQUENCY_DEFAULT_VALUE);
-			dev_info(g->dev, "GPU at %dmC: cap released\n", temp);
+	ret = thermal_zone_get_temp(g->tz, &temp);
+	if (ret && !g->sensor_fault)
+		dev_warn(g->dev, "GPU temperature unavailable (%d): limiting to %luHz\n",
+			 ret, g->rates[3]);
+	else if (!ret && g->sensor_fault)
+		dev_info(g->dev, "GPU temperature recovered: %dmC\n", temp);
+	g->sensor_fault = !!ret;
+	capped = ums_thermal_cap_required(READ_ONCE(g->hot), ret, temp,
+					 READ_ONCE(ums9620_hot_mc),
+					 READ_ONCE(ums9620_cool_mc));
+	if (capped != READ_ONCE(g->hot)) {
+		ret = dev_pm_qos_update_request(&g->thermal_qos, capped ?
+			g->rates[3] / 1000 : PM_QOS_MAX_FREQUENCY_DEFAULT_VALUE);
+		if (ret < 0) {
+			dev_err_ratelimited(g->dev, "GPU thermal limit update failed: %d\n", ret);
+		} else {
+			WRITE_ONCE(g->hot, capped);
+			if (capped)
+				dev_info(g->dev, "GPU thermal cap: %luHz\n", g->rates[3]);
+			else
+				dev_info(g->dev, "GPU at %dmC: cap released\n", temp);
 		}
 	}
 	queue_delayed_work(system_freezable_power_efficient_wq, &g->thermal_work,
@@ -648,10 +701,15 @@ static int ums_thermal_start(struct ums_gpu *g)
 
 	if (ums_max_rate(g) <= g->rates[3])
 		return 0;
+	ret = ums_thermal_bind(g);
+	if (ret)
+		return dev_err_probe(g->dev, ret, "GPU temperature provider unavailable\n");
+	/* Do not allow high OPPs until a valid cool sample has been observed. */
 	ret = dev_pm_qos_add_request(g->dev, &g->thermal_qos, DEV_PM_QOS_MAX_FREQUENCY,
-				     PM_QOS_MAX_FREQUENCY_DEFAULT_VALUE);
+					     g->rates[3] / 1000);
 	if (ret < 0)
 		return ret;
+	WRITE_ONCE(g->hot, true);
 	INIT_DEFERRABLE_WORK(&g->thermal_work, ums_thermal_poll);
 	queue_delayed_work(system_freezable_power_efficient_wq, &g->thermal_work, 0);
 	return devm_add_action_or_reset(g->dev, ums_thermal_stop, g);
