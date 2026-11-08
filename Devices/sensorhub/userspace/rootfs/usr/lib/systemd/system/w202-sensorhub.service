@@ -1,0 +1,15 @@
+[Unit]
+Description=W202DS sensor hub IIO (accelerometer, gyroscope, magnetometer, light)
+Requires=w202-modem-runtime.service
+After=w202-modem-runtime.service
+PartOf=w202-modem-runtime.service
+Before=iio-sensor-proxy.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/libexec/w202-sensorhub-attach
+ExecStop=/sbin/modprobe -r w202_hub_iio
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,9 @@
+# W202DS sensor hub devices for iio-sensor-proxy (after its 80-iio-sensor-proxy.rules).
+ACTION=="remove", GOTO="w202_sensorhub_end"
+SUBSYSTEM!="iio", GOTO="w202_sensorhub_end"
+
+# The LSM6DSOQ sits rotated 180 degrees in the panel plane relative to the panel's native portrait axes:
+# in the keyboard stand (landscape, GNOME rotation "right") it reads gravity on +X with Z toward the viewer.
+ATTR{name}=="w202-lsm6dsoq", ENV{ACCEL_MOUNT_MATRIX}="-1, 0, 0; 0, -1, 0; 0, 0, 1"
+
+LABEL="w202_sensorhub_end"

@@ -34,6 +34,9 @@ SOURCES*.json
 !/Devices/wcn/userspace/
 /Devices/wcn/userspace/output/
 
+# Publish the sensor hub userspace (driver attach service, iio-sensor-proxy rules).
+!/Devices/sensorhub/userspace/
+
 # Publish the GPU implementation already verified on W202DS.
 /Devices/gpu/source/*
 !/Devices/gpu/source/panfrost/

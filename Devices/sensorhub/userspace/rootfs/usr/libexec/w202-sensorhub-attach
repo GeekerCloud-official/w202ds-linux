@@ -1,0 +1,16 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-only
+# Bind w202-hub-iio once CH has opened its SIPC pipe. w202-modem-runtime starts CH; the driver's probe
+# defers until the spipe_ch ring is ready, and nothing else retries a deferred probe this late in boot.
+set -eu
+device=sprd-sensorhub
+driver=/sys/bus/platform/drivers/w202-hub-iio
+
+modprobe w202_hub_iio
+for attempt in $(seq 30); do
+    test -e "$driver/$device" && exit 0
+    echo "$device" > "$driver/bind" 2>/dev/null || true
+    sleep 1
+done
+echo "$device did not bind to w202-hub-iio within 30 s; see the kernel log." >&2
+exit 1
