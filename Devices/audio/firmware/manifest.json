@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "status": "AW88166 已确认；固件与扬声器参数已校验；ALSA/PipeWire 连续播放和四功放上电/解除静音已实测，听感待验收",
+  "status": "AW88166 已确认；固件与扬声器参数已校验；正式 102e 内核已部署；ALSA/PipeWire 连续播放和四功放上电/解除静音已实测；用户已确认左右声道提示音出声，Chrome B站音频流已接入",
   "files": [
     {
       "path": "firmware/stock-partitions/l_agdsp_a.img",

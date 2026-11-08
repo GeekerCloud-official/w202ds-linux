@@ -53,12 +53,20 @@ make -C Devices KDIR=/path/to/prepared/kernel OUT=/path/to/modules w202ds-audio-
 `audio.primary.whale.so` 核对参数选择编码，来源和 ABI 见
 [source/PROTOCOL.md](source/PROTOCOL.md)。不引入整套原厂内核音频驱动。
 
-2026-11-08：临时验证内核 `6.18.35-w202ds-audio1` 与全部 44 个配套外置模块
-完整构建通过，音频对象 `W=1` 通过；固件准备脚本的六项边界测试通过。
+2026-11-08：正式内核 `6.18.35-w202ds-g102e847e2492` 已完成 Image、393 个
+内核树内模块和全部 44 个配套外置模块的完整构建，并安装、重启验证。
+音频对象 `W=1` 通过；固件准备脚本的六项边界测试通过。
 修复 PCM open 约束返回值和本机 AP DMA 中断号后，50 次连续 open/close、
 144000 帧 / 2.997 秒硬件播放、标准 ALSA plug 与 12 秒 PipeWire 播放通过。
 四颗功放播放时均为 SYSST=0x0311、SYSCTRL=0x5240（上电且解除静音），
-停止后恢复关闭。软件与寄存器验证不替代实际听感验收。
+停止后恢复关闭。这些底层和寄存器验证先在临时 `audio1` 内核完成；正式
+内核又通过 50 次 open/close 与 144000 帧 / 2.997 秒播放。
+
+正式内核上的 KDE/PipeWire 已播放左右声道提示音，用户确认实际听到声音。
+Chrome 157 的 B 站 AAC 双声道音频已接入同一 PipeWire 扬声器输出，
+后台已捕获 Chrome 播放流，视频未静音，播放期间 ALSA PCM 为 RUNNING。
+AAC 由浏览器软件解码，采样率和布局由 PipeWire 转为本声卡支持的格式；
+视频 H.264 的 VPU 硬解是独立路径。当前结果不覆盖麦克风、耳机或通话。
 
 `w202ds-alsa.dtsi` 将 AP DMA 修正为 GIC INTID 88 / SPI 56，依据为本机播放时
 的 GIC pending 与 DMA 状态；厂商 W205DS-ESIM 参考设备树的 SPI 55 在本机不适用。
