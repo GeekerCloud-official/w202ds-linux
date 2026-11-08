@@ -25,13 +25,13 @@
   "missing": [
     {
       "name": "aw883xx_acf.bin",
-      "evidence": "w202ds-research/bsp/Devices/audio/source/vendor-reference/sound/soc/codecs/aw883xx_new/aw883xx.c",
-      "evidence_path_base": "workspace"
+      "evidence": "https://github.com/Yeamika/w202ds-linux/blob/e517c65be6a13e7ae8bce64a5813622c9e56fdb0/Devices/audio/source/vendor-reference/sound/soc/codecs/aw883xx_new/aw883xx.c",
+      "evidence_path_base": "url"
     },
     {
       "name": "aw883xx_monitor.bin",
-      "evidence": "w202ds-research/bsp/Devices/audio/source/vendor-reference/sound/soc/codecs/aw883xx_new/aw883xx_monitor.c",
-      "evidence_path_base": "workspace"
+      "evidence": "https://github.com/Yeamika/w202ds-linux/blob/e517c65be6a13e7ae8bce64a5813622c9e56fdb0/Devices/audio/source/vendor-reference/sound/soc/codecs/aw883xx_new/aw883xx_monitor.c",
+      "evidence_path_base": "url"
     }
   ],
   "placement": "Known firmware is stored as regular files beneath this device firmware directory; shared chip firmware has one owner.",

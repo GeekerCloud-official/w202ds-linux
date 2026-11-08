@@ -47,8 +47,8 @@ make -C Devices/wcn/userspace OUT="$PWD/output/wcn-bt-arm64" DESTDIR="$PWD/outpu
 
 ## 分离后的内建与模块
 
-`kernel/` 内 4 个功能位置的相对链接指向 `Devices/`；复制源码时保留整个 `6.18.35` 布局和链接。
-早期黑框日志、背光、USB PHY 和恢复接口在 debug 配置内建，模块归属不等于晚加载。
+`kernel/` 内 3 个功能位置的相对链接指向 `Devices/`；复制源码时保留整个 `6.18.35` 布局和链接。
+早期黑框日志、背光和 USB PHY 在 debug 配置内建，模块归属不等于晚加载。
 早期日志组件为 `pj4edk-boot-display`，由 `CONFIG_PJ4EDK_BOOT_DISPLAY` 控制。
 旧 `/dev/w202fbcon` 接口及其实现、构建入口已删除。
 背光、USB PHY 另有显式 `.ko` 编译目标，见 `Devices/BUILD.md`。
@@ -57,6 +57,5 @@ make -C Devices/wcn/userspace OUT="$PWD/output/wcn-bt-arm64" DESTDIR="$PWD/outpu
 安装时外部板级模块放到 `updates/w202ds/`，重建 depmod 和 initramfs 并核实解析路径；
 不要只安装树内原生 `panfrost.ko`。本仓构建命令不执行安装。
 
-默认诊断配置保留 120 秒恢复计时；普通系统可设 `CONFIG_W202DS_DIAG_BOOT_TIMEOUT=0`，
-保留 `/dev/w202diagctl` 用户态兼容。新的标准 PMIC 重启路径、显示顺序和 USB 需要真机回归。
+标准 PMIC 重启路径、显示顺序和 USB 需要真机回归。
 配套使用本仓 DTSI 编译的 DTB，不能依赖已删除的启动时 GPU FDT 修补。
