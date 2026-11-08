@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "status": "原厂 WCN/GNSS 启动固件、两份 Wi-Fi 板配置和两份蓝牙参数已存在",
+  "status": "原厂 WCN/GNSS 固件、Wi-Fi 板配置与蓝牙 PSKey/RF 参数已存在",
   "files": [
     {
       "path": "firmware/gnssmodem.bin",

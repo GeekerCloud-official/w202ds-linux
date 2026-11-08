@@ -18,6 +18,7 @@
  * SPDX-License-Identifier: MIT
  */
 #include <errno.h>
+#include <ctype.h>
 #include <fcntl.h>
 #include <poll.h>
 #include <stdint.h>
@@ -132,7 +133,14 @@ static int hci_cmd(int fd, uint16_t op, const uint8_t *param, int len)
 		if (h[0] != 0x04) { hexdump("? skip", h, 1); continue; }
 		if (read_full(fd, h + 1, 2, 1000) < 0 || read_full(fd, ev, h[2], 1000) < 0) break;
 		hexdump(">", ev, h[2]);
-		if (h[1] == 0x0e && h[2] >= 4 && (ev[1] | ev[2] << 8) == op) return ev[3];
+		if (h[1] == 0x0e && h[2] >= 4 && (ev[1] | ev[2] << 8) == op) {
+			/* Marlin3 echoes the mode and enabled state, not HCI status.
+			 * For 00 00 01, enabled=1 is success. Reject short/mismatched
+			 * replies instead of treating the first mode byte as status. */
+			if (op == 0xfca1)
+				return h[2] == 6 && len == 3 && !memcmp(ev + 3, param, 3) ? 0 : 1;
+			return ev[3];
+		}
 		if (h[1] == 0x0f && h[2] >= 4 && (ev[2] | ev[3] << 8) == op && ev[0]) return ev[0];
 	}
 	fprintf(stderr, "no Command Complete for 0x%04x\n", op);
@@ -166,7 +174,10 @@ int main(int argc, char **argv)
 	if (addr) {
 		unsigned int m[6];
 		int ai = field_index(pskey_fields, "device_addr");
-		if (sscanf(addr, "%x:%x:%x:%x:%x:%x", &m[0], &m[1], &m[2], &m[3], &m[4], &m[5]) != 6) {
+		int valid = strlen(addr) == 17;
+		for (int i = 0; valid && i < 17; i++)
+			valid = i % 3 == 2 ? addr[i] == ':' : isxdigit((unsigned char)addr[i]);
+		if (!valid || sscanf(addr, "%2x:%2x:%2x:%2x:%2x:%2x", &m[0], &m[1], &m[2], &m[3], &m[4], &m[5]) != 6) {
 			fprintf(stderr, "bad address %s\n", addr);
 			return 2;
 		}
@@ -187,9 +198,8 @@ int main(int argc, char **argv)
 	if ((st = hci_cmd(fd, 0xfca0, buf, n)) != 0) { fprintf(stderr, "PSKey upload failed (%d)\n", st); return 1; }
 	n = serialize(rf_fields, rv, buf);
 	if ((st = hci_cmd(fd, 0xfca2, buf, n)) != 0) { fprintf(stderr, "RF parameters failed (%d)\n", st); return 1; }
-	/* the enable reply carries mode (2 bytes) before the status, so report it only */
 	st = hci_cmd(fd, 0xfca1, (const uint8_t[]){ 0x00, 0x00, 0x01 }, 3);
-	if (st < 0) { fprintf(stderr, "enable failed\n"); return 1; }
+	if (st != 0) { fprintf(stderr, "enable failed (%d)\n", st); return 1; }
 	for (int i = 0; i < nextra; i++) {
 		uint8_t pb[255];
 		int pl = 0;

@@ -1,0 +1,17 @@
+[Unit]
+Description=W202DS Marlin3 Bluetooth H4 transport
+Wants=bluetooth.service
+After=systemd-udev-trigger.service w202-wifi.service
+Before=bluetooth.service
+
+[Service]
+Type=simple
+ExecStartPre=/usr/sbin/modprobe hci_uart
+ExecStart=/usr/libexec/w202-bluetooth-start
+ExecStopPost=-/usr/libexec/w202-bluetooth-start --block
+Restart=on-failure
+RestartSec=10
+TimeoutStopSec=10
+
+[Install]
+WantedBy=multi-user.target

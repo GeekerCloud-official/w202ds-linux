@@ -1,6 +1,0 @@
-# sprd_wlan_combo's recovery watchdog asks for Wi-Fi to be reopened:
-# - FW_ERROR: it reset the WCN chip after a firmware assert (or wcn_bsp did); Wi-Fi stays dead until wlan0 is opened
-#   again, and without that the watchdog reboots the tablet about a minute after the assert (recovery_reboot);
-# - TX_STALL: the firmware stopped taking data TX (no assert, commands still work); a Wi-Fi restart clears it.
-# w202-wcn-reopen does both.
-ACTION=="change", SUBSYSTEM=="misc", KERNEL=="wlan", ENV{SOURCE}=="unisocwl", ENV{EVENT}=="FW_ERROR|TX_STALL", RUN+="/bin/systemctl --no-block start w202-wcn-reopen.service"
