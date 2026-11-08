@@ -15,12 +15,23 @@
 //    counts. With a non-zero delay a suspend no longer locks at once.
 //  - Whatever lights the outputs while the shield is up (gnome-settings-daemon on a charger plug, a notification,
 //    a key) also drops the shield's black curtain, so a lit screen is never left black.
+//  - Screen off fades the screen to black (FADE_TIME) before the outputs go off, on the lock screen as well; another
+//    ScreenOff (power key pressed again) or a ScreenOn during the fade cancels it and the screen stays on.
+//  - The lock screen shows the wallpaper itself, dimmed, instead of GNOME's heavily blurred copy of it.
+//  - Closing the cover (Hall lid switch, through UPower and Mutter's lid-is-closed-changed) turns the screen off
+//    at once, without the fade; opening it turns the screen on to the lock screen. While the cover is closed the
+//    outputs stay off whatever lights them (keys of the folded keyboard, gnome-settings-daemon).
+//  - The lit lock screen, password prompt included, fades to black over IDLE_FADE_TIME before it goes dark when
+//    left alone (30 s after the last input, as gnome-settings-daemon would blank it at once); input during the
+//    fade lights it again.
 //
-// Everything else (authentication, notifications, the idle fade) is GNOME's.
+// Everything else (authentication, notifications, the session's own idle fade) is GNOME's.
 
 import Clutter from 'gi://Clutter';
+import Cogl from 'gi://Cogl';
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
+import St from 'gi://St';
 
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import {ScreenShield} from 'resource:///org/gnome/shell/ui/screenShield.js';
@@ -39,6 +50,14 @@ const MODIFIERS = [Clutter.KEY_Shift_L, Clutter.KEY_Shift_R, Clutter.KEY_Shift_L
     Clutter.KEY_Control_L, Clutter.KEY_Control_R, Clutter.KEY_Alt_L, Clutter.KEY_Alt_R,
     Clutter.KEY_Super_L, Clutter.KEY_Super_R];
 const LIFT_TIME = 300;    // ms, GNOME's CURTAIN_SLIDE_TIME
+const FADE_TIME = 300;    // ms, screen off fade to black, GNOME's MANUAL_FADE_TIME
+const DIM = 0.3;          // opacity of the black layer over the lock screen wallpaper
+// The lit lock screen goes dark this long after the last input, as gnome-settings-daemon blanks it
+// (SCREENSAVER_TIMEOUT_BLANK); after a wake that was no input of the user (outputs lit by gnome-settings-daemon
+// on plugging in power, WakeUpScreen) that daemon blanks it POWER_UP_TIME_ON_AC after the wake.
+const LOCK_SCREEN_IDLE_BLANK = 30000;   // ms
+const LOCK_SCREEN_UNIDLE_BLANK = 15000; // ms
+const IDLE_FADE_TIME = 3000;            // ms, fade to black before that blank
 
 export default class W202ScreenLock extends Extension {
     enable() {
@@ -49,6 +68,10 @@ export default class W202ScreenLock extends Extension {
         this._lockTimeoutId = 0;
         this._lifting = false;  // our slide-up of the lock screen is running
         this._raiseWhenDownId = 0;
+        this._litAt = 0;        // monotonic µs when the lock screen was last lit
+        this._litBase = 0;      // ms after _litAt at which it goes dark when there was no input since
+        this._idleBlankId = 0;  // timeout: start of the idle fade, then its end
+        this._ownWakeAt = 0;    // monotonic µs of our last PowerSaveMode 0
         this._injections = new InjectionManager();
         const unlocked = () => ext._shield?.active && !ext._shield.locked;
 
@@ -65,6 +88,7 @@ export default class W202ScreenLock extends Extension {
             this._longLightbox.lightOff();
             this._shortLightbox.lightOff();
             ext._setPowerSave(0);
+            ext._armIdleBlank(LOCK_SCREEN_IDLE_BLANK);  // input, or our own wake
             return undefined;
         });
 
@@ -96,6 +120,7 @@ export default class W202ScreenLock extends Extension {
             // pick the lock screen up where it is, also in the middle of a lift
             const group = ext._shield._lockDialogGroup;
             group.remove_all_transitions();
+            ext._revealSession(true);
             const progress = Math.min(1, Math.max(0, -group.translation_y / global.stage.height));
             tracker.confirmSwipe(global.stage.height, [0, 1], progress, 0);
             return undefined;
@@ -116,6 +141,7 @@ export default class W202ScreenLock extends Extension {
                     translation_y: 0,
                     duration,
                     mode: Clutter.AnimationMode.EASE_OUT_CUBIC,
+                    onStopped: () => ext._revealSession(false),
                 });
             }
             return undefined;
@@ -133,17 +159,75 @@ export default class W202ScreenLock extends Extension {
             return orig.apply(this, args);
         });
 
+        // The lock screen background: the wallpaper without the blur, under a dimming layer for the clock. The blur
+        // effect is removed rather than set to radius 0, which would still render the wallpaper offscreen each frame.
+        this._injections.overrideMethod(UnlockDialog.prototype, '_updateBackgroundEffects', orig => function () {
+            orig.call(this);
+            for (const widget of this._backgroundGroup) {
+                widget.remove_effect_by_name('blur');
+                if (!widget._w202Dim) {
+                    widget._w202Dim = new St.Widget({style: `background-color: rgba(0, 0, 0, ${DIM});`});
+                    widget._w202Dim.add_constraint(new Clutter.BindConstraint({
+                        source: widget, coordinate: Clutter.BindCoordinate.SIZE,
+                    }));
+                    widget.add_child(widget._w202Dim);
+                }
+            }
+        });
+
         this._shield.connectObject('active-changed', () => this._onActiveChanged(), this);
         this._settings.connectObject('changed', () => this._armLock(), this);
         this._onActiveChanged();
 
-        // Outputs lit while the shield's curtain is down: show the lock screen.
+        // Outputs lit while the shield's curtain is down: show the lock screen. With the cover closed, dark again.
         this._powerSaveId = Gio.DBus.session.signal_subscribe(null, 'org.freedesktop.DBus.Properties',
             'PropertiesChanged', MUTTER[1], MUTTER[2], Gio.DBusSignalFlags.NONE, (...args) => {
                 const [, changed] = args[5].deepUnpack();
-                if (changed.PowerSaveMode?.unpack() === 0 && this._shield.active)
+                const mode = changed.PowerSaveMode?.unpack();
+                if (mode === undefined)
+                    return;
+                // our own Set is answered within a frame or two; one second leaves room for a busy compositor
+                const own = GLib.get_monotonic_time() - this._ownWakeAt < 1000000;
+                if (mode !== 0) {
+                    this._cancelIdleBlank();
+                    return;
+                }
+                if (this._lidClosed) {
+                    this._log('cover closed: screen kept off');
+                    this._setPowerSave(3);
+                } else if (this._shield.active && !own) {
+                    // lit by someone else (gnome-settings-daemon): GNOME's wake, which announces WakeUpScreen
                     this._shield._wakeUpScreen();
+                    this._armIdleBlank(LOCK_SCREEN_UNIDLE_BLANK);
+                }
             });
+        // Mutter follows UPower's LidIsClosed but does not expose its state to JavaScript; read it once here and
+        // follow Mutter's change signal afterwards (a signal arriving before the reply wins over the reply).
+        this._lidClosed = false;
+        let lidSignalled = false;
+        Gio.DBus.system.call('org.freedesktop.UPower', '/org/freedesktop/UPower', 'org.freedesktop.DBus.Properties',
+            'Get', new GLib.Variant('(ss)', ['org.freedesktop.UPower', 'LidIsClosed']), null,
+            Gio.DBusCallFlags.NONE, -1, null, (bus, res) => {
+                try {
+                    const closed = bus.call_finish(res).deepUnpack()[0].unpack();
+                    if (!lidSignalled && this._injections)
+                        this._lidClosed = closed;
+                } catch (e) {
+                    this._log(`cannot read the cover state: ${e.message}`);
+                }
+            });
+        global.backend.connectObject('lid-is-closed-changed', (backend, closed) => {
+            lidSignalled = true;
+            this._lidClosed = closed;
+            if (closed) {
+                this._cancelFade();
+                this._screenOff();
+                this._log('cover closed');
+            } else {
+                this.ScreenOn();
+                this._log('cover opened');
+            }
+        }, this);
 
         this._dbus = Gio.DBusExportedObject.wrapJSObject(IFACE, this);
         this._dbus.export(Gio.DBus.session, OBJECT_PATH);
@@ -155,14 +239,19 @@ export default class W202ScreenLock extends Extension {
         this._dbus = null;
         Gio.DBus.session.signal_unsubscribe(this._powerSaveId);
         this._shield.disconnectObject(this);
+        global.backend.disconnectObject(this);
         this._settings.disconnectObject(this);
         this._disarm();
+        this._cancelIdleBlank();
         if (this._raiseWhenDownId)
             this._shield.disconnect(this._raiseWhenDownId);
         this._raiseWhenDownId = 0;
-        if (this._lifting)
-            this._shield._lockDialogGroup.remove_all_transitions();
+        this._shield._lockDialogGroup.remove_all_transitions();
+        this._shield._lockDialogGroup.translation_y = 0;
+        this._revealSession(false);
+        this._cancelFade();
         this._injections.clear();
+        this._shield._dialog?._updateBackgrounds();  // rebuild the lock screen background as GNOME's
         this._injections = null;
         this._settings = null;
         this._shield = null;
@@ -186,6 +275,7 @@ export default class W202ScreenLock extends Extension {
         } else {
             this._offAt = 0;
             this._disarm();
+            this._cancelIdleBlank();
         }
     }
 
@@ -222,6 +312,8 @@ export default class W202ScreenLock extends Extension {
     }
 
     _setPowerSave(mode) {
+        if (mode === 0)
+            this._ownWakeAt = GLib.get_monotonic_time();
         Gio.DBus.session.call(MUTTER[0], MUTTER[1], 'org.freedesktop.DBus.Properties', 'Set',
             new GLib.Variant('(ssv)', [MUTTER[2], 'PowerSaveMode', GLib.Variant.new_int32(mode)]),
             null, Gio.DBusCallFlags.NONE, -1, null, null);
@@ -242,11 +334,47 @@ export default class W202ScreenLock extends Extension {
     // D-Bus
 
     ScreenOff() {
+        if (this._curtain) {
+            // pressed again while fading out: keep the screen on
+            this._cancelFade();
+            this._log('screen off cancelled');
+            return;
+        }
         const shield = this._shield;
+        if (shield.active && (shield._shortLightbox.visible || shield._longLightbox.visible)) {
+            // the lock screen is up behind its black curtain already: nothing to fade
+            this._screenOff();
+            return;
+        }
+        const curtain = this._curtain = new Clutter.Actor({background_color: new Cogl.Color({alpha: 255}), opacity: 0});
+        curtain.add_constraint(new Clutter.BindConstraint({source: global.stage, coordinate: Clutter.BindCoordinate.ALL}));
+        Main.uiGroup.add_child(curtain);
+        Main.uiGroup.set_child_above_sibling(curtain, null);
+        curtain.ease({
+            opacity: 255,
+            duration: FADE_TIME,
+            mode: Clutter.AnimationMode.EASE_IN_QUAD,
+            onComplete: () => {
+                this._screenOff();  // raises the shield, whose own black curtain is up at once
+                this._cancelFade();
+            },
+        });
+    }
+
+    _cancelFade() {
+        const curtain = this._curtain;
+        this._curtain = null;
+        curtain?.destroy();
+    }
+
+    _screenOff() {
+        const shield = this._shield;
+        this._cancelIdleBlank();
         if (this._lifting) {
             // a lift was under way: the lock screen stays
             shield._lockDialogGroup.remove_all_transitions();  // onStopped clears _lifting, no deactivate
             shield._lockDialogGroup.translation_y = 0;
+            this._revealSession(false);
         }
         if (shield.active && Main.sessionMode.currentMode !== 'unlock-dialog') {
             // GNOME is finishing a deactivation (its last slide, ~250 ms): raise the shield again once it is down
@@ -262,10 +390,71 @@ export default class W202ScreenLock extends Extension {
     }
 
     ScreenOn() {
-        if (this._shield.active)
-            this._shield._wakeUpScreen();
-        this._setPowerSave(0);
+        this._cancelFade();
+        if (this._shield.active) {
+            // GNOME's _wakeUpScreen() without its WakeUpScreen announcement: gnome-settings-daemon answers that with
+            // a blank 15 s later that no input postpones; this wake is the user's, and the lock screen goes dark
+            // after LOCK_SCREEN_IDLE_BLANK with a fade (_armIdleBlank, from _onUserBecameActive).
+            this._shield._onUserBecameActive();
+        } else {
+            this._setPowerSave(0);
+        }
         this._log(`screen on${this._shield.locked ? ' (locked)' : ''}`);
+    }
+
+    // The lock screen lit: fade it to black over IDLE_FADE_TIME and blank it when it has had no input for
+    // LOCK_SCREEN_IDLE_BLANK, or `base` ms after now if that is later (a wake that was no input). Input during the
+    // fade reaches _onUserBecameActive (GNOME's becameActive watch of _activateFade), which lights it and re-arms.
+    _armIdleBlank(base) {
+        this._cancelIdleBlank();
+        if (!this._shield.active)
+            return;
+        this._litAt = GLib.get_monotonic_time();
+        this._litBase = base;
+        this._scheduleIdleBlank();
+    }
+
+    _scheduleIdleBlank() {
+        const now = GLib.get_monotonic_time();
+        const lastInput = now - this._shield.idleMonitor.get_idletime() * 1000;
+        const deadline = Math.max(this._litAt + this._litBase * 1000, lastInput + LOCK_SCREEN_IDLE_BLANK * 1000);
+        const wait = Math.ceil((deadline - IDLE_FADE_TIME * 1000 - now) / 1000);
+        if (wait > 50) {
+            // input since arming moves the deadline: look again then
+            this._idleBlankId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, wait, () => {
+                this._idleBlankId = 0;
+                this._scheduleIdleBlank();
+                return GLib.SOURCE_REMOVE;
+            });
+            return;
+        }
+        if (!this._shield.active || this._lidClosed)
+            return;
+        this._shield._activateFade(this._shield._shortLightbox, IDLE_FADE_TIME);
+        this._idleBlankId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, IDLE_FADE_TIME, () => {
+            this._idleBlankId = 0;
+            this._log('idle on the lock screen');
+            this._screenOff();
+            return GLib.SOURCE_REMOVE;
+        });
+    }
+
+    _cancelIdleBlank() {
+        if (this._idleBlankId)
+            GLib.source_remove(this._idleBlankId);
+        this._idleBlankId = 0;
+    }
+
+    // While the lock screen is up GNOME hides the session, the desktop background included (both are in the window
+    // group, hidden in the unlock-dialog session mode). Lifting the lock screen with the finger uncovers part of the
+    // stage where then nothing paints, and the screen shows whatever an earlier frame left in that buffer (streaks).
+    // Show the window group, which lies below the shield, during the lift; top_window_group lies above the shield
+    // and stays hidden. GNOME's own deactivation leaves the unlock-dialog mode first and needs none of this.
+    _revealSession(show) {
+        if (show)
+            global.window_group.show();
+        else
+            Main.layoutManager._updateVisibility();  // back to what the session mode says
     }
 
     // Slide the lock screen up from where it is, then let GNOME take the shield down without its own animation.
@@ -273,6 +462,7 @@ export default class W202ScreenLock extends Extension {
         const group = this._shield._lockDialogGroup;
         this._lifting = true;
         group.remove_all_transitions();
+        this._revealSession(true);
         group.ease({
             translation_y: -global.stage.height,
             duration,

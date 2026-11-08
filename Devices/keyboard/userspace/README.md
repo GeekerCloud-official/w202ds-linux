@@ -4,7 +4,7 @@
 
 | 目录 | 内容 |
 | --- | --- |
-| `rootfs/` | 按键守护进程 `w202-power-key`、其 systemd 单元、logind 与 dconf 配置模板，设置程序 `w202-screen-settings` 及其桌面文件。 |
+| `rootfs/` | 按键守护进程 `w202-power-key`、其 systemd 单元、logind（电源键、合盖）与 dconf 配置模板，设置程序 `w202-screen-settings` 及其桌面文件。 |
 | `power-menu/` | GNOME Shell 扩展 `w202-power-menu@w202ds` 源码及其简体中文翻译。 |
 | `screen-lock/` | GNOME Shell 扩展 `w202-screen-lock@w202ds`（手机式息屏 / 亮屏 / 锁屏）。 |
 | `tests/` | 通过 GNOME Shell 截图服务截屏的验收辅助脚本，以及 uinput 按键、触摸屏注入脚本。 |
@@ -37,7 +37,12 @@ GNOME 自己的电源键动作被 dconf 设为 `nothing`，logind 忽略电源�
 - 熄屏时间达到 `org.gnome.desktop.screensaver lock-delay`（默认 15 分钟，0 为立即，`lock-enabled` 关闭则从不）后锁定，此后上划显示密码框。计时用墙上时钟并在亮屏时再比较一次，挂起的时间也计入；设了非 0 的锁定时间时，挂起不再立即锁定。
 - 盾牌升起期间任何原因点亮屏幕（gnome-settings-daemon 在插拔电源时、通知、按键）都会撤掉盾牌的黑色遮罩，屏幕不会亮着却全黑。
 - 熄屏发生在上划滑出动画途中时，锁屏留在原位；发生在 GNOME 收尾的最后一段动画中时，等盾牌放下后再重新升起。
-- 每次熄屏、亮屏、锁定都以 `w202-screen-lock@w202ds:` 前缀写入 gnome-shell 日志。
+- 短按电源键熄屏先用 0.3 秒渐暗再关屏，桌面和锁屏上都一样；渐暗途中再按一次取消熄屏。屏幕已被盾牌的黑色遮罩盖住时直接关屏。
+- 亮着的锁屏（含密码框）无操作时先用 3 秒渐暗，再关屏：最后一次输入后 30 秒（gnome-settings-daemon 的 `SCREENSAVER_TIMEOUT_BLANK`，它原本直接关屏），被 gnome-settings-daemon 点亮而无输入时为点亮后 15 秒。渐暗途中有输入即恢复亮屏。电源键 / 开盖亮屏不发出 GNOME 的 `WakeUpScreen`，否则 gnome-settings-daemon 15 秒后会不经渐暗直接关屏。桌面空闲时仍是 GNOME 自己的 10 秒渐暗。
+- 锁屏背景是壁纸本身加一层 30% 黑色，不用 GNOME 的重度模糊（模糊效果整个移除，不是把半径设 0）。
+- 上划过程中显示锁屏下方的会话（窗口组）：unlock-dialog 模式下 GNOME 隐藏了窗口组和桌面背景，锁屏被推开的部分没有任何东西绘制，屏幕上会留下以前帧的横条纹；上划未到位弹回时恢复隐藏。
+- 合盖（霍尔开关 `w202_hall`，经 UPower 与 Mutter 的 `lid-is-closed-changed`）立即熄屏、开盖亮到锁屏；合盖期间无论谁点亮屏幕都立即关回。logind 忽略合盖（`50-w202-lid.conf`），不挂起：本机 Wi-Fi 固件不能从挂起恢复。
+- 每次熄屏、亮屏、锁定、合盖、开盖都以 `w202-screen-lock@w202ds:` 前缀写入 gnome-shell 日志。
 
 设置程序 `w202-screen-settings`（应用名“屏幕与锁屏”，GTK 4 / libadwaita）直接修改当前用户的标准 GNOME 设置，选中即生效：自动息屏（`org.gnome.desktop.session idle-delay`）、需要密码的时间（`org.gnome.desktop.screensaver lock-enabled` / `lock-delay`）、锁屏上显示通知（`org.gnome.desktop.notifications show-in-lock-screen`）、使用电池时自动挂起（`org.gnome.settings-daemon.plugins.power sleep-inactive-battery-*`）。接通电源时从不自动挂起（`50-w202-no-ac-suspend`），程序中注明了原因。
 
@@ -64,7 +69,7 @@ systemctl enable --now w202-power-key.service
 
 ## 验收
 
-辅助脚本用于不碰平板完成验收：`tests/shell-screenshot.py` 以会话用户身份运行，临时占用 `org.gnome.Screenshot` 名称（GNOME Shell 只为白名单名称截图），调用 `org.gnome.Shell.Screenshot` 保存整屏截图；`tests/uinput-key.py` 以 root 身份通过 uinput 敲一次指定键（1 = Esc，15 = Tab，28 = 回车）；`tests/uinput-touch.py` 以 root 身份创建与面板同尺寸（1200×1920 竖向坐标）的 uinput 触摸屏，做一次直线滑动或点按（`tap X Y`）。横屏下“上划”沿面板 X 轴由小到大，例如 `uinput-touch.py 200 960 1000 960 350`。
+辅助脚本用于不碰平板完成验收：`tests/shell-screenshot.py` 以会话用户身份运行，临时占用 `org.gnome.Screenshot` 名称（GNOME Shell 只为白名单名称截图），调用 `org.gnome.Shell.Screenshot` 保存整屏截图；`tests/uinput-key.py` 以 root 身份通过 uinput 敲一次指定键（1 = Esc，15 = Tab，28 = 回车）；`tests/uinput-touch.py` 以 root 身份创建与面板同尺寸（1200×1920 竖向坐标）的 uinput 触摸屏，做一次直线滑动或点按（`tap X Y`），可选第 6 个参数为手指停在终点的秒数，用于截取上划途中的画面。横屏下“上划”沿面板 X 轴由小到大，例如 `uinput-touch.py 200 960 1000 960 350`。
 
 2026-11-08 在 W202DS（Debian 13，GNOME Shell 48.7，gnome-session 48.0，内核 `6.18.35-w202ds-m23-wifi`）上验证，结果均来自重启后的实机：
 
@@ -81,5 +86,11 @@ systemctl enable --now w202-power-key.service
 - 改动后：触摸上划 3 次、按键 1 次，每次盾牌都放下（`user` 模式、无抓取），切换概览各产生 15～21 次提交，鼠标移动无残影；单点、向下划、慢速短划都留在锁屏。连续快速熄屏 / 亮屏（0.3～0.6 秒间隔）以及上划滑出途中熄屏之后，盾牌都能正常升起和放下。
 - `lock-delay` 设为 5 秒、熄屏 8 秒后亮屏：已锁定，上划显示密码框；`loginctl unlock-session` 后画面正常刷新。熄屏 2 秒后亮屏：未锁定，上划直接回到桌面。
 - 设置程序：截图中四项分别显示 5 分钟 / 15 分钟后 / 开 / 30 分钟；逐项选择后读回 GSettings：需要密码“1 分钟后”→ `lock-enabled true`、`lock-delay 60`，“从不”→ `lock-enabled false`；自动息屏“2 分钟”→ `idle-delay 120`；使用电池时“从不”→ `nothing`，“1 小时”→ `suspend` / 3600。
+
+同日第二轮（用户实机观察并确认）：
+
+- 上划锁屏：改动前手指停在半路时截屏，锁屏被推开的下半部分是横条纹（与用户照片一致）；改动后为会话画面，用户确认不再出现条纹。
+- 渐暗：用户确认桌面与锁屏上短按电源键都有渐暗；锁屏无操作约 27 秒开始渐暗、30 秒关屏（日志 `idle on the lock screen`），渐暗途中触摸恢复亮屏。
+- 合盖：用户多次合盖 / 开盖，日志每次合盖立即熄屏、开盖亮屏；合盖时折叠键盘按键点亮的屏幕立即关回（`cover closed: screen kept off`）。
 
 待用户实机确认：按住电源键 1 秒弹出菜单、松开后屏幕不熄灭；触摸点按挂起 / 重启 / 关机 / 取消；熄屏及锁屏状态下长按；菜单打开时短按电源键熄屏；真实手指上划解锁的手感。关机与挂起两项按钮未在本轮自动验收中实际执行（挂起后需按电源键唤醒）。

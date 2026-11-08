@@ -47,11 +47,13 @@ if sys.argv[1] == "tap":
 else:
     x0, y0, x1, y1 = map(int, sys.argv[1:5])
     ms = int(sys.argv[5]) if len(sys.argv) > 5 else 300
+    hold = float(sys.argv[6]) if len(sys.argv) > 6 else 0  # seconds to keep the finger down at (x1, y1)
     steps = max(2, ms // 8)
     down(x0, y0)
     for i in range(1, steps + 1):
         time.sleep(ms / 1000 / steps)
         frame(x0 + (x1 - x0) * i // steps, y0 + (y1 - y0) * i // steps)
+    time.sleep(hold)
     up()
 time.sleep(0.3)
 fcntl.ioctl(fd, UI_DEV_DESTROY)
