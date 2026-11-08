@@ -7,6 +7,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import platform
 import re
 import shlex
 import subprocess
@@ -16,6 +17,8 @@ import tomllib
 
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / 'scripts'))
+from kernel_state import configuration, current_configuration, file_records, source_identity
 SETTING = re.compile(r'(CONFIG_[A-Za-z0-9_]+)=(y|m|n|-?[0-9]+|0[xX][0-9a-fA-F]+|"(?:[^"\\]|\\.)*")')
 UNSET = re.compile(r'# (CONFIG_[A-Za-z0-9_]+) is not set')
 
@@ -150,17 +153,6 @@ def clean_environment():
     return env
 
 
-def kernel_identity(kernel):
-    try:
-        top = subprocess.check_output(['git', '-C', str(kernel), 'rev-parse', '--show-toplevel'],
-                                      stderr=subprocess.DEVNULL, text=True).strip()
-        if Path(top).resolve() == kernel:
-            return subprocess.check_output(['git', '-C', str(kernel), 'rev-parse', 'HEAD'], text=True).strip()
-    except (OSError, subprocess.CalledProcessError):
-        pass
-    return None
-
-
 def make(args, plan, directory, targets, log, capture=False):
     command = ['make', '--no-print-directory', '-s', '-C', str(args.kernel),
                'O=' + str(directory), 'ARCH=' + plan['arch'],
@@ -185,20 +177,28 @@ def generate(args, plan):
         raise ConfigError('Choose a build directory outside kernel/ that does not contain configuration inputs')
     if not (args.kernel / 'Makefile').is_file():
         raise ConfigError(f'Kernel source not found: {args.kernel}')
+    identity = source_identity(args.kernel)
     out.mkdir(parents=True, exist_ok=True)
     with (out / '.kernel-build.lock').open('a') as lock:
         try:
             fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except BlockingIOError as error:
             raise ConfigError(f'Another kernel task is using {out}') from error
-        report = dict(plan, status='configuring', kernel=str(args.kernel), kernel_commit=kernel_identity(args.kernel),
+        report = dict(plan, status='configuring', kernel=str(args.kernel), kernel_commit=identity['commit'],
+                      source_identity=identity,
                       cross_compile=args.cross_compile, output=str(out))
         report_path = out / 'kernel-build.json'
-        if report_path.exists() and any((out / n).exists() for n in ('vmlinux', 'Module.symvers', 'include/config/auto.conf')):
+        if report_path.exists():
             previous = json.loads(report_path.read_text())
             for key in ('kernel', 'arch', 'cross_compile'):
                 if previous.get(key) != report[key]:
                     raise ConfigError(f'Build identity changed ({key}); choose a new output directory')
+            if previous.get('kernel_commit') != identity['commit'] or previous.get('source_identity') != identity:
+                raise ConfigError('Kernel source changed in a prepared build; choose a new output directory')
+            if configuration(previous) != configuration(plan):
+                raise ConfigError('Configuration inputs changed in a prepared build; choose a new output directory')
+            if (out / '.config').exists() and previous.get('config_sha256') != digest((out / '.config').read_bytes()):
+                raise ConfigError('Prepared configuration changed; choose a new output directory')
 
         def save():
             write_atomic(report_path, (json.dumps(report, indent=2, ensure_ascii=False) + '\n').encode())
@@ -241,6 +241,18 @@ def generate(args, plan):
                 report.update(status='built', image_sha256=digest(image.read_bytes()),
                               symvers_sha256=digest(symbols.read_bytes()),
                               tree_module_count=sum(1 for _ in out.rglob('*.ko')))
+                if source_identity(args.kernel) != identity:
+                    raise ConfigError('Kernel source changed during the build')
+                if current_configuration(configuration(plan)) != configuration(plan):
+                    raise ConfigError('Configuration inputs changed during the build')
+                state = {'schema': 1, 'kind': 'w202ds-kernel-output', 'arch': plan['arch'],
+                         'host_system': platform.system(), 'host_machine': platform.machine(),
+                         'kernel_commit': identity['commit'], 'source_identity': identity,
+                         'kernelrelease': release, 'profile': plan['profile'],
+                         'compiler': report['compiler'], 'configuration': configuration(plan),
+                         'config_sha256': report['config_sha256'], 'symvers_sha256': report['symvers_sha256'],
+                         'files': file_records(out)}
+                write_atomic(out / 'kernel-state.json', (json.dumps(state, indent=2) + '\n').encode())
                 save()
         except BaseException as error:
             report.update(status='failed', error=str(error))
