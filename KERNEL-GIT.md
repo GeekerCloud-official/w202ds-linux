@@ -25,7 +25,8 @@ git -C kernel log --oneline v6.18.35..HEAD
 先在 `kernel/` 提交内核改动，再在主仓库 `git add kernel` 并提交新指针。
 `Devices/` 中的模块实现、配置和设备树由主仓库维护，不属于内核子模块提交。
 内核仍有 4 个相对链接接入这些实现，构建必须保留同级 `Devices/` 布局。
-构建命令见 [BUILD.md](BUILD.md)，显式设置 `LOCALVERSION=`，防止新 Git 提交使内核版本多出 `+`。
+构建命令见 [BUILD.md](BUILD.md)。`CONFIG_LOCALVERSION_AUTO=y` 启用内核 Git 版本信息；
+示例中的 `LOCALVERSION=` 仅表示不追加手工后缀，不会关闭自动 Git 标识。
 
 ## 从 GitHub 检出
 

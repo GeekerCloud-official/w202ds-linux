@@ -1,0 +1,17 @@
+schema = 1
+default = "debug"
+arch = "arm64"
+
+[profiles.desktop]
+description = "W202DS display and keyboard foundation, with the existing module capabilities."
+fragments = [
+  "common.config",
+  "platform/ums9620.config",
+  "boards/w202ds.config",
+  "desktop.config",
+]
+
+[profiles.debug]
+description = "Desktop foundation plus the diagnostic/debug settings of the former Server configuration."
+extends = ["desktop"]
+fragments = ["debug.config"]

@@ -22,7 +22,7 @@ W202DS Linux 6.18.35 内核、板级设备树及硬件模块源码。
 | `kernel/` | 基于官方 v6.18.35 的内核子模块和 W202DS 适配提交。 |
 | `devicetree/` | W202DS 设备树源码及相关文件。 |
 | `Devices/` | 18 组硬件归属，含模块源码、DTSI、构建入口及实现/待办说明。 |
-| `config/` | 最新 Server 构建使用的完整内核配置。 |
+| `config/` | desktop/debug 内核配置合成模型及历史 Server 配置对照，默认 debug。 |
 
 已导入 2026-11-05 Server 使用的 `6.18.35-w202ds-m23-wifi` 源码及对应模块。
 包含 DRM、GPU、VPU、WCN/Wi-Fi、基带、PMIC、充电、霍尔、键盘、Sensor Hub 和历史 Linux 触控实现。
