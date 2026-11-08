@@ -1,5 +1,5 @@
 [Unit]
-Description=W202DS original CP NV service using private regular files
+Description=W202DS original CP NV service using private loop images
 Requires=w202-modem-private-root.service w202-modem-log.service w202-modem-properties.service
 After=w202-modem-private-root.service w202-modem-log.service w202-modem-properties.service
 PartOf=w202-modem-runtime.service

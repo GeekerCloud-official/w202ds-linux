@@ -9,6 +9,8 @@
 * as published by the Free Software Foundation.
 */
 
+#include <linux/moduleparam.h>
+
 #include "cmdevt.h"
 #include "common/cfg80211.h"
 #include "common/channel_2g.h"
@@ -18,6 +20,10 @@
 #include "qos.h"
 #include "scan.h"
 #include "txrx.h"
+
+static bool disable_p2p;
+module_param(disable_p2p, bool, 0444);
+MODULE_PARM_DESC(disable_p2p, "Expose only one STA or AP interface, without P2P");
 
 #define SPRD_MAX_PFN_LIST_COUNT	9
 
@@ -250,6 +256,9 @@ void sc2355_setup_wiphy(struct wiphy *wiphy, struct sprd_priv *priv)
 	    BIT(NL80211_IFTYPE_STATION) | BIT(NL80211_IFTYPE_AP) |
 	    BIT(NL80211_IFTYPE_P2P_GO) | BIT(NL80211_IFTYPE_P2P_CLIENT) |
 	    BIT(NL80211_IFTYPE_P2P_DEVICE);
+	if (disable_p2p)
+		wiphy->interface_modes = BIT(NL80211_IFTYPE_STATION) |
+			BIT(NL80211_IFTYPE_AP);
 
 	wiphy->features |= NL80211_FEATURE_CELL_BASE_REG_HINTS;
 	wiphy->flags &= ~WIPHY_FLAG_PS_ON_BY_DEFAULT;
@@ -368,7 +377,13 @@ void sc2355_setup_wiphy(struct wiphy *wiphy, struct sprd_priv *priv)
 		}
 	}
 
-	if (priv->fw_capa & SPRD_CAPA_MCC) {
+	if (disable_p2p) {
+		/* No combinations/software bypass: cfg80211 permits one STA or
+		 * AP. An idle P2P device can also occupy a firmware context and
+		 * break AP authentication on boards using exclusive STA/AP.
+		 */
+		pr_info("\tP2P disabled: one STA or AP interface\n");
+	} else if (priv->fw_capa & SPRD_CAPA_MCC) {
 		pr_info("\tMCC supported\n");
 		wiphy->n_iface_combinations = ARRAY_SIZE(sprd_iface_combos);
 		wiphy->iface_combinations = sprd_iface_combos;

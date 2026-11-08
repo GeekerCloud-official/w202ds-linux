@@ -9,6 +9,7 @@ root="$state/android"
 modules="/usr/lib/w202ds/modem/$(uname -r)"
 broker=/usr/libexec/w202-android-runtime
 properties=/usr/share/w202ds/modem/runtime-properties.bin
+storage=/usr/libexec/w202-modem-storage
 ldpath=/apex/com.android.runtime/lib64/bionic:/system/lib64:/vendor/lib64
 fail() { echo "w202-modem-runtime: $*" >&2; exit 1; }
 check_state() {
@@ -60,6 +61,32 @@ check_code() {
     test -f "$state/runtime-code.sha256" && test ! -L "$state/runtime-code.sha256"
     test "$(stat -c %u "$state/runtime-code.sha256")" = 0
     (cd "$state"; sha256sum -c --quiet runtime-code.sha256)
+}
+bind_firmware() {
+    directory=${W202_MODEM_FIRMWARE_DIR:-}
+    test -n "$directory" || return 0
+    test -d "$directory" && test "$(readlink -f "$directory")" = "$directory" ||
+        fail 'Firmware directory must be an absolute canonical directory.'
+    test "$(stat -c %u "$directory")" = 0 || fail 'Firmware directory must be root-owned.'
+    permissions=$(stat -c %a "$directory")
+    test $(( 0$permissions & 0022 )) = 0 || fail 'Firmware directory is writable by others.'
+    for name in nr_modem_a nr_phy_a pm_sys_a ch_sys_a nr_deltanv_a; do
+        file="$directory/$name.img"
+        test -f "$file" && test ! -L "$file" || fail "Missing firmware image: $name."
+        test "$(stat -c %u "$file")" = 0 || fail 'Firmware image must be root-owned.'
+        permissions=$(stat -c %a "$file")
+        test $(( 0$permissions & 0022 )) = 0 || fail 'Firmware image is writable by others.'
+        test "$(readlink "$root/dev/block/by-name/$name")" = "../../../firmware/$name.img" ||
+            fail "Firmware compatibility path is not configured: $name."
+    done
+    install -d -m 0755 "$root/firmware"
+    if ! mountpoint -q "$root/firmware"; then
+        mount --bind "$directory" "$root/firmware"
+        mount -o remount,bind,ro,nosuid,nodev,noexec "$root/firmware"
+    fi
+    test "$directory" -ef "$root/firmware" || fail 'Unexpected firmware mount.'
+    options=$(findmnt -n -o OPTIONS --mountpoint "$root/firmware")
+    case ",$options," in *,ro,*) ;; *) fail 'Firmware mount must be read-only.' ;; esac
 }
 copy_character() {
     source=$1
@@ -134,8 +161,9 @@ case "$operation" in
         # No unload/unbind path: these modules remain until the next OS reboot.
         ;;
     private-root)
+        bind_firmware
+        "$storage" prepare --state "$state"
         check_code
-        test -z "$(find "$root/dev" -xdev -type b -print -quit)" || fail 'Raw block device in private root.'
         for forbidden in dev/mem dev/kmem dev/mmcblk0 sys/power/wake_lock; do
             test ! -e "$root/$forbidden" || fail "Unexpected $forbidden."
         done
@@ -145,7 +173,7 @@ case "$operation" in
         done
         for partition in nr_fixnv1_a nr_fixnv2_a nr_runtimenv1 nr_runtimenv2; do
             path="$root/dev/block/by-name/$partition"
-            test -f "$path" && test ! -L "$path" || fail "NV is not a regular working file: $partition."
+            test -b "$path" && test ! -L "$path" || fail "NV is not a private loop node: $partition."
             test "$(stat -c %U "$path")" = w202modem || fail 'Unexpected NV owner.'
         done
         install -d -m 0750 -o root -g w202modem "$root/dev/socket"
@@ -169,6 +197,8 @@ case "$operation" in
     unmount-root)
         if mountpoint -q "$root/proc/cmdline"; then umount "$root/proc/cmdline"; fi
         if mountpoint -q "$root/proc"; then umount "$root/proc"; fi
+        "$storage" release --state "$state"
+        if mountpoint -q "$root/firmware"; then umount "$root/firmware"; fi
         ;;
     clean-log) clean_socket logdw ;;
     clean-properties) clean_socket property_service ;;
@@ -177,7 +207,7 @@ case "$operation" in
         exec "$broker" properties "$root/dev/socket/property_service" "$(id -u w202modem)" \
             "$root/dev/__properties__" --cp-diskserver-service
         ;;
-    cp-check) check_code; wait_brokers ;;
+    cp-check) check_code; "$storage" verify --state "$state" --check-nv; wait_brokers ;;
     cp) android_program /vendor/bin/cp_diskserver '-all,+sys_chroot,+block_suspend' ;;
     loader) android_program /vendor/bin/modem_control '-all,+sys_chroot,+chown,+block_suspend' ;;
     initialize)

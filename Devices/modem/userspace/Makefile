@@ -30,6 +30,7 @@ install: all
 	mkdir -p "$(DESTDIR)"
 	cp -a rootfs/. "$(DESTDIR)/"
 	install -m 0755 rootfs/usr/libexec/w202-modem-runtime "$(DESTDIR)/usr/libexec/w202-modem-runtime"
+	install -m 0755 runtime/w202-modem-storage.py "$(DESTDIR)/usr/libexec/w202-modem-storage"
 	install -m 0755 rootfs/usr/libexec/w202-cellular "$(DESTDIR)/usr/libexec/w202-cellular"
 	install -m 0755 rootfs/usr/local/sbin/w202-cellular "$(DESTDIR)/usr/local/sbin/w202-cellular"
 	install -D -m 0755 "$(OUT)/w202-modem-at" "$(DESTDIR)/usr/local/sbin/w202-modem-at"

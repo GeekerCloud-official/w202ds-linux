@@ -185,8 +185,10 @@ static ssize_t boot_console_store(struct device *dev,
 				 struct device_attribute *attr, const char *buf, size_t count)
 {
 	struct w202_dpu *d = dev_get_drvdata(dev);
-	bool value;
-	int ret = kstrtobool(buf, &value);
+	bool value = false;
+	/* Stop the boot writer without starting fbdev before a greeter paints. */
+	bool preserve = sysfs_streq(buf, "preserve");
+	int ret = preserve ? 0 : kstrtobool(buf, &value);
 
 	if (ret || value)
 		return ret ? ret : -EINVAL;
@@ -196,7 +198,7 @@ static ssize_t boot_console_store(struct device *dev,
 		goto out;
 	}
 	w202_boot_console_stop(d);
-	if (!d->fbdev_started) {
+	if (!preserve && !d->fbdev_started) {
 		d->fbdev_started = true;
 		drm_client_setup_with_color_mode(&d->drm, 16);
 	}
