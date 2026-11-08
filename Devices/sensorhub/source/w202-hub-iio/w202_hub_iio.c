@@ -32,12 +32,19 @@ extern int sbuf_write(u8 dst, u8 channel, u32 bufid,
 #define HUB_CHANNEL 4
 #define HUB_PERIOD_NS 200000000
 #define HUB_SENSORS 4
+/* A sample is current for two report periods; a sensor nobody reads for HUB_IDLE_MS is disabled again. */
+#define HUB_FRESH_NS (2ULL * HUB_PERIOD_NS + 100000000ULL)
+#define HUB_IDLE_MS 5000
 
 struct hub_sensor {
 	u8 handle;
-	const char *name;
+	/* Chip names CH may report for this handle; chip is the one it did report. */
+	const char *const *names;
+	const char *chip;
 	bool identified;
 	bool enabled;
+	u64 enabled_ns;
+	unsigned long last_use;
 	u32 value_bits[3];
 	u64 timestamp_us;
 	u64 received_ns;
@@ -62,6 +69,7 @@ struct w202_hub {
 	spinlock_t data_lock;
 	wait_queue_head_t data_wait;
 	struct delayed_work sync_work;
+	struct delayed_work idle_work;
 	void __iomem *syst;
 	void __iomem *frt;
 	u32 firmware;
@@ -115,8 +123,13 @@ static void hub_packet(void *context, u8 handle, u8 subtype,
 		wake_up_all(&hub->data_wait);
 	} else if (subtype == 9 && length == 76) {
 		sensor = hub_find_sensor(hub, get_unaligned_le32(payload + 44));
-		if (sensor && !strncmp(sensor->name, (const char *)payload, 20))
-			WRITE_ONCE(sensor->identified, true);
+		for (i = 0; sensor && sensor->names[i]; i++) {
+			if (!strncmp(sensor->names[i], (const char *)payload, 20)) {
+				sensor->chip = sensor->names[i];
+				smp_store_release(&sensor->identified, true);
+				break;
+			}
+		}
 		wake_up_all(&hub->data_wait);
 	} else if (subtype == 4 && length && !(length % 34)) {
 		for (offset = 0; offset < length; offset += 34) {
@@ -210,74 +223,155 @@ static void hub_sync_work(struct work_struct *work)
 		schedule_delayed_work(&hub->sync_work, msecs_to_jiffies(10000));
 }
 
-static int hub_read_raw(struct iio_dev *iio, const struct iio_chan_spec *channel,
-			int *value, int *value2, long mask)
+/* Caller holds sample_lock. */
+static void hub_disable(struct w202_hub *hub, struct hub_sensor *sensor)
 {
-	struct w202_hub *hub = ((struct hub_iio_private *)iio_priv(iio))->hub;
-	struct hub_sensor *sensor = hub_find_sensor(hub, channel->address >> 8);
-	u8 batch[12] = {0};
-	u64 before;
-	u32 bits;
-	s64 fixed;
-	s32 remainder;
-	unsigned long flags;
-	long waited;
-	int ret, disabled;
+	int ret = hub_command(hub, sensor->handle, 1, NULL, 0);
 
-	if (mask != IIO_CHAN_INFO_PROCESSED || !sensor)
-		return -EINVAL;
+	if (ret)
+		dev_err_ratelimited(hub->dev, "handle%u disable failed: %d\n", sensor->handle, ret);
+	else
+		sensor->enabled = false;
+}
+
+/* Caller holds sample_lock. */
+static int hub_enable(struct w202_hub *hub, struct hub_sensor *sensor)
+{
+	u8 batch[12] = {0};
+	int ret;
+
+	put_unaligned_le32(HUB_PERIOD_NS, batch);
+	ret = hub_command(hub, sensor->handle, 2, batch, sizeof(batch));
+	if (ret)
+		return ret;
+	/* Mark ownership before sending so a partial/failed enable is also undone. */
+	sensor->enabled = true;
+	sensor->enabled_ns = ktime_get_boottime_ns();
+	ret = hub_command(hub, sensor->handle, 0, NULL, 0);
+	if (ret)
+		hub_disable(hub, sensor);
+	return ret;
+}
+
+/* Once a second while any sensor is on: turn off the ones nobody has read for HUB_IDLE_MS. */
+static void hub_idle_work(struct work_struct *work)
+{
+	struct w202_hub *hub = container_of(to_delayed_work(work), struct w202_hub, idle_work);
+	struct hub_sensor *sensor;
+	bool active = false;
+	unsigned int i;
+
+	mutex_lock(&hub->sample_lock);
+	for (i = 0; i < HUB_SENSORS; i++) {
+		sensor = &hub->sensors[i];
+		if (sensor->enabled &&
+		    time_after_eq(jiffies, sensor->last_use + msecs_to_jiffies(HUB_IDLE_MS)))
+			hub_disable(hub, sensor);
+		active |= sensor->enabled;
+	}
+	if (active && !READ_ONCE(hub->stopping))
+		schedule_delayed_work(&hub->idle_work, HZ);
+	mutex_unlock(&hub->sample_lock);
+}
+
+/* Latest report of one axis. The sensor keeps streaming between reads, so a poller gets the current
+ * sample at once; only the first read after enabling, or after reports stopped, waits for a new one.
+ */
+static int hub_sample(struct w202_hub *hub, struct hub_sensor *sensor, unsigned int axis, u32 *bits)
+{
+	unsigned long flags;
+	u64 before, received;
+	long waited;
+	int ret = 0;
+
 	if (mutex_lock_interruptible(&hub->sample_lock))
 		return -ERESTARTSYS;
 	if (READ_ONCE(hub->stopping)) {
 		ret = -ENODEV;
 		goto unlock;
 	}
-	before = READ_ONCE(sensor->sequence);
-	put_unaligned_le32(HUB_PERIOD_NS, batch);
-	ret = hub_command(hub, sensor->handle, 2, batch, sizeof(batch));
-	if (ret)
-		goto unlock;
-	/* Mark ownership before sending so a partial/failed enable is also undone. */
-	sensor->enabled = true;
-	ret = hub_command(hub, sensor->handle, 0, NULL, 0);
-	if (ret)
-		goto disable;
-	waited = wait_event_interruptible_timeout(hub->data_wait,
-		READ_ONCE(hub->stopping) || READ_ONCE(sensor->sequence) != before,
-		msecs_to_jiffies(2500));
-	if (waited < 0) {
-		ret = waited;
-		goto disable;
-	}
-	if (!waited || READ_ONCE(hub->stopping)) {
-		ret = READ_ONCE(hub->stopping) ? -ENODEV : -ETIMEDOUT;
-		goto disable;
+	sensor->last_use = jiffies;
+	if (!sensor->enabled) {
+		ret = hub_enable(hub, sensor);
+		if (ret)
+			goto unlock;
+		mod_delayed_work(system_wq, &hub->idle_work, HZ);
 	}
 	spin_lock_irqsave(&hub->data_lock, flags);
-	bits = sensor->value_bits[channel->address & 255];
+	before = sensor->sequence;
+	received = sensor->received_ns;
 	spin_unlock_irqrestore(&hub->data_lock, flags);
-	/* Hub magnetic values are microtesla; Linux IIO magnetic units are Gauss.
-	 * Other channels retain m/s^2, rad/s and lux in micro-unit fixed point.
+	/* Light is reported on change, so an unchanged value remains valid
+	 * while enabled. Only the streaming motion sensors have an age limit.
 	 */
-	ret = hub_float_fixed(bits, sensor->handle == 2 ? 10000 : 1000000, &fixed);
-	if (!ret && (fixed > (s64)INT_MAX * 1000000 || fixed < (s64)INT_MIN * 1000000))
-		ret = -ERANGE;
-	if (!ret) {
-		*value = div_s64_rem(fixed, 1000000, &remainder);
-		*value2 = remainder;
+	if (received < sensor->enabled_ns ||
+	    (sensor->handle != 5 && ktime_get_boottime_ns() - received > HUB_FRESH_NS)) {
+		waited = wait_event_interruptible_timeout(hub->data_wait,
+			READ_ONCE(hub->stopping) || READ_ONCE(sensor->sequence) != before,
+			msecs_to_jiffies(2500));
+		if (waited < 0) {
+			ret = waited;
+			goto unlock;
+		}
+		if (!waited || READ_ONCE(hub->stopping)) {
+			ret = READ_ONCE(hub->stopping) ? -ENODEV : -ETIMEDOUT;
+			goto unlock;
+		}
 	}
-disable:
-	disabled = hub_command(hub, sensor->handle, 1, NULL, 0);
-	if (!disabled)
-		sensor->enabled = false;
-	else {
-		dev_err(hub->dev, "handle%u disable failed: %d\n", sensor->handle, disabled);
-		if (!ret)
-			ret = disabled;
-	}
+	spin_lock_irqsave(&hub->data_lock, flags);
+	*bits = sensor->value_bits[axis];
+	spin_unlock_irqrestore(&hub->data_lock, flags);
 unlock:
 	mutex_unlock(&hub->sample_lock);
-	return ret ? ret : IIO_VAL_INT_PLUS_MICRO;
+	return ret;
+}
+
+static int hub_read_raw(struct iio_dev *iio, const struct iio_chan_spec *channel,
+			int *value, int *value2, long mask)
+{
+	struct w202_hub *hub = ((struct hub_iio_private *)iio_priv(iio))->hub;
+	struct hub_sensor *sensor = hub_find_sensor(hub, channel->address >> 8);
+	u32 bits;
+	s64 fixed;
+	s32 remainder;
+	int ret;
+
+	if (!sensor)
+		return -EINVAL;
+	/* The hub reports m/s^2, rad/s, microtesla and lux. Raw values are micro-units (nanotesla for the
+	 * magnetometer); the scales convert them to Linux IIO units: m/s^2, rad/s and Gauss.
+	 */
+	switch (mask) {
+	case IIO_CHAN_INFO_SCALE:
+		*value = 0;
+		if (channel->type == IIO_MAGN) {
+			*value2 = 10000;	/* 1 nT = 0.00001 Gauss */
+			return IIO_VAL_INT_PLUS_NANO;
+		}
+		*value2 = 1;
+		return IIO_VAL_INT_PLUS_MICRO;
+	case IIO_CHAN_INFO_RAW:
+	case IIO_CHAN_INFO_PROCESSED:
+		break;
+	default:
+		return -EINVAL;
+	}
+	ret = hub_sample(hub, sensor, channel->address & 255, &bits);
+	if (!ret)
+		ret = hub_float_fixed(bits, channel->type == IIO_MAGN ? 1000 : 1000000, &fixed);
+	if (ret)
+		return ret;
+	if (mask == IIO_CHAN_INFO_RAW) {
+		if (fixed > INT_MAX || fixed < INT_MIN)
+			return -ERANGE;
+		*value = fixed;
+		return IIO_VAL_INT;
+	}
+	if (fixed > (s64)INT_MAX * 1000000 || fixed < (s64)INT_MIN * 1000000)
+		return -ERANGE;
+	*value = div_s64_rem(fixed, 1000000, &remainder);
+	*value2 = remainder;
+	return IIO_VAL_INT_PLUS_MICRO;
 }
 
 static ssize_t hub_stats_show(struct device *dev, struct device_attribute *attr, char *buf)
@@ -307,7 +401,8 @@ static const struct iio_info hub_iio_info = { .read_raw = hub_read_raw, .attrs =
 #define HUB_AXIS(kind, modifier, handle, axis) { \
 	.type = kind, .modified = 1, .channel2 = modifier, \
 	.address = ((handle) << 8) | (axis), \
-	.info_mask_separate = BIT(IIO_CHAN_INFO_PROCESSED) }
+	.info_mask_separate = BIT(IIO_CHAN_INFO_RAW), \
+	.info_mask_shared_by_type = BIT(IIO_CHAN_INFO_SCALE) }
 
 static const struct iio_chan_spec imu_channels[] = {
 	HUB_AXIS(IIO_ACCEL, IIO_MOD_X, 1, 0), HUB_AXIS(IIO_ACCEL, IIO_MOD_Y, 1, 1),
@@ -328,7 +423,7 @@ static bool hub_identified(struct w202_hub *hub)
 	unsigned int i;
 
 	for (i = 0; i < HUB_SENSORS; i++)
-		if (!READ_ONCE(hub->sensors[i].identified))
+		if (!smp_load_acquire(&hub->sensors[i].identified))
 			return false;
 	return true;
 }
@@ -347,6 +442,8 @@ static void hub_stop(struct w202_hub *hub)
 			hub->iio[i] = NULL;
 		}
 	}
+	/* No reader is left once the IIO devices are gone; nothing can requeue the idle work. */
+	cancel_delayed_work_sync(&hub->idle_work);
 	mutex_lock(&hub->sample_lock);
 	for (i = 0; i < HUB_SENSORS; i++) {
 		if (hub->sensors[i].enabled && hub_command(hub, hub->sensors[i].handle, 1, NULL, 0))
@@ -387,7 +484,12 @@ static void __iomem *hub_map_timer(const char *compatible)
 
 static int hub_probe(struct platform_device *pdev)
 {
-	static const char *const names[] = {"w202-lsm6dsoq", "w202-mmc5603", "w202-ltr578"};
+	static const char *const imu_chips[] = {"acc_lsm6dsoq", NULL};
+	static const char *const magn_chips[] = {"mag_mmc5603", NULL};
+	static const char *const gyro_chips[] = {"gyro_lsm6dsoq", NULL};
+	/* ZTE fitted either light sensor; CH firmware 20250605 reports LTR578, 20250219 units STK3x1x. */
+	static const char *const light_chips[] = {"light_ltr578", "light_stk3x1x", NULL};
+	const char *names[3] = {"w202-lsm6dsoq", "w202-mmc5603"};
 	static const struct iio_chan_spec *const channels[] = {imu_channels, magn_channels, light_channels};
 	static const unsigned int counts[] = {ARRAY_SIZE(imu_channels), ARRAY_SIZE(magn_channels), ARRAY_SIZE(light_channels)};
 	struct w202_hub *hub;
@@ -407,15 +509,16 @@ static int hub_probe(struct platform_device *pdev)
 	if (!hub)
 		return -ENOMEM;
 	hub->dev = &pdev->dev;
-	hub->sensors[0] = (struct hub_sensor){ .handle = 1, .name = "acc_lsm6dsoq" };
-	hub->sensors[1] = (struct hub_sensor){ .handle = 2, .name = "mag_mmc5603" };
-	hub->sensors[2] = (struct hub_sensor){ .handle = 4, .name = "gyro_lsm6dsoq" };
-	hub->sensors[3] = (struct hub_sensor){ .handle = 5, .name = "light_ltr578" };
+	hub->sensors[0] = (struct hub_sensor){ .handle = 1, .names = imu_chips };
+	hub->sensors[1] = (struct hub_sensor){ .handle = 2, .names = magn_chips };
+	hub->sensors[2] = (struct hub_sensor){ .handle = 4, .names = gyro_chips };
+	hub->sensors[3] = (struct hub_sensor){ .handle = 5, .names = light_chips };
 	mutex_init(&hub->command_lock);
 	mutex_init(&hub->sample_lock);
 	spin_lock_init(&hub->data_lock);
 	init_waitqueue_head(&hub->data_wait);
 	INIT_DELAYED_WORK(&hub->sync_work, hub_sync_work);
+	INIT_DELAYED_WORK(&hub->idle_work, hub_idle_work);
 	platform_set_drvdata(pdev, hub);
 	hub->syst = hub_map_timer("sprd,syst-timer");
 	hub->frt = hub_map_timer("sprd,sysfrt-timer");
@@ -441,8 +544,8 @@ static int hub_probe(struct platform_device *pdev)
 		ret = waited ? waited : -ETIMEDOUT;
 		goto stop;
 	}
-	/* This wire layout is validated only for the actual 20250605 CH image. */
-	if (READ_ONCE(hub->firmware) != 20250605) {
+	/* The report layout is validated on these CH images only. */
+	if (READ_ONCE(hub->firmware) != 20250219 && READ_ONCE(hub->firmware) != 20250605) {
 		ret = -EPROTONOSUPPORT;
 		goto stop;
 	}
@@ -452,6 +555,12 @@ static int hub_probe(struct platform_device *pdev)
 	waited = wait_event_interruptible_timeout(hub->data_wait, hub_identified(hub), HZ);
 	if (waited <= 0) {
 		ret = waited ? waited : -ENODEV;
+		goto stop;
+	}
+	names[2] = devm_kasprintf(&pdev->dev, GFP_KERNEL, "w202-%s",
+				  hub->sensors[3].chip + strlen("light_"));
+	if (!names[2]) {
+		ret = -ENOMEM;
 		goto stop;
 	}
 	ret = hub_sync_time(hub);
@@ -480,7 +589,8 @@ static int hub_probe(struct platform_device *pdev)
 		hub->iio[i] = iio;
 	}
 	schedule_delayed_work(&hub->sync_work, msecs_to_jiffies(10000));
-	dev_info(&pdev->dev, "CH firmware %u; LSM6DSOQ/MMC5603/LTR578 direct IIO ready\n", hub->firmware);
+	dev_info(&pdev->dev, "CH firmware %u; LSM6DSOQ/MMC5603/%s IIO ready\n", hub->firmware,
+		 hub->sensors[3].chip + strlen("light_"));
 	return 0;
 stop:
 	hub_stop(hub);
@@ -502,4 +612,4 @@ static struct platform_driver hub_driver = {
 };
 module_platform_driver(hub_driver);
 MODULE_LICENSE("GPL");
-MODULE_DESCRIPTION("W202DS CH Sensor Hub direct IIO for LSM6DSOQ, MMC5603 and LTR578");
+MODULE_DESCRIPTION("W202DS CH Sensor Hub IIO for LSM6DSOQ, MMC5603 and LTR578 or STK3x1x");

@@ -954,8 +954,12 @@ int sbuf_write(u8 dst, u8 channel, u32 bufid,
 		if (tail > 0) {
 			/* ring buffer is rounded */
 			if (!access_ok(u_buf.buf, txsize)) {
-				unalign_memcpy(txpos, u_buf.buf, txsize - tail);
-				unalign_memcpy(ring->txbuf_virt,
+				/* SRAM may be Device memory: generic memcpy tails
+				 * can issue unaligned accesses even after alignment.
+				 */
+				memcpy_toio((void __iomem *)txpos,
+					    u_buf.buf, txsize - tail);
+				memcpy_toio((void __iomem *)ring->txbuf_virt,
 					       u_buf.buf + txsize - tail, tail);
 			} else {
 				if (unalign_copy_from_user(
@@ -973,7 +977,8 @@ int sbuf_write(u8 dst, u8 channel, u32 bufid,
 			}
 		} else {
 			if (!access_ok(u_buf.buf, txsize)) {
-				unalign_memcpy(txpos, u_buf.buf, txsize);
+				memcpy_toio((void __iomem *)txpos,
+					    u_buf.buf, txsize);
 			} else {
 				/* handle the user space address */
 				if (unalign_copy_from_user(
@@ -1185,9 +1190,10 @@ int sbuf_read(u8 dst, u8 channel, u32 bufid,
 		if (tail > 0) {
 			/* ring buffer is rounded */
 			if (!access_ok(u_buf.buf, rxsize)) {
-				unalign_memcpy(u_buf.buf, rxpos, rxsize - tail);
-				unalign_memcpy(u_buf.buf + rxsize - tail,
-					       ring->rxbuf_virt, tail);
+				memcpy_fromio(u_buf.buf,
+					      (void __iomem *)rxpos, rxsize - tail);
+				memcpy_fromio(u_buf.buf + rxsize - tail,
+					      (void __iomem *)ring->rxbuf_virt, tail);
 			} else {
 				/* handle the user space address */
 				if (unalign_copy_to_user(u_buf.ubuf,
@@ -1204,7 +1210,8 @@ int sbuf_read(u8 dst, u8 channel, u32 bufid,
 			}
 		} else {
 			if (!access_ok(u_buf.buf, rxsize)) {
-				unalign_memcpy(u_buf.buf, rxpos, rxsize);
+				memcpy_fromio(u_buf.buf,
+					      (void __iomem *)rxpos, rxsize);
 			} else {
 				/* handle the user space address */
 				if (unalign_copy_to_user(u_buf.ubuf,

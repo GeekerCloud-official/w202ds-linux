@@ -54,3 +54,6 @@ SOURCES*.json
 # Keep keyboard diagnostic state snapshots local.
 /Devices/keyboard/source/keyboard-m22/super-layout.json
 /Devices/keyboard/source/keyboard-m22/*-lease.json
+
+# Sensor hub module startup and standard IIO sensor-proxy integration.
+!/Devices/sensorhub/userspace/

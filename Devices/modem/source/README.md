@@ -5,7 +5,7 @@
 
 ## W202DS 改动
 
-2026-11-06 核对：导入基线共 105 个文件，98 个保持一致，7 个有 W202DS 改动。
+2026-11-08 核对：导入基线共 105 个文件，97 个保持一致，8 个有 W202DS 改动。
 上游原样导入单独记录为主仓库提交 `bb7ca0a`，现有适配另行提交，便于查看真实增量。
 
 | 文件 | 改动 |
@@ -14,6 +14,7 @@
 | `sprd_modem/modem_loader/sprd_modem_loader.c`、`.h` | 改为按进程维护读写锁所有权，处理进程退出与资源释放，保留原厂 loader 使用的接口。 |
 | `sprd_modem/sipa_delegate/sipa_delegate.c` | 将本机 DT 未提供的旧资源设为可选，正确返回 DT 解析错误，并收敛不支持的解绑入口。 |
 | `sprd_modem/sipc/smem.c` | 修正非 RAM 共享 SRAM 的映射与释放，避免缓存属性使 PM 固件内容损坏、校验失败。 |
+| `sprd_modem/sipc/sbuf.c` | 内核缓冲区收发和环形回绕使用 `memcpy_toio/fromio`，修复 Device SRAM 上通用 memcpy 尾部导致的 ARM64 对齐异常；用户缓冲区路径不在此次验证范围。 |
 | `sprd_modem/sipc/spipe.c` | 修正驱动与设备类的退出释放顺序。 |
 | `sprd_modem/trusty/trusty-pm.c` | 适配 Linux 6.18 的 syscore 注册接口与恢复回调。 |
 
