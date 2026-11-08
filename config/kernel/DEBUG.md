@@ -43,6 +43,7 @@ DRM 前的早期日志由 `Devices/drm/source/pj4edk-boot-display/` 提供。
 | 类别 | 当前内建内容 |
 | --- | --- |
 | 时钟与安全服务 | UMS9620 时钟、SPRD SIP 服务。 |
+| CPU 调频 | `sprd-cpufreq-v2`、默认 schedutil、调频统计和 CPU thermal cooling；频率/电压表由固件提供。 |
 | 引脚与总线 | QOGIRN6PRO pinctrl、SPRD GPIO/EIC/PMIC EIC、I2C、SPI、ADI、UART 和串口控制台、PCIe。 |
 | 电源域与同步 | UMS9620 IPA 电源域、SPRD 硬件自旋锁。 |
 | PMIC 与电源 | SC27xx MFD/ADI 框架、UMP9620 稳压器、SC27xx ADC/RTC、SPRD/SC27xx efuse；PMIC watchdog 对象由现有 MFD 选择带入。 |

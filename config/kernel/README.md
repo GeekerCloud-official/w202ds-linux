@@ -21,6 +21,11 @@ platform 维护 UMS9620/ARM64 选择；boards 维护板级驱动；desktop 维�
 交互能力及普通启动默认值。选项按归属维护，不另设 module-support.config。
 平台片段由本项目维护，不是 Linux 上游提供的 UMS9620 defconfig。
 
+desktop 和 debug 共同合入 `config/fragments/cpu-dvfs.config`，内建
+`sprd-cpufreq-v2`，默认使用 schedutil，并启用 CPU 调频统计及 CPU thermal cooling。
+频率和电压表由 SPRD SIP 固件提供，保留原厂电压。驱动当前有约 45 秒的初始化等待；
+CPU_FREQ 和板级驱动均为内建选项，启用需要重新构建并启动匹配内核与模块。
+
 配置来自 `config/server.config` 经同一内核 `olddefconfig`、`savedefconfig` 得到的输入。
 原 Server 文件继续作为历史 debug 对照，日常修改这里的片段。
 更新内核版本时应重新核验默认值，不能假定精简片段在不同源码版本上结果相同。

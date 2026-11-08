@@ -8,6 +8,7 @@ fragments = [
   "common.config",
   "platform/ums9620.config",
   "boards/w202ds.config",
+  "../fragments/cpu-dvfs.config",
   "desktop.config",
 ]
 
