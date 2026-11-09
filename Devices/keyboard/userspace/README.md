@@ -7,6 +7,7 @@
 | `rootfs/` | 按键守护进程 `w202-power-key`、其 systemd 单元、logind（电源键、合盖）与 dconf 配置模板，设置程序 `w202-screen-settings` 及其桌面文件。 |
 | `power-menu/` | GNOME Shell 扩展 `w202-power-menu@w202ds` 源码及其简体中文翻译。 |
 | `screen-lock/` | GNOME Shell 扩展 `w202-screen-lock@w202ds`（手机式息屏 / 亮屏 / 锁屏）。 |
+| `quick-toggles/` | GNOME Shell 扩展 `w202-quick-toggles@w202ds`：快速设置面板中的定位、热点、移动数据、手电筒开关，及其简体中文翻译。 |
 | `tests/` | 通过 GNOME Shell 截图服务截屏的验收辅助脚本，以及 uinput 按键、触摸屏注入脚本。 |
 
 ## 已实现
@@ -55,12 +56,12 @@ make OUT="$PWD/output" all
 make OUT="$PWD/output" DESTDIR="$PWD/output/rootfs" install
 ```
 
-输入：本目录源码与 `po/*.po`，需要 GNU gettext 的 `msgfmt`。输出：编译后的 `.mo` 及离线 rootfs 暂存树（扩展装到 `/usr/share/gnome-shell/extensions/w202-power-menu@w202ds/` 与 `w202-screen-lock@w202ds/`）。`install` 只接受显式 `DESTDIR`，不启用服务。
+输入：本目录源码与 `po/*.po`，需要 GNU gettext 的 `msgfmt`。输出：编译后的 `.mo` 及离线 rootfs 暂存树（扩展装到 `/usr/share/gnome-shell/extensions/w202-power-menu@w202ds/`、`w202-screen-lock@w202ds/` 与 `w202-quick-toggles@w202ds/`）。`install` 只接受显式 `DESTDIR`，不启用服务。
 
 目标系统依赖 GNOME Shell 48、gnome-session、Python 3（设置程序另需 PyGObject、GTK 4 与 libadwaita）、systemd、util-linux（`setpriv`）及 GLib 的 `gdbus`。集成时执行：
 
 ```sh
-dconf update                                   # 60-w202-power-key：电源键动作 nothing，锁定时间 15 分钟，默认启用两个扩展
+dconf update                                   # 60-w202-power-key：电源键动作 nothing，锁定时间 15 分钟，默认启用三个扩展
 systemctl daemon-reload
 systemctl enable --now w202-power-key.service
 ```
@@ -94,3 +95,21 @@ systemctl enable --now w202-power-key.service
 - 合盖：用户多次合盖 / 开盖，日志每次合盖立即熄屏、开盖亮屏；合盖时折叠键盘按键点亮的屏幕立即关回（`cover closed: screen kept off`）。
 
 待用户实机确认：按住电源键 1 秒弹出菜单、松开后屏幕不熄灭；触摸点按挂起 / 重启 / 关机 / 取消；熄屏及锁屏状态下长按；菜单打开时短按电源键熄屏；真实手指上划解锁的手感。关机与挂起两项按钮未在本轮自动验收中实际执行（挂起后需按电源键唤醒）。
+
+## 快速设置开关（w202-quick-toggles@w202ds）
+
+在 GNOME 48 快速设置面板加四个开关，均复用系统已有机制，不另起守护进程：
+
+| 开关 | 实现 |
+| --- | --- |
+| 定位 | 绑定 `org.gnome.system.location enabled`；GNSS 上电由已有的 `w202-gps-location-switch` 服务跟随该设置完成。 |
+| 热点 | 用 libnm 启停 NetworkManager 连接 `Hotspot`（wlan0）；开启时副标题显示 SSID。SC2355 不能同时作 AP 与 STA（`iw list` 只有 managed / AP，无接口组合），wlan0 已连 Wi-Fi 时副标题提示“开启后断开 WLAN”。 |
+| 移动数据 | 用 libnm 启停连接 `W202DS Cellular`，状态实时更新。 |
+| 手电筒 | 使用第一个 `/sys/class/leds/*:torch`（优先 `white:torch`，见 `../../camera/README.md`），开为 `max_brightness`、关为 0。LED 亮度没有变更通知，只在面板打开时每秒读一次；每次打开面板重新查找设备，晚加载的驱动也能出现。无设备时隐藏，无写权限时置灰并提示“无权限”；扩展禁用时熄灭手电。 |
+
+`session-modes` 含 `unlock-dialog`（与另两个扩展相同），锁屏上只显示手电筒，其余三项隐藏。
+
+2026-11-09 实机（GNOME Shell 48.7，内核 `6.18.35-w202ds-m23-audio-20261109`）：扩展为已启用 / `ACTIVE`，
+禁用再启用正常，gnome-shell 日志无错误；面板截图中四个开关齐全。定位开关使设置变为 `true`、图标切换，已恢复；
+移动数据关闭后 `stty_nr0` 断开、开启后重新连接并保持；手电筒点按写入 8 / 0，面板打开时外部改动约 1.6 秒内反映，
+手电亮着时禁用扩展会熄灭。热点开关只核对了连接查找与副标题，未实际开启（会断开当前 Wi-Fi）；锁屏上的显示未实测。

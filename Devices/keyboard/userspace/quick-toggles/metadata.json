@@ -1,0 +1,8 @@
+{
+  "uuid": "w202-quick-toggles@w202ds",
+  "name": "W202DS Quick Toggles",
+  "description": "Quick Settings toggles for location, the Wi-Fi hotspot, mobile data and the flashlight.",
+  "shell-version": ["48"],
+  "session-modes": ["user", "unlock-dialog"],
+  "gettext-domain": "w202-quick-toggles"
+}

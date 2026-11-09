@@ -9,7 +9,8 @@ sleep-inactive-battery-timeout=1800
 [org/gnome/desktop/screensaver]
 lock-delay=uint32 900
 
-# The power menu and screen lock are the GNOME Shell extensions w202-power-menu@w202ds and w202-screen-lock@w202ds.
-# A user who changes the extension list keeps their own value instead of this default; both then have to stay in it.
+# The power menu, screen lock and Quick Settings toggles are the GNOME Shell extensions w202-power-menu@w202ds,
+# w202-screen-lock@w202ds and w202-quick-toggles@w202ds.
+# A user who changes the extension list keeps their own value instead of this default; all three then have to stay in it.
 [org/gnome/shell]
-enabled-extensions=['w202-power-menu@w202ds', 'w202-screen-lock@w202ds']
+enabled-extensions=['w202-power-menu@w202ds', 'w202-screen-lock@w202ds', 'w202-quick-toggles@w202ds']

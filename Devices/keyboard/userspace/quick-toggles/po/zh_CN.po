@@ -1,0 +1,42 @@
+# Chinese (simplified) translation of the W202DS Quick Toggles GNOME Shell extension.
+msgid ""
+msgstr ""
+"Project-Id-Version: w202-quick-toggles\n"
+"Language: zh_CN\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+msgid "Location"
+msgstr "定位"
+
+msgid "Hotspot"
+msgstr "热点"
+
+msgid "Mobile Data"
+msgstr "移动数据"
+
+msgid "Flashlight"
+msgstr "手电筒"
+
+msgid "Turning on…"
+msgstr "正在开启…"
+
+msgid "Turning off…"
+msgstr "正在关闭…"
+
+msgid "Disconnects Wi-Fi"
+msgstr "开启后断开 WLAN"
+
+msgid "No permission"
+msgstr "无权限"
+
+msgid "Could not turn on %s"
+msgstr "无法开启%s"
+
+msgid "Could not turn off %s"
+msgstr "无法关闭%s"
+
+msgid "Could not switch the flashlight"
+msgstr "无法切换手电筒"

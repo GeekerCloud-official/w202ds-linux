@@ -7,11 +7,19 @@ EXTDIR := /usr/share/gnome-shell/extensions/$(UUID)
 LOCKDIR := /usr/share/gnome-shell/extensions/w202-screen-lock@w202ds
 LANGS := $(basename $(notdir $(wildcard power-menu/po/*.po)))
 MO := $(foreach l,$(LANGS),$(OUT)/locale/$(l)/LC_MESSAGES/$(DOMAIN).mo)
+QTDIR := /usr/share/gnome-shell/extensions/w202-quick-toggles@w202ds
+QTDOMAIN := w202-quick-toggles
+QTLANGS := $(basename $(notdir $(wildcard quick-toggles/po/*.po)))
+QTMO := $(foreach l,$(QTLANGS),$(OUT)/locale/$(l)/LC_MESSAGES/$(QTDOMAIN).mo)
 
 .PHONY: all install
-all: $(MO)
+all: $(MO) $(QTMO)
 
 $(OUT)/locale/%/LC_MESSAGES/$(DOMAIN).mo: power-menu/po/%.po
+	mkdir -p "$(@D)"
+	$(MSGFMT) --check -o "$@" $<
+
+$(OUT)/locale/%/LC_MESSAGES/$(QTDOMAIN).mo: quick-toggles/po/%.po
 	mkdir -p "$(@D)"
 	$(MSGFMT) --check -o "$@" $<
 
@@ -29,4 +37,12 @@ install: all
 	for l in $(LANGS); do \
 		install -D -m 0644 "$(OUT)/locale/$$l/LC_MESSAGES/$(DOMAIN).mo" \
 			"$(DESTDIR)$(EXTDIR)/locale/$$l/LC_MESSAGES/$(DOMAIN).mo" || exit 1; \
+	done
+	install -D -m 0644 quick-toggles/metadata.json "$(DESTDIR)$(QTDIR)/metadata.json"
+	install -D -m 0644 quick-toggles/extension.js "$(DESTDIR)$(QTDIR)/extension.js"
+	install -D -m 0644 quick-toggles/icons/w202-flashlight-symbolic.svg \
+		"$(DESTDIR)$(QTDIR)/icons/w202-flashlight-symbolic.svg"
+	for l in $(QTLANGS); do \
+		install -D -m 0644 "$(OUT)/locale/$$l/LC_MESSAGES/$(QTDOMAIN).mo" \
+			"$(DESTDIR)$(QTDIR)/locale/$$l/LC_MESSAGES/$(QTDOMAIN).mo" || exit 1; \
 	done
