@@ -1,28 +1,34 @@
 #!/bin/sh
 # SPDX-License-Identifier: GPL-2.0-only
-# Boot-time speaker bring-up. Do not unbind/rebind the built-in audio clocks.
+# Boot-time speaker and microphone bring-up. Never unbind the built-in audio clocks.
 set -eu
 case "$(uname -r)" in
-    6.18.35-w202ds-audio1|6.18.35-w202ds-g102e847e2492) ;;
+    6.18.35-w202ds-audio1|6.18.35-w202ds-g102e847e2492|6.18.35-w202ds-m23-audio-20261109) ;;
     *) echo 'W202DS audio: install modules for this kernel first' >&2; exit 1 ;;
 esac
 /sbin/modprobe unisoc_mailbox
 /sbin/modprobe w202_audio_amp
 /sbin/modprobe w202_audio_dsp
-attempt=0
-while ! test -L /sys/bus/platform/devices/56200000.clock-controller/driver; do
-    attempt=$((attempt + 1))
-    test "$attempt" -le 50 || {
-        echo 'W202DS audio: audio clocks unavailable; reboot with audio enabled' >&2
-        exit 1
-    }
-    sleep 0.1
-done
+test -L /sys/bus/platform/devices/65006400.audcp-iram/driver || {
+    echo 'W202DS audio: AUDCP did not boot; see kernel log' >&2
+    exit 1
+}
+# The AGCP clock gate waits on the AUDCP power domain. That module loads after
+# the 10 s deferred-probe timeout, so the gate is never retried by itself.
+C=56200000.clock-controller
+test -L "/sys/bus/platform/devices/$C/driver" ||
+    echo "$C" > /sys/bus/platform/drivers/ums9620-clk/bind
+test -L "/sys/bus/platform/devices/$C/driver" || {
+    echo 'W202DS audio: audio clocks unavailable' >&2
+    exit 1
+}
 /sbin/modprobe sprd_dma
 /sbin/modprobe snd_soc_aw88166
 /sbin/modprobe w202_audio_vbc
 /sbin/modprobe w202_audio_pcm
+/sbin/modprobe w202_audio_mic
 /sbin/modprobe w202_audio_card
 test -c /dev/snd/controlC0
 test -c /dev/snd/pcmC0D0p
-echo 'W202DS speaker card ready'
+test -c /dev/snd/pcmC0D1c
+echo 'W202DS speaker and microphone card ready'

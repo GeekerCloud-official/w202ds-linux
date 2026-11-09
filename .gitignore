@@ -50,6 +50,9 @@ SOURCES*.json
 /Devices/audio/userspace/*
 !/Devices/audio/userspace/w202-audio-start
 !/Devices/audio/userspace/w202-audio.service
+!/Devices/audio/userspace/w202-audio.conf
+!/Devices/audio/userspace/w202ds.conf
+!/Devices/audio/userspace/89-w202ds-audio.rules
 
 # Keep keyboard diagnostic state snapshots local.
 /Devices/keyboard/source/keyboard-m22/super-layout.json

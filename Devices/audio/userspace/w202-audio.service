@@ -1,7 +1,9 @@
 [Unit]
 Description=W202DS AUDCP and AW88166 speakers
+DefaultDependencies=no
 After=local-fs.target systemd-modules-load.service
-Before=display-manager.service
+Before=sysinit.target sound.target display-manager.service
+ConditionPathExists=/usr/lib/modules/%v/updates/w202ds/w202_audio_card.ko
 
 [Service]
 Type=oneshot
@@ -10,4 +12,4 @@ ExecStart=/usr/libexec/w202-audio-start
 TimeoutStartSec=20
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=sysinit.target
