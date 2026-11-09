@@ -39,6 +39,9 @@ SOURCES*.json
 !/Devices/gpu/source/panfrost/
 !/Devices/gpu/source/README.md
 
+# Rear torch udev permission rule.
+!/Devices/camera/userspace/
+
 # Publish VPU userspace sources; keep runtime packages and external dependencies local.
 !/Devices/vpu/userspace/
 /Devices/vpu/userspace/*

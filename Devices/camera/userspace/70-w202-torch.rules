@@ -1,0 +1,2 @@
+# W202DS rear torch (w202_flash_aw36518): let the video group (desktop user) switch it.
+SUBSYSTEM=="leds", KERNEL=="white:torch", ACTION=="add", RUN+="/bin/chgrp video /sys%p/brightness", RUN+="/bin/chmod g+w /sys%p/brightness"
